@@ -251,7 +251,7 @@ static void __cpuinit check_temp(struct work_struct *work)
 			update_policy = true;
 			max_freq = msm_thermal_tuners_ins.allowed_low_freq;
 			thermal_throttled = 2;
-			pr_warn("msm_thermal: Thermal Throttled (mid)! temp:%lu by:%s\n",
+                        pr_warn("msm_thermal: Thermal Throttled (mid)! temp:%lu by:%s\n",
                                 (max(temp0, temp1)), (temp0>temp1) ? "0" : "1");
 		//mid clr point
 		} else if (((max(temp0, temp1)) < msm_thermal_tuners_ins.allowed_mid_low) &&
@@ -266,7 +266,7 @@ static void __cpuinit check_temp(struct work_struct *work)
 			update_policy = true;
 			max_freq = msm_thermal_tuners_ins.allowed_max_freq;
 			thermal_throttled = 3;
-			pr_warn("msm_thermal: Thermal Throttled (max)! temp:%lu by:%s\n",
+		        pr_warn("msm_thermal: Thermal Throttled (max)! temp:%lu by:%s\n",
                                 (max(temp0, temp1)), (temp0>temp1) ? "0" : "1");
 		//max clr point
 		} else if (((max(temp0, temp1)) < msm_thermal_tuners_ins.allowed_max_low) &&
@@ -274,11 +274,11 @@ static void __cpuinit check_temp(struct work_struct *work)
 			max_freq = msm_thermal_tuners_ins.allowed_mid_freq;
 			update_policy = true;
                         thermal_throttled = 2;
-			pr_warn("msm_thermal: CPU%i: Max thermal throttle ended! temp:%lu by:%s\n", cpu,
-                        (max(temp0, temp1)), (temp0>temp1) ? "0" : "1");
+                        pr_warn("msm_thermal: CPU%i: Max thermal throttle ended! temp:%lu by:%s\n", cpu,
+                                (max(temp0, temp1)), (temp0>temp1) ? "0" : "1");
 		}
 
-		if ((update_policy) && (cpu_policy->max > max_freq))
+		if ((update_policy) && (max_freq <= pre_throttled_max))
 			update_cpu_max_freq(cpu_policy, cpu, max_freq);
 
 		cpufreq_cpu_put(cpu_policy);
