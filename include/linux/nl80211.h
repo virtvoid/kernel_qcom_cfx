@@ -1369,6 +1369,7 @@ enum nl80211_commands {
  * @NL80211_ATTR_VHT_CAPABILITY: VHT Capability information element (from
  *	association request when used with NL80211_CMD_NEW_STATION)
  *
+<<<<<<< HEAD
  * @NL80211_ATTR_SCAN_FLAGS: scan request control flags (u32)
  *
  * @NL80211_ATTR_P2P_CTWINDOW: P2P GO Client Traffic Window (u8), used with
@@ -1429,6 +1430,8 @@ enum nl80211_commands {
  *	allowed to be used with the first @NL80211_CMD_SET_STATION command to
  *	update a TDLS peer STA entry.
  *
+=======
+>>>>>>> 5fed1a7... {nl,cfg}80211: Peer STA VHT caps
  * @NL80211_ATTR_MAX: highest attribute number currently defined
  * @__NL80211_ATTR_AFTER_LAST: internal use
  */
@@ -1690,6 +1693,7 @@ enum nl80211_attrs {
 
 	NL80211_ATTR_VHT_CAPABILITY,
 
+<<<<<<< HEAD
 	NL80211_ATTR_SCAN_FLAGS,
 
 	NL80211_ATTR_CHANNEL_WIDTH,
@@ -1729,6 +1733,8 @@ enum nl80211_attrs {
 
 	NL80211_ATTR_PEER_AID,
 
+=======
+>>>>>>> 5fed1a7... {nl,cfg}80211: Peer STA VHT caps
 	/* add attributes here, update the policy in nl80211.c */
 
 	__NL80211_ATTR_AFTER_LAST,
