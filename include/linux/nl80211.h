@@ -1370,6 +1370,9 @@ enum nl80211_commands {
  *	association request when used with NL80211_CMD_NEW_STATION)
  *
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 9f6d091... cfg80211: Pass station (extended) capability info to kernel
  * @NL80211_ATTR_SCAN_FLAGS: scan request control flags (u32)
  *
  * @NL80211_ATTR_P2P_CTWINDOW: P2P GO Client Traffic Window (u8), used with
@@ -1408,6 +1411,7 @@ enum nl80211_commands {
  *	advertised to the driver, e.g., to enable TDLS off channel operations
  *	and PU-APSD.
  *
+<<<<<<< HEAD
  * @NL80211_ATTR_PROTOCOL_FEATURES: global nl80211 feature flags, see
  *	&enum nl80211_protocol_features, the attribute is a u32.
  *
@@ -1432,6 +1436,8 @@ enum nl80211_commands {
  *
 =======
 >>>>>>> 5fed1a7... {nl,cfg}80211: Peer STA VHT caps
+=======
+>>>>>>> 9f6d091... cfg80211: Pass station (extended) capability info to kernel
  * @NL80211_ATTR_MAX: highest attribute number currently defined
  * @__NL80211_ATTR_AFTER_LAST: internal use
  */
@@ -1694,6 +1700,9 @@ enum nl80211_attrs {
 	NL80211_ATTR_VHT_CAPABILITY,
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 9f6d091... cfg80211: Pass station (extended) capability info to kernel
 	NL80211_ATTR_SCAN_FLAGS,
 
 	NL80211_ATTR_CHANNEL_WIDTH,
@@ -1719,6 +1728,7 @@ enum nl80211_attrs {
 	NL80211_ATTR_STA_CAPABILITY,
 	NL80211_ATTR_STA_EXT_CAPABILITY,
 
+<<<<<<< HEAD
 	NL80211_ATTR_PROTOCOL_FEATURES,
 	NL80211_ATTR_SPLIT_WIPHY_DUMP,
 
@@ -1735,6 +1745,8 @@ enum nl80211_attrs {
 
 =======
 >>>>>>> 5fed1a7... {nl,cfg}80211: Peer STA VHT caps
+=======
+>>>>>>> 9f6d091... cfg80211: Pass station (extended) capability info to kernel
 	/* add attributes here, update the policy in nl80211.c */
 
 	__NL80211_ATTR_AFTER_LAST,
