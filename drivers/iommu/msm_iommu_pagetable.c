@@ -325,7 +325,8 @@ static unsigned int get_phys_addr(struct scatterlist *sg)
 int msm_iommu_pagetable_map_range(struct iommu_pt *pt, unsigned int va,
 		       struct scatterlist *sg, unsigned int len, int prot)
 {
-	unsigned int pa;
+	phys_addr_t pa;
+	unsigned int start_va = va;
 	unsigned int offset = 0;
 	unsigned int pgprot;
 	unsigned long *fl_pte;
@@ -415,6 +416,9 @@ int msm_iommu_pagetable_map_range(struct iommu_pt *pt, unsigned int va,
 	}
 
 fail:
+	if (ret && offset > 0)
+		msm_iommu_pagetable_unmap_range(pt, start_va, offset);
+
 	return ret;
 }
 
