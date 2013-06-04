@@ -2791,7 +2791,8 @@ static int nl80211_set_station_tdls(struct genl_info *info,
 	int err;
 
 	/* Dummy STA entry gets updated once the peer capabilities are known */
-
+	if (info->attrs[NL80211_ATTR_PEER_AID])
+		params->aid = nla_get_u16(info->attrs[NL80211_ATTR_PEER_AID]);
 	if (info->attrs[NL80211_ATTR_HT_CAPABILITY])
 		params->ht_capa =
 			nla_data(info->attrs[NL80211_ATTR_HT_CAPABILITY]);
