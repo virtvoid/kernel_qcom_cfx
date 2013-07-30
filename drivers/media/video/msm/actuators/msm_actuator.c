@@ -277,7 +277,7 @@ static int32_t msm_actuator_move_focus(
 		return -EFAULT;
 	}
 
-/* OPPO 2013-04-27 yxq Add begin for reason */
+#ifdef CONFIG_MACH_APQ8064_FIND5
     if (copy_from_user(&a_ctrl->ringing_params,
         (void *)move_params->ringing_params, 
         a_ctrl->region_size * sizeof(struct damping_params_t))) {
@@ -285,7 +285,7 @@ static int32_t msm_actuator_move_focus(
         return -EFAULT;
     }
     move_params->ringing_params = a_ctrl->ringing_params;
-/* OPPO 2013-04-27 yxq Add end */
+#endif
 
 	curr_lens_pos = a_ctrl->step_position_table[a_ctrl->curr_step_pos];
 	a_ctrl->i2c_tbl_index = 0;

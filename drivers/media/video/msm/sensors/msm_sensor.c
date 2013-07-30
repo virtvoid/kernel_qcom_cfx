@@ -17,11 +17,12 @@
 #include "msm_ispif.h"
 #include "msm_camera_i2c_mux.h"
 
-/* OPPO 2013-02-04 kangjian added begin for voltage supply */
+#ifdef CONFIG_MACH_APQ8064_FIND5
 #include <linux/regulator/consumer.h>
 #include <mach/vreg.h>
 #include <linux/i2c/ssl3252.h>
-/* OPPO 2013-02-04 kangjian added end */
+#endif
+
 /*=============================================================*/
 void msm_sensor_adjust_frame_lines1(struct msm_sensor_ctrl_t *s_ctrl)
 {
@@ -2011,14 +2012,13 @@ int msm_sensor_enable_debugfs(struct msm_sensor_ctrl_t *s_ctrl)
 
 	return 0;
 }
-/* OPPO 2013-02-04 kangjian added begin for voltage supply changed */
 
-/* OPPO 2013-02-04 kangjian added begin for reason */
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	static struct regulator *ldo8;
 	static struct regulator *lvs5;
 	static struct regulator *ldo16;
 	static struct regulator *ldo21;
-/* OPPO 2013-02-04 kangjian added end */
+
 int32_t s5k6a3yx_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 {
 	int32_t rc = 0;
@@ -2031,26 +2031,6 @@ int32_t s5k6a3yx_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 		pr_err("%s: request gpio failed\n", __func__);
 		goto request_gpio_failed;
 	}
-/* OPPO 2013-02-04 kangjian modified begin for reason */
-  #if 0
-	rc = msm_camera_config_vreg(&s_ctrl->sensor_i2c_client->client->dev,
-			s_ctrl->sensordata->sensor_platform_info->cam_vreg,
-			s_ctrl->sensordata->sensor_platform_info->num_vreg,
-			s_ctrl->reg_ptr, 1);
-	if (rc < 0) {
-		pr_err("%s: regulator on failed\n", __func__);
-		goto config_vreg_failed;
-	}
-
-	rc = msm_camera_enable_vreg(&s_ctrl->sensor_i2c_client->client->dev,
-			s_ctrl->sensordata->sensor_platform_info->cam_vreg,
-			s_ctrl->sensordata->sensor_platform_info->num_vreg,
-			s_ctrl->reg_ptr, 1);
-	if (rc < 0) {
-		pr_err("%s: enable regulator failed\n", __func__);
-		goto enable_vreg_failed;
-	}
-  #else
  	// for old GSBI1's voltage
 	ldo21 = regulator_get(NULL, "8921_l21");
 	if (IS_ERR(ldo21)){
@@ -2082,8 +2062,6 @@ int32_t s5k6a3yx_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 		pr_err("%s: VREG LDO8 enable failed\n", __func__);
 		goto ldo8_enable_failed;
 		}
-  #endif
-/* OPPO 2013-02-04 kangjian modified end */
 	msleep(1);
 	rc = msm_camera_config_gpio_table(data, 1);
 	if (rc < 0) {
@@ -2092,7 +2070,6 @@ int32_t s5k6a3yx_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 	}
 	msleep(1);
 
-/* OPPO 2013-02-04 kangjian added begin for reason */
 	lvs5 = regulator_get(NULL, "8921_lvs5");
 	if (IS_ERR(lvs5)){
 		pr_err("%s: VREG LVS5 get failed\n", __func__);
@@ -2117,15 +2094,12 @@ int32_t s5k6a3yx_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 		pr_err("%s: VREG LDO16 enable failed\n", __func__);
 		goto ldo16_enable_failed;
 		}
-/* OPPO 2012-09-15 yxq added end */
 
 	if (s_ctrl->clk_rate != 0)
 		cam_8960_clk_info->clk_rate = s_ctrl->clk_rate;
 	rc = msm_cam_clk_enable(&s_ctrl->sensor_i2c_client->client->dev, cam_8960_clk_info,
 			s_ctrl->cam_clk, ARRAY_SIZE(cam_8960_clk_info), 1);
 
-	//rc = msm_cam_clk_enable(&s_ctrl->sensor_i2c_client->client->dev,
-		//cam_clk_info, &s_ctrl->cam_clk, ARRAY_SIZE(cam_clk_info), 1);
 	if (rc < 0) {
 		pr_err("%s: clk enable failed\n", __func__);
 		goto enable_clk_failed;
@@ -2142,14 +2116,8 @@ int32_t s5k6a3yx_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 	return rc;
 
 enable_clk_failed:
-/* OPPO 2013-02-04 kangjian modified begin for reason */
-#if 0
-	msm_camera_config_gpio_table(data, 0);
-#else
 	regulator_disable(ldo16);
-#endif
-/* OPPO 2013-02-04 kangjian modified end */
-/* OPPO 2013-02-04 kangjian added begin for reason */
+
 ldo16_enable_failed:
 ldo16_set_voltage_failed:
 		regulator_put(ldo16);
@@ -2168,30 +2136,6 @@ ldo8_get_failed:
 		msm_camera_request_gpio_table(data, 0);
 request_gpio_failed:
 		return rc;
-/* OPPO 2013-02-04 kangjian added end */
-
-/* OPPO 2013-02-04 kangjian deleted begin for reason */
-#if 0
-config_gpio_failed:
-	msm_camera_enable_vreg(&s_ctrl->sensor_i2c_client->client->dev,
-			s_ctrl->sensordata->sensor_platform_info->cam_vreg,
-			s_ctrl->sensordata->sensor_platform_info->num_vreg,
-			s_ctrl->reg_ptr, 0);
-
-enable_vreg_failed:
-	msm_camera_config_vreg(&s_ctrl->sensor_i2c_client->client->dev,
-		s_ctrl->sensordata->sensor_platform_info->cam_vreg,
-		s_ctrl->sensordata->sensor_platform_info->num_vreg,
-		s_ctrl->reg_ptr, 0);
-config_vreg_failed:
-	msm_camera_request_gpio_table(data, 0);
-request_gpio_failed:
-  #if 0
-	kfree(s_ctrl->reg_ptr);
-  #endif
- #endif
- /* OPPO 2013-02-04 kangjian deleted end */
-	//return rc;
 }
 
 int32_t s5k6a3yx_sensor_power_down(struct msm_sensor_ctrl_t *s_ctrl)
@@ -2207,20 +2151,7 @@ int32_t s5k6a3yx_sensor_power_down(struct msm_sensor_ctrl_t *s_ctrl)
 		data->sensor_platform_info->ext_power_ctrl(0);
 		msm_cam_clk_enable(&s_ctrl->sensor_i2c_client->client->dev, cam_8960_clk_info,
 			s_ctrl->cam_clk, ARRAY_SIZE(cam_8960_clk_info), 0);
-	//msm_cam_clk_enable(&s_ctrl->sensor_i2c_client->client->dev,
-		//cam_clk_info, &s_ctrl->cam_clk, ARRAY_SIZE(cam_clk_info), 0);
 	msm_camera_config_gpio_table(data, 0);
-/* OPPO 2013-02-04 kangjian modified begin for voltage supply */
-#if 0
-	msm_camera_enable_vreg(&s_ctrl->sensor_i2c_client->client->dev,
-		s_ctrl->sensordata->sensor_platform_info->cam_vreg,
-		s_ctrl->sensordata->sensor_platform_info->num_vreg,
-		s_ctrl->reg_ptr, 0);
-	msm_camera_config_vreg(&s_ctrl->sensor_i2c_client->client->dev,
-		s_ctrl->sensordata->sensor_platform_info->cam_vreg,
-		s_ctrl->sensordata->sensor_platform_info->num_vreg,
-		s_ctrl->reg_ptr, 0);
-#else
 	msleep(1);
 	if (ldo16) {
 		regulator_disable(ldo16);
@@ -2234,23 +2165,14 @@ int32_t s5k6a3yx_sensor_power_down(struct msm_sensor_ctrl_t *s_ctrl)
 		regulator_disable(ldo8);
 		regulator_put(ldo8);
 		}
-	// for GSBI1's voltage
 	if (ldo21) {
 		regulator_disable(ldo21);
 		regulator_put(ldo21);
 		}
-#endif
-/* OPPO 2013-02-04 kangjian modified end */
 	msm_camera_request_gpio_table(data, 0);
-/* OPPO 2013-02-04 kangjian deleted begin for reason */
-#if 0
-	kfree(s_ctrl->reg_ptr);
-#endif
-/* OPPO 2013-02-04 kangjian deleted end */
 	return 0;
 }
-/* OPPO 2013-02-04 kangjian added end */
-/* OPPO 2012-11-29 yxq Add begin for imx135's boot up sequence */
+
 int32_t imx135_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 {
 	int32_t rc = 0;
@@ -2352,7 +2274,7 @@ int32_t imx135_sensor_power_down(struct msm_sensor_ctrl_t *s_ctrl)
 {
 	struct msm_camera_sensor_info *data = s_ctrl->sensordata;
 	CDBG("%s\n", __func__);
-	oppo_led_control(MSM_CAMERA_LED_RELEASE);/*OPPO*/
+	oppo_led_control(MSM_CAMERA_LED_RELEASE);
 	if (data->sensor_platform_info->i2c_conf &&
 		data->sensor_platform_info->i2c_conf->use_i2c_mux)
 		msm_sensor_disable_i2c_mux(
@@ -2379,3 +2301,4 @@ int32_t imx135_sensor_power_down(struct msm_sensor_ctrl_t *s_ctrl)
 	kfree(s_ctrl->reg_ptr);
 	return 0;
 }
+#endif

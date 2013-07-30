@@ -15,36 +15,7 @@
 
 extern unsigned int kgsl_cff_dump_enable;
 
-/* OPPO 2013-06-17 huanggd Modify for too many kgsl log*/	
-#if 0
-#define KGSL_LOG_INFO(dev, lvl, fmt, args...) \
-	do { \
-		if ((lvl) >= 6)  \
-			dev_info(dev, "|%s| " fmt, \
-					__func__, ##args);\
-	} while (0)
-
-#define KGSL_LOG_WARN(dev, lvl, fmt, args...) \
-	do { \
-		if ((lvl) >= 4)  \
-			dev_warn(dev, "|%s| " fmt, \
-					__func__, ##args);\
-	} while (0)
-
-#define KGSL_LOG_ERR(dev, lvl, fmt, args...) \
-	do { \
-		if ((lvl) >= 3)  \
-			dev_err(dev, "|%s| " fmt, \
-					__func__, ##args);\
-	} while (0)
-
-#define KGSL_LOG_CRIT(dev, lvl, fmt, args...) \
-	do { \
-		if ((lvl) >= 2) \
-			dev_crit(dev, "|%s| " fmt, \
-					__func__, ##args);\
-	} while (0)	
-#else
+#ifdef CONFIG_MACH_APQ8064_FIND5
 #define KGSL_LOG_INFO(dev, lvl, fmt, args...) \
 	do { \
 		if (((lvl) >= 6) && printk_ratelimit())  \
@@ -72,21 +43,44 @@ extern unsigned int kgsl_cff_dump_enable;
 			dev_crit(dev, "|%s| " fmt, \
 					__func__, ##args);\
 	} while (0)
-#endif	
-/* OPPO 2013-06-17 huanggd Modify end*/
+#else
+#define KGSL_LOG_INFO(dev, lvl, fmt, args...) \
+	do { \
+		if ((lvl) >= 6)  \
+			dev_info(dev, "|%s| " fmt, \
+					__func__, ##args);\
+	} while (0)
 
+#define KGSL_LOG_WARN(dev, lvl, fmt, args...) \
+	do { \
+		if ((lvl) >= 4)  \
+			dev_warn(dev, "|%s| " fmt, \
+					__func__, ##args);\
+	} while (0)
+
+#define KGSL_LOG_ERR(dev, lvl, fmt, args...) \
+	do { \
+		if ((lvl) >= 3)  \
+			dev_err(dev, "|%s| " fmt, \
+					__func__, ##args);\
+	} while (0)
+
+#define KGSL_LOG_CRIT(dev, lvl, fmt, args...) \
+	do { \
+		if ((lvl) >= 2) \
+			dev_crit(dev, "|%s| " fmt, \
+					__func__, ##args);\
+	} while (0)	
+#endif	
 
 #define KGSL_LOG_POSTMORTEM_WRITE(_dev, fmt, args...) \
 	do { dev_crit(_dev->dev, fmt, ##args); } while (0)
 
-
-/* OPPO 2013-06-17 huanggd Modify for too many kgsl log*/	
-#if 0
-#define KGSL_LOG_DUMP(_dev, fmt, args...)	dev_err(_dev->dev, fmt, ##args)
-#else
+#ifdef CONFIG_MACH_APQ8064_FIND5
 #define KGSL_LOG_DUMP(_dev, fmt, args...)	 do {} while(0)
+#else
+#define KGSL_LOG_DUMP(_dev, fmt, args...)	dev_err(_dev->dev, fmt, ##args)
 #endif
-/* OPPO 2013-06-17 huanggd Modify end*/	
 
 #define KGSL_DEV_ERR_ONCE(_dev, fmt, args...) \
 ({ \

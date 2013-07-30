@@ -815,13 +815,11 @@ static const struct attribute_group blink_attr_group = {
 static void lcds_set_brightness(struct led_classdev *led_cdev,
 					enum led_brightness value)
 {
-	//printk("huyu----%s: light the lcd  ", __func__);
 	if(!strcmp(led_cdev->name, "red"))
 	{
 		if(shine_debug) {
 			printk("shineled----%s: light the red ,value = %d\n", __func__, value);
 		}
-		//SN3193_TurnOnOut_sled(RED_SLED);
 		SN3193_SetBrightness(RED_SLED,value);
 		color_R = value;
 	}
@@ -830,7 +828,6 @@ static void lcds_set_brightness(struct led_classdev *led_cdev,
 		if(shine_debug) {
 			printk("shineled----%s: light the green ,value = %d\n", __func__, value);
 		}
-		//SN3193_TurnOnOut_sled(GREEN_SLED);
 		SN3193_SetBrightness(GREEN_SLED,value);
 		color_G = value;
 	}
@@ -840,7 +837,6 @@ static void lcds_set_brightness(struct led_classdev *led_cdev,
 		if(shine_debug) {
 			printk("shineled----%s: light the blue ,value = %d\n", __func__, value);
 		}
-		//SN3193_TurnOnOut_sled(BLUE_SLED);
 		SN3193_SetBrightness(BLUE_SLED,value);
 		color_B = value;
 	}
@@ -855,17 +851,14 @@ static const struct file_operations SN3193_fops = {
 static struct led_classdev SN3193_lcds[] = {
 	{
 		.name		= "red",
-		//.brightness = MAX_BACKLIGHT_BRIGHTNESS,
 		.brightness_set = lcds_set_brightness,
 	},
 	{
 		.name		= "green",
-		//.brightness = MAX_BACKLIGHT_BRIGHTNESS,
 		.brightness_set = lcds_set_brightness,
 	},
 	{
 		.name		= "blue",
-		//.brightness = MAX_BACKLIGHT_BRIGHTNESS,
 		.brightness_set = lcds_set_brightness,
 	},
 };
@@ -931,15 +924,6 @@ static int SN3193_probe(struct i2c_client *client, const struct i2c_device_id *i
 	SN3193_enable_sled(0);
 
 
-	/**************************test*********************/
-	//enable sled
-	/*SN3193_enable_sled(1);
-       SN3193_config_feature_sled(0x00);
-	SN3193_workmod_sled(1);
-	SN3193_setCurrent_sled(0x01);*/
-        //SN3193_enable_diff_color_sled(BLUE_SLED);
-        //mod_timer(&SN3193_sled_dev_sate->gsled_last_timer,jiffies+5*HZ);
-       /**************************test******************/
 	return 0;
 err_group_register:
 	for(i = 0; i < 3; i ++ )

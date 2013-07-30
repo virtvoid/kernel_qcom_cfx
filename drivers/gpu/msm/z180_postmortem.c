@@ -205,9 +205,9 @@ static void z180_dump_ib(struct kgsl_device *device)
  */
 int z180_dump(struct kgsl_device *device, int manual)
 {
-/* OPPO 2013-06-17 huanggd Delete for too many kgsl log*/		
-	//struct z180_device *z180_dev = Z180_DEVICE(device);
-/* OPPO 2013-06-17 huanggd Delete end*/		
+#ifndef CONFIG_MACH_APQ8064_FIND5
+	struct z180_device *z180_dev = Z180_DEVICE(device);
+#endif	
 	mb();
 
 	KGSL_LOG_DUMP(device, "Retired Timestamp: %d\n", z180_dev->timestamp);

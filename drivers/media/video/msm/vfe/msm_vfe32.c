@@ -30,7 +30,9 @@
 #include "msm_vfe32.h"
 
 atomic_t irq_cnt;
-int overflow_cnt = 0;/*OPPO*/
+#ifdef CONFIG_MACH_APQ8064_FIND5
+int overflow_cnt = 0;
+#endif
 
 #define VFE32_AXI_OFFSET 0x0050
 #define vfe32_get_ch_ping_addr(base, chn) \
@@ -724,7 +726,9 @@ static void vfe32_stop(struct vfe32_ctrl_type *vfe32_ctrl)
 
 	/* in either continuous or snapshot mode, stop command can be issued
 	 * at any time. stop camif immediately. */
-	overflow_cnt = 0;/*OPPO*/
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	overflow_cnt = 0;
+#endif
 	if (!vfe32_ctrl->share_ctrl->dual_enabled)
 		msm_camera_io_w_mb(CAMIF_COMMAND_STOP_IMMEDIATELY,
 			vfe32_ctrl->share_ctrl->vfebase + VFE_CAMIF_COMMAND);
@@ -1185,7 +1189,9 @@ static int vfe32_reset(struct vfe32_ctrl_type *vfe32_ctrl)
 {
 	uint32_t irq_mask1, irq_mask;
 	atomic_set(&vfe32_ctrl->share_ctrl->vstate, 0);
-	overflow_cnt = 0;/*OPPO*/
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	overflow_cnt = 0;
+#endif
 	msm_camera_io_w(VFE_MODULE_RESET_CMD,
 		vfe32_ctrl->share_ctrl->vfebase + VFE_MODULE_RESET);
 	msm_camera_io_w(0,
@@ -4342,6 +4348,7 @@ static void vfe32_process_reset_irq(
 	}
 }
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
 static void vfe32_process_overflow_error(
 	struct vfe_share_ctrl_t *share_ctrl, uint32_t errStatus)
 {
@@ -4443,13 +4450,15 @@ static void vfe32_process_overflow_error(
 	pr_err("vfe32: process overflow err %d output mode 0x%x\n",
 		overflow_cnt,share_ctrl->comp_output_mode);
 }
+#endif
 
 static void vfe32_process_camif_sof_irq(
 		struct vfe32_ctrl_type *vfe32_ctrl)
 {
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	if(overflow_cnt)
 		vfe32_process_overflow_error(vfe32_ctrl->share_ctrl ,0);
-
+#endif
 	if (vfe32_ctrl->share_ctrl->operation_mode ==
 		VFE_OUTPUTS_RAW) {
 		if (atomic_cmpxchg(
@@ -4528,7 +4537,7 @@ static void vfe32_process_error_irq(
 			axi_ctrl->share_ctrl->vfeFrameId, MSG_ID_CAMIF_ERROR);
 		}
 	}
-
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	if(errStatus &
 		(VFE32_IMASK_BHIST_OVWR |
 		VFE32_IMASK_STATS_CS_OVWR|
@@ -4550,6 +4559,7 @@ static void vfe32_process_error_irq(
 		v4l2_subdev_notify(&axi_ctrl->subdev,
 			NOTIFY_VFE_CAMIF_ERROR, (void *)NULL);
 	}
+#endif
 
 	if (errStatus & VFE32_IMASK_BHIST_OVWR)
 		pr_err("vfe32_irq: stats bhist overwrite\n");
@@ -4594,7 +4604,7 @@ static void vfe32_process_error_irq(
 static void vfe32_process_common_error_irq(
 	struct axi_ctrl_t *axi_ctrl, uint32_t errStatus)
 {
-
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	if(errStatus &
 		(VFE32_IMASK_IMG_MAST_0_BUS_OVFL|
 		VFE32_IMASK_IMG_MAST_1_BUS_OVFL|
@@ -4605,6 +4615,7 @@ static void vfe32_process_common_error_irq(
 		VFE32_IMASK_IMG_MAST_6_BUS_OVFL)) {
 		vfe32_process_overflow_error(axi_ctrl->share_ctrl, errStatus);
 	}
+#endif
 
 	if (errStatus & VFE32_IMASK_IMG_MAST_0_BUS_OVFL)
 		pr_err("vfe32_irq: image master 0 bus overflow\n");
@@ -6337,11 +6348,9 @@ static int msm_axi_subdev_s_crystal_freq(struct v4l2_subdev *sd,
 	if (axi_ctrl->share_ctrl->dual_enabled) {
 		CDBG("%s Dual camera Enabled hence returning "\
 			"without clock change\n", __func__);
-/* OPPO 2013-03-07 kangjian delete begin for snap */		
-#if 0
+#ifndef CONFIG_MACH_APQ8064_FIND5
 		return rc;
 #endif
-/* OPPO 2013-03-07 kangjian delete end for snap */
 	}
 	round_rate = clk_round_rate(axi_ctrl->vfe_clk[0], freq);
 	if (rc < 0) {
@@ -6844,13 +6853,11 @@ void axi_start(struct msm_cam_media_controller *pmctl,
 		break;
 	case AXI_CMD_CAPTURE:
 	case AXI_CMD_RAW_CAPTURE:
-/* OPPO 2013-03-07 kangjian Modify begin for snap */		
-#if 0
-		if (!axi_ctrl->share_ctrl->dual_enabled)
+#ifdef CONFIG_MACH_APQ8064_FIND5
+		if (axi_ctrl->share_ctrl->dual_enabled)
 #else
-        if (axi_ctrl->share_ctrl->dual_enabled)
+        if (!axi_ctrl->share_ctrl->dual_enabled)
 #endif
-/* OPPO 2013-03-07 kangjian Modify end for snap */
 			msm_camio_bus_scale_cfg(
 			pmctl->sdata->pdata->cam_bus_scale_table, S_CAPTURE);
 		break;
@@ -6864,13 +6871,11 @@ void axi_start(struct msm_cam_media_controller *pmctl,
 			msm_camio_bus_scale_cfg(
 				pmctl->sdata->pdata->cam_bus_scale_table,
 				S_LOW_POWER);
-/* OPPO 2013-03-07 kangjian Modify begin for zsl */
-#if 0
-		else if (!axi_ctrl->share_ctrl->dual_enabled)
+#ifdef CONFIG_MACH_APQ8064_FIND5
+		else if (axi_ctrl->share_ctrl->dual_enabled)
 #else 
-        else if (axi_ctrl->share_ctrl->dual_enabled)
+        else if (!axi_ctrl->share_ctrl->dual_enabled)
 #endif
-/* OPPO 2013-03-07 kangjian Modify end for zsl */
 			msm_camio_bus_scale_cfg(
 				pmctl->sdata->pdata->cam_bus_scale_table,
 				S_ZSL);

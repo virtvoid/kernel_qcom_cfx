@@ -156,15 +156,13 @@ static struct device_attribute power_supply_attrs[] = {
 	POWER_SUPPLY_ATTR(charge_full),
 	POWER_SUPPLY_ATTR(charge_empty),
 	POWER_SUPPLY_ATTR(charge_now),
-	/* OPPO 2012-12-30 chendx Modify begin for charge long timeout */
-	#ifndef CONFIG_VENDOR_EDIT
-	POWER_SUPPLY_ATTR(charge_avg),
-	POWER_SUPPLY_ATTR(charge_counter),
-	#else
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	POWER_SUPPLY_ATTR(charge_timeout),
 	POWER_SUPPLY_ATTR(charge_soc_fall),
-	#endif
-	/* OPPO 2012-12-30 chendx end begin for charge long timeout */
+#else
+	POWER_SUPPLY_ATTR(charge_avg),
+	POWER_SUPPLY_ATTR(charge_counter),
+#endif
 	POWER_SUPPLY_ATTR(energy_full_design),
 	POWER_SUPPLY_ATTR(energy_empty_design),
 	POWER_SUPPLY_ATTR(energy_full),

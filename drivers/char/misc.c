@@ -59,13 +59,13 @@ static DEFINE_MUTEX(misc_mtx);
 /*
  * Assigned numbers, used for dynamic minors
  */
- /*OPPO,Jiangsm modify begin for avoiding same minor shared by two misc devices, 2013-4-23*/
- #ifdef CONFIG_VENDOR_EDIT
+
+#ifdef CONFIG_MACH_APQ8064_FIND5
 #define DYNAMIC_MINORS 64*2
 #else
 #define DYNAMIC_MINORS 64 /* like dynamic majors */
 #endif
-/*OPPO,Jiangsm modify end,2013-4-23*/
+
 static DECLARE_BITMAP(misc_minors, DYNAMIC_MINORS);
 
 #ifdef CONFIG_PROC_FS
@@ -202,11 +202,9 @@ int misc_register(struct miscdevice * misc)
 			return -EBUSY;
 		}
 	}
-/*OPPO,Jiangsm add begin for avoiding same minor shared by two misc devices, 2013-4-23*/
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 alloc_minor:
 #endif
-/*OPPO,Jiangsm add end,2013-4-23*/
 	if (misc->minor == MISC_DYNAMIC_MINOR) {
 		int i = find_first_zero_bit(misc_minors, DYNAMIC_MINORS);
 		if (i >= DYNAMIC_MINORS) {
@@ -215,8 +213,7 @@ alloc_minor:
 		}
 		misc->minor = DYNAMIC_MINORS - i - 1;
 		set_bit(i, misc_minors);
-/*OPPO,Jiangsm add begin for avoiding same minor shared by two misc devices, 2013-4-23*/
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 		list_for_each_entry(c, &misc_list, list) {
 			if (c->minor == misc->minor) {
 				pr_err("%s:minor[%d] has been used by misc device %s,try to choose another one\n", __func__, misc->minor, c->name);
@@ -225,7 +222,6 @@ alloc_minor:
 			}
 		}
 #endif
-/*OPPO,Jiangsm add end,2013-4-23*/
 	}
 	dev = MKDEV(MISC_MAJOR, misc->minor);
 

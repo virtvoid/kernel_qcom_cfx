@@ -183,12 +183,15 @@ __do_user_fault(struct task_struct *tsk, unsigned long addr,
 	    ((user_debug & UDBG_BUS)  && (sig == SIGBUS))) {
 		printk(KERN_DEBUG "%s: unhandled page fault (%d) at 0x%08lx, code 0x%03x\n",
 		       tsk->comm, sig, addr, fsr);
-/* OPPO 2013-06-08 huanggd Modify for reduce printk rate*/
+#ifdef CONFIG_MACH_APQ8064_FIND5
 		if (printk_ratelimit()) {
 			show_pte(tsk->mm, addr);
 			show_regs(regs);
 		}
-/* OPPO 2013-06-08 huanggd Modify end*/		
+#else
+		show_pte(tsk->mm, addr);
+		show_regs(regs);
+#endif
 	}
 #endif
 

@@ -16,7 +16,9 @@
 #include <linux/module.h>
 #include <linux/mfd/pm8xxx/pm8xxx-adc.h>
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
 #include <linux/pcb_version.h>
+#endif
 
 #define KELVINMIL_DEGMIL	273160
 
@@ -29,95 +31,7 @@
    their framework which is 0.1DegC. True resolution of 0.1DegC
    will result in the below table size to increase by 10 times */
    
-/* OPPO 2012-08-10 chendx Modify begin for BTM */
-#ifndef CONFIG_VENDOR_EDIT
-static const struct pm8xxx_adc_map_pt adcmap_btm_threshold[] = {
-	{-300,	1642},
-	{-200,	1544},
-	{-100,	1414},
-	{0,	1260},
-	{10,	1244},
-	{20,	1228},
-	{30,	1212},
-	{40,	1195},
-	{50,	1179},
-	{60,	1162},
-	{70,	1146},
-	{80,	1129},
-	{90,	1113},
-	{100,	1097},
-	{110,	1080},
-	{120,	1064},
-	{130,	1048},
-	{140,	1032},
-	{150,	1016},
-	{160,	1000},
-	{170,	985},
-	{180,	969},
-	{190,	954},
-	{200,	939},
-	{210,	924},
-	{220,	909},
-	{230,	894},
-	{240,	880},
-	{250,	866},
-	{260,	852},
-	{270,	838},
-	{280,	824},
-	{290,	811},
-	{300,	798},
-	{310,	785},
-	{320,	773},
-	{330,	760},
-	{340,	748},
-	{350,	736},
-	{360,	725},
-	{370,	713},
-	{380,	702},
-	{390,	691},
-	{400,	681},
-	{410,	670},
-	{420,	660},
-	{430,	650},
-	{440,	640},
-	{450,	631},
-	{460,	622},
-	{470,	613},
-	{480,	604},
-	{490,	595},
-	{500,	587},
-	{510,	579},
-	{520,	571},
-	{530,	563},
-	{540,	556},
-	{550,	548},
-	{560,	541},
-	{570,	534},
-	{580,	527},
-	{590,	521},
-	{600,	514},
-	{610,	508},
-	{620,	502},
-	{630,	496},
-	{640,	490},
-	{650,	485},
-	{660,	281},
-	{670,	274},
-	{680,	267},
-	{690,	260},
-	{700,	254},
-	{710,	247},
-	{720,	241},
-	{730,	235},
-	{740,	229},
-	{750,	224},
-	{760,	218},
-	{770,	213},
-	{780,	208},
-	{790,	203}
-};
-#else
-/*OPPO*/
+#ifdef CONFIG_MACH_APQ8064_FIND5
 static const struct pm8xxx_adc_map_pt adcmap_btm_threshold[] = {
 	{-350, 1473}, 
 	{-340, 1460}, 
@@ -344,10 +258,95 @@ static const struct pm8xxx_adc_map_pt adcmap_btm_threshold2[] = {
 	{730, 441 }, 
 	{740, 438 }, 
 	{750, 436 }  
-};	
-
+};
+#else
+static const struct pm8xxx_adc_map_pt adcmap_btm_threshold[] = {
+	{-300,	1642},
+	{-200,	1544},
+	{-100,	1414},
+	{0,	1260},
+	{10,	1244},
+	{20,	1228},
+	{30,	1212},
+	{40,	1195},
+	{50,	1179},
+	{60,	1162},
+	{70,	1146},
+	{80,	1129},
+	{90,	1113},
+	{100,	1097},
+	{110,	1080},
+	{120,	1064},
+	{130,	1048},
+	{140,	1032},
+	{150,	1016},
+	{160,	1000},
+	{170,	985},
+	{180,	969},
+	{190,	954},
+	{200,	939},
+	{210,	924},
+	{220,	909},
+	{230,	894},
+	{240,	880},
+	{250,	866},
+	{260,	852},
+	{270,	838},
+	{280,	824},
+	{290,	811},
+	{300,	798},
+	{310,	785},
+	{320,	773},
+	{330,	760},
+	{340,	748},
+	{350,	736},
+	{360,	725},
+	{370,	713},
+	{380,	702},
+	{390,	691},
+	{400,	681},
+	{410,	670},
+	{420,	660},
+	{430,	650},
+	{440,	640},
+	{450,	631},
+	{460,	622},
+	{470,	613},
+	{480,	604},
+	{490,	595},
+	{500,	587},
+	{510,	579},
+	{520,	571},
+	{530,	563},
+	{540,	556},
+	{550,	548},
+	{560,	541},
+	{570,	534},
+	{580,	527},
+	{590,	521},
+	{600,	514},
+	{610,	508},
+	{620,	502},
+	{630,	496},
+	{640,	490},
+	{650,	485},
+	{660,	281},
+	{670,	274},
+	{680,	267},
+	{690,	260},
+	{700,	254},
+	{710,	247},
+	{720,	241},
+	{730,	235},
+	{740,	229},
+	{750,	224},
+	{760,	218},
+	{770,	213},
+	{780,	208},
+	{790,	203}
+};
 #endif
-/* OPPO 2012-08-10 chendx Modify end */
+
 static const struct pm8xxx_adc_map_pt adcmap_pa_therm[] = {
 	{1731,	-30},
 	{1726,	-29},
@@ -857,7 +856,7 @@ int32_t pm8xxx_adc_scale_batt_therm(int32_t adc_code,
 
 	bat_voltage = pm8xxx_adc_scale_ratiometric_calib(adc_code,
 			adc_properties, chan_properties);
-
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	if(get_pcb_version() == PCB_VERSION_PVT3_TD) {
 		return pm8xxx_adc_map_batt_therm(
 			adcmap_btm_threshold2,
@@ -871,7 +870,14 @@ int32_t pm8xxx_adc_scale_batt_therm(int32_t adc_code,
 			bat_voltage,
 			&adc_chan_result->physical);
 	}
+#else
+	return pm8xxx_adc_map_batt_therm(
+			adcmap_btm_threshold,
+			ARRAY_SIZE(adcmap_btm_threshold),
+			bat_voltage,
+			&adc_chan_result->physical);
 }
+#endif
 EXPORT_SYMBOL_GPL(pm8xxx_adc_scale_batt_therm);
 
 int32_t pm8xxx_adc_scale_pa_therm(int32_t adc_code,

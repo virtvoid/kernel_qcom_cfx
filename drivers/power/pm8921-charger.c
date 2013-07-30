@@ -32,16 +32,15 @@
 #include <linux/ratelimit.h>
 
 #include <mach/msm_xo.h>
-/* OPPO 2012-08-10 chendx Modify begin for 12025 charge*/
-#ifndef CONFIG_VENDOR_EDIT
-#include <mach/msm_hsusb.h>
-#else
+
+#ifdef CONFIG_MACH_APQ8064_FIND5
 #include <linux/usb/msm_hsusb.h>	
 #include <linux/mfd/pm8xxx/batt-alarm.h>
 #include <linux/input.h>
 #include <linux/reboot.h>
+#else
+#include <mach/msm_hsusb.h>
 #endif
-/* OPPO 2012-08-10 chendx Modify end */
 
 #define CHG_BUCK_CLOCK_CTRL	0x14
 #define CHG_BUCK_CLOCK_CTRL_8038	0xD
@@ -101,8 +100,7 @@
 #define UNPLUG_CHECK_RAMP_MS 25
 #define USB_TRIM_ENTRIES 16
 
-/* OPPO 2012-08-10 chendx Modify begin for 12025 charge*/
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 /* delay 500msecs to begin charge*/
 #define CHARGE_ENABLE_DELAY	500
 /* recharging  monitor*/
@@ -195,8 +193,7 @@ static int logo_level  = 1;
 		if (logo_level  >= (level)) \
 			printk(__VA_ARGS__); \
    } while (0) 
-#endif /*CONFIG_VENDOR_EDIT*/
-/* OPPO 2012-08-22 chendx Add end */
+#endif 
 
 enum chg_fsm_state {
 	FSM_STATE_OFF_0 = 0,
@@ -349,8 +346,8 @@ struct pm8921_chg_chip {
 	int				warm_temp_dc;
 	int				hysteresis_temp_dc;
 	unsigned int			temp_check_period;
-	/* OPPO 2012-08-07 chendx Add begin for oppo charge */
-	#ifdef CONFIG_VENDOR_EDIT
+
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	
 	unsigned int			little_cold_bat_chg_current;
 	unsigned int			normal_dcp_chg_current;
@@ -439,13 +436,8 @@ struct pm8921_chg_chip {
 	unsigned int			r_sense;
 	int battery_temp;  /* in celsius */
 	int                     bad_charger_check_time;
-	/*OPPO,Jiangsm add begin for bad charger type detecting logic,2013-1-23*/
-
 	struct work_struct		cancel_charge_det;
-
-/*OPPO,Jiangsm add end*/
-	#endif /*CONFIG_VENDOR_EDIT*/
-	/* OPPO 2012-08-07 chendx Add end */
+#endif
 	unsigned int			cool_bat_chg_current;
 	unsigned int			warm_bat_chg_current;
 	unsigned int			cool_bat_voltage;
@@ -557,8 +549,8 @@ static int pm_chg_write(struct pm8921_chg_chip *chip, u16 addr, u8 reg)
 
 	return rc;
 }
-/* OPPO 2012-08-08 chendx Add begin for 12025 charge */
-#ifdef CONFIG_VENDOR_EDIT
+
+#ifdef CONFIG_MACH_APQ8064_FIND5
 static int get_prop_batt_status(struct pm8921_chg_chip *chip);
 static int Pm8921_battery_set_normal_params(struct pm8921_chg_chip *chip);
 static int pm8921_chg_temp_state_reset(struct pm8921_chg_chip *chip);
@@ -1322,7 +1314,6 @@ EXPORT_SYMBOL(update_presoc_long_time_sleep);
 #endif
 
 #endif
-/* OPPO 2012-08-06 chendx Add end */
 
 static int pm_chg_masked_write(struct pm8921_chg_chip *chip, u16 addr,
 							u8 mask, u8 val)
@@ -1603,11 +1594,9 @@ static int pm_chg_vbatdet_set(struct pm8921_chg_chip *chip, int voltage)
 		return -EINVAL;
 	}
 	
-	/* OPPO 2012-08-20 chendx Add begin for recharging */
-	#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	chip->vbatdet_mv = voltage;
-	#endif
-	/* OPPO 2012-08-20 chendx Add end */
+#endif
 	temp = (voltage - PM8921_CHG_V_MIN_MV) / PM8921_CHG_V_STEP_MV;
 	pr_debug("voltage=%d setting %02x\n", voltage, temp);
 	return pm_chg_masked_write(chip, CHG_VBAT_DET, PM8921_CHG_V_MASK, temp);
@@ -1665,13 +1654,12 @@ static int pm_chg_uvd_threshold_set(struct pm8921_chg_chip *chip, int thresh_mv)
 				PM8917_USB_UVD_MASK, temp);
 }
 
-/* OPPO 2012-08-09 chendx Modify begin for ibat value */
-#ifndef CONFIG_VENDOR_EDIT
-#define PM8921_CHG_IBATMAX_MIN	325
+#ifdef CONFIG_VENDOR_EDIT
+#define PM8921_CHG_IBATMAX_MIN	225
 #else
-#define PM8921_CHG_IBATMAX_MIN	225	
+#define PM8921_CHG_IBATMAX_MIN	325	
 #endif
-/* OPPO 2012-08-09 chendx Modify end */
+
 #define PM8921_CHG_IBATMAX_MAX	3025
 #define PM8921_CHG_I_MIN_MA	225
 #define PM8921_CHG_I_STEP_MA	50
@@ -1718,8 +1706,7 @@ static int pm_chg_ibatsafe_set(struct pm8921_chg_chip *chip, int chg_current)
 	}
 	temp = (chg_current - PM8921_CHG_I_MIN_MA) / PM8921_CHG_I_STEP_MA;
 	
-	/* OPPO 2012-08-07 chendx Modify begin for r-sense */
-	#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	/*12025 r-sense 20mohm,qualcomm default is 10mohm*/
 	if(chip->r_sense == 20){
 		temp &= ~PM8921_CHG_RSENSE_MASK;
@@ -1730,11 +1717,10 @@ static int pm_chg_ibatsafe_set(struct pm8921_chg_chip *chip, int chg_current)
 	}
 	return pm_chg_masked_write(chip, CHG_IBAT_SAFE,
 					PM8921_CHG_SAFE_MASK, temp);
-	#else	
+#else	
 	return pm_chg_masked_write(chip, CHG_IBAT_SAFE,
 						PM8921_CHG_I_MASK, temp);
-	#endif
-	/* OPPO 2012-08-07 chendx Modify end */
+#endif
 }
 
 #define PM8921_CHG_ITERM_MIN_MA		50
@@ -1991,12 +1977,11 @@ static int pm_chg_iusbmax_set(struct pm8921_chg_chip *chip, int index)
 		return -EINVAL;
 	}
 	
-	/* OPPO 2012-11-02 chendx Add begin for Set the max iusb to 1100mA */
-	#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	if(reg_val > PM8921_IUSB_MAX)
 		reg_val = PM8921_IUSB_MAX;
-	#endif
-	/* OPPO 2012-11-02 chendx Modify end */
+#endif
+
 	temp = reg_val << PM8921_CHG_IUSB_SHIFT;
 
 	/* IUSB_FINE_RES */
@@ -2391,25 +2376,19 @@ static void bms_notify_check(struct pm8921_chg_chip *chip)
 {
 	int fsm_state, new_is_charging;
 
-	/* OPPO 2013-02-28 chendx Add begin for do nothing with bms 
-   	 XXX ,notify bms through function bms_notify_is_charging_check */
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	return;
-	/* OPPO 2013-02-28 chendx Add end */
-
+#endif
 	fsm_state = pm_chg_get_fsm_state(chip);
 	new_is_charging = is_battery_charging(fsm_state);
 	
 	if (chip->bms_notify.is_charging ^ new_is_charging) {		
-		/* OPPO 2013-02-23 chendx Add begin for debug log */
-		pr_info("new_is_charging =%d,chip->bms_notify.is_charging=%d\n",
-					new_is_charging,chip->bms_notify.is_charging);
-		/* OPPO 2013-02-23 chendx Add end */
 		chip->bms_notify.is_charging = new_is_charging;
 		schedule_work(&(chip->bms_notify.work));
 	}
 }
 
-/* OPPO 2013-02-28 chendx Add begin for oppo begin and end bms charge */
+#ifdef CONFIG_MACH_APQ8064_FIND5
 static void bms_notify_is_charging_check(bool new_is_chaging,struct pm8921_chg_chip *chip)
 {
 	pr_info("new_is_charging =%d,chip->bms_notify.is_charging=%d\n",
@@ -2423,8 +2402,7 @@ static void bms_notify_is_charging_check(bool new_is_chaging,struct pm8921_chg_c
 	schedule_work(&(chip->bms_notify.work));
 
 }
-/* OPPO 2013-02-28 chendx Add end */
-
+#endif
 
 static enum power_supply_property pm_power_props_usb[] = {
 	POWER_SUPPLY_PROP_PRESENT,
@@ -2448,12 +2426,9 @@ static int pm_power_get_property_mains(struct power_supply *psy,
 				  enum power_supply_property psp,
 				  union power_supply_propval *val)
 {
-	/* OPPO 2012-12-04 chendx Modify begin for reason */
-	#ifndef CONFIG_VENDOR_EDIT
+#ifndef CONFIG_MACH_APQ8064_FIND5
 	int type;
-	#endif
-	/* OPPO 2012-12-04 chendx Modify end */
-
+#endif
 
 	/* Check if called before init */
 	if (!the_chip)
@@ -2462,9 +2437,13 @@ static int pm_power_get_property_mains(struct power_supply *psy,
 	switch (psp) {
 	case POWER_SUPPLY_PROP_PRESENT:
 	case POWER_SUPPLY_PROP_ONLINE:
-/* OPPO 2012-12-04 chendx Modify begin for reason */
-#ifndef CONFIG_VENDOR_EDIT
-
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	   if(the_chip->pm8921_chg_type == USB_DCP_CHARGER ||
+	   	  the_chip->pm8921_chg_type == USB_NON_DCP_CHARGER)
+	   	    val->intval = 1;
+	   else
+	   	    val->intval = 0;
+#else
 		val->intval = 0;
 
 		if (the_chip->has_dc_supply) {
@@ -2482,15 +2461,7 @@ static int pm_power_get_property_mains(struct power_supply *psy,
 			type == POWER_SUPPLY_TYPE_USB_ACA ||
 			type == POWER_SUPPLY_TYPE_USB_CDP)
 			val->intval = is_usb_chg_plugged_in(the_chip);
-
-#else
-	   if(the_chip->pm8921_chg_type == USB_DCP_CHARGER ||
-	   	  the_chip->pm8921_chg_type == USB_NON_DCP_CHARGER)
-	   	    val->intval = 1;
-	   else
-	   	    val->intval = 0;
 #endif
-/* OPPO 2012-12-04 chendx Modify end */
 		break;
 	default:
 		return -EINVAL;
@@ -2616,20 +2587,17 @@ static int pm_power_get_property_usb(struct power_supply *psy,
 		break;
 	case POWER_SUPPLY_PROP_PRESENT:
 	case POWER_SUPPLY_PROP_ONLINE:
-/* OPPO 2012-12-04 chendx Modify begin for reason */
-#ifndef CONFIG_VENDOR_EDIT
-		val->intval = 0;
-
-		if (the_chip->usb_type == POWER_SUPPLY_TYPE_USB)
-			val->intval = is_usb_chg_plugged_in(the_chip);
-
-#else
+#ifdef CONFIG_MACH_APQ8064_FIND5
 		if(the_chip->pm8921_chg_type == USB_SDP_CHARGER)
 			val->intval = 1;
 		else
 			val->intval = 0;
+#else
+		val->intval = 0;
+
+		if (the_chip->usb_type == POWER_SUPPLY_TYPE_USB)
+			val->intval = is_usb_chg_plugged_in(the_chip);
 #endif
-/* OPPO 2012-12-04 chendx Modify end */
 		break;
 
 	case POWER_SUPPLY_PROP_SCOPE:
@@ -2662,13 +2630,11 @@ static enum power_supply_property msm_batt_power_props[] = {
 	POWER_SUPPLY_PROP_CURRENT_NOW,
 	POWER_SUPPLY_PROP_TEMP,
 	POWER_SUPPLY_PROP_CHARGE_FULL,
-	/* OPPO 2012-08-06 chendx Add begin for charge current */
-	#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	POWER_SUPPLY_PROP_CHARGE_NOW,
 	POWER_SUPPLY_PROP_CHARGE_TIMEOUT,
 	POWER_SUPPLY_PROP_CHARGE_SOC_FALL,
-	#endif
-	/* OPPO 2012-08-06 chendx Add end */
+#endif
 };
 
 static int get_prop_battery_uvolts(struct pm8921_chg_chip *chip)
@@ -2676,26 +2642,23 @@ static int get_prop_battery_uvolts(struct pm8921_chg_chip *chip)
 	int rc;
 	struct pm8xxx_adc_chan_result result;
 
-/* OPPO 2013-04-08 chendx Add begin for auto test */
-	#ifdef AUTO_TEST_FEATURE
+#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef AUTO_TEST_FEATURE
 	if(chg_auto_test_feature && chip->auto_test_batvol_high){
 		chip->battery_voltage = BATTERY_SOFT_OVP_VOLTAGE + 100;
 		return (BATTERY_SOFT_OVP_VOLTAGE + 100) * 1000;
 	}
-	#endif
-/* OPPO 2013-04-08 chendx Add end */
-
+#endif
+#endif
 	rc = pm8xxx_adc_read(chip->vbat_channel, &result);
 	if (rc) {
 		pr_err("error reading adc channel = %d, rc = %d\n",
 					chip->vbat_channel, rc);
 		return rc;
 	}
-    /* OPPO 2012-08-08 chendx Add begin for reason */
-    #ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	chip->battery_voltage = (int)result.physical/1000;
-    #endif
-    /* OPPO 2012-08-08 chendx Add end */
+#endif
 	pr_debug("mvolts phy = %lld meas = 0x%llx\n", result.physical,
 						result.measurement);
 	return (int)result.physical;
@@ -2703,9 +2666,9 @@ static int get_prop_battery_uvolts(struct pm8921_chg_chip *chip)
 
 static int voltage_based_capacity(struct pm8921_chg_chip *chip)
 {
-/* OPPO 2012-10-26 chendx Modify begin for  battery is remove,Default Soc is 30% */
-#ifndef CONFIG_VENDOR_EDIT
-
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	return DEFAULT_BATT_CAPACITY;
+#else
 	unsigned int current_voltage_uv = get_prop_battery_uvolts(chip);
 	unsigned int current_voltage_mv = current_voltage_uv / 1000;
 	unsigned int low_voltage = chip->min_voltage_mv;
@@ -2723,10 +2686,7 @@ static int voltage_based_capacity(struct pm8921_chg_chip *chip)
 	else
 		return (current_voltage_mv - low_voltage) * 100
 		    / (high_voltage - low_voltage);
-#else
-	return DEFAULT_BATT_CAPACITY;
 #endif
-/* OPPO 2012-10-26 chendx Modify end */
 }
 
 static int get_prop_batt_present(struct pm8921_chg_chip *chip)
@@ -2740,16 +2700,13 @@ static int get_prop_batt_status(struct pm8921_chg_chip *chip)
 	int fsm_state = pm_chg_get_fsm_state(chip);
 	int i;
 
-	/* OPPO 2012-11-28 chendx Add begin for not charge when not capable charge now */
-	#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	
-		/* OPPO 2013-04-08 chendx Add begin for auto test */
 		#ifdef AUTO_TEST_FEATURE
 		if(chg_auto_test_feature && (chip->auto_test_cool_charge_finished ||
 			chip->auto_test_warm_charge_finished) )
 			return POWER_SUPPLY_STATUS_FULL;
 		#endif
-		/* OPPO 2013-04-08 chendx Add end */ 
 	
 		if(chip->charge_is_finished)
 			return POWER_SUPPLY_STATUS_FULL;
@@ -2762,8 +2719,7 @@ static int get_prop_batt_status(struct pm8921_chg_chip *chip)
 			return POWER_SUPPLY_STATUS_CHARGING;
 		else
 			return POWER_SUPPLY_STATUS_DISCHARGING; 	
-	#endif /*CONFIG_VENDOR_EDIT*/
-	/* OPPO 2012-11-28 chendx Add end */
+#endif
 
 	if (chip->ext_psy) {
 		if (chip->ext_charge_done)
@@ -2790,11 +2746,9 @@ static int get_prop_batt_status(struct pm8921_chg_chip *chip)
 static int get_prop_batt_capacity(struct pm8921_chg_chip *chip)
 {
 	int percent_soc;
-	/* OPPO 2012-10-26 chendx add begin for  batt capacity algorithm */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	static int reported_soc_init=0;
 #endif
-/* OPPO 2012-11-26 chendx Add end */
 
 	if (chip->battery_less_hardware)
 		return 100;
@@ -2807,32 +2761,12 @@ static int get_prop_batt_capacity(struct pm8921_chg_chip *chip)
 	if (percent_soc == -ENXIO)
 		percent_soc = voltage_based_capacity(chip);
 
-/* OPPO 2012-10-26 chendx Modify begin for  batt capacity algorithm */
-#ifndef CONFIG_VENDOR_EDIT
-	if (percent_soc <= 10)
-		pr_warn_ratelimited("low battery charge = %d%%\n",
-						percent_soc);
-
-	if (percent_soc <= chip->resume_charge_percent
-		&& get_prop_batt_status(chip) == POWER_SUPPLY_STATUS_FULL) {
-		pr_debug("soc fell below %d. charging enabled.\n",
-						chip->resume_charge_percent);
-		if (chip->is_bat_warm)
-			pr_warn_ratelimited("battery is warm = %d, do not resume charging at %d%%.\n",
-					chip->is_bat_warm,
-					chip->resume_charge_percent);
-		else if (chip->is_bat_cool)
-			pr_warn_ratelimited("battery is cool = %d, do not resume charging at %d%%.\n",
-					chip->is_bat_cool,
-					chip->resume_charge_percent);
-		else
-			pm_chg_vbatdet_set(the_chip, PM8921_CHG_VBATDET_MAX);
+	if (percent_soc < 0) {
+		pr_err("Unable to read battery voltage\n");
+		goto fail_voltage;
 	}
-
-fail_voltage:
-	chip->recent_reported_soc = percent_soc;
-	return percent_soc;
-#else
+	
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	if(chip->battery_temp <= BATT_REMOVE_TEMP_C &&
 		pm_chg_get_rt_status(chip, BATT_REMOVED_IRQ) &&
 		percent_soc <= 0){
@@ -2867,9 +2801,31 @@ fail_voltage:
 	chip->recent_reported_soc = percent_soc;
 
 	return chip->report_calib_soc;
+#else
+	if (percent_soc <= 10)
+		pr_warn_ratelimited("low battery charge = %d%%\n",
+						percent_soc);
 
+	if (percent_soc <= chip->resume_charge_percent
+		&& get_prop_batt_status(chip) == POWER_SUPPLY_STATUS_FULL) {
+		pr_debug("soc fell below %d. charging enabled.\n",
+						chip->resume_charge_percent);
+		if (chip->is_bat_warm)
+			pr_warn_ratelimited("battery is warm = %d, do not resume charging at %d%%.\n",
+					chip->is_bat_warm,
+					chip->resume_charge_percent);
+		else if (chip->is_bat_cool)
+			pr_warn_ratelimited("battery is cool = %d, do not resume charging at %d%%.\n",
+					chip->is_bat_cool,
+					chip->resume_charge_percent);
+		else
+			pm_chg_vbatdet_set(the_chip, PM8921_CHG_VBATDET_MAX);
+	}
+
+fail_voltage:
+	chip->recent_reported_soc = percent_soc;
+	return percent_soc;
 #endif
-/* OPPO 2012-11-26 chendx Modify end */
 }
 
 static int get_prop_batt_current_max(struct pm8921_chg_chip *chip, int *curr)
@@ -2891,27 +2847,21 @@ static int get_prop_batt_current(struct pm8921_chg_chip *chip, int *curr)
 	if (rc == -ENXIO) {
 		rc = pm8xxx_ccadc_get_battery_current(curr);
 	}
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	if (rc) {
 		pr_err("unable to get batt current rc = %d\n", rc);
-
-	/* OPPO 2012-08-09 chendx Modify begin for error handle */
-	#ifndef CONFIG_VENDOR_EDIT
-		return rc;
-	#else
 		return chip->charge_current;
-	#endif
-	/* OPPO 2012-08-09 chendx Modify end */
 	} else {
-	/* OPPO 2012-08-07 chendx Modify begin for battery current(uA) */
-	#ifdef CONFIG_VENDOR_EDIT
 	    chip->charge_current = *curr/1000;
 		
 		return rc;
-	#else
-		return rc;
-	#endif
-	/* OPPO 2012-08-07 chendx Modify end */
 	}
+#else
+	if (rc)
+		pr_err("unable to get batt current rc = %d\n", rc);
+
+	return rc;
+#endif
 }
 
 static int get_prop_batt_fcc(struct pm8921_chg_chip *chip)
@@ -2923,7 +2873,7 @@ static int get_prop_batt_fcc(struct pm8921_chg_chip *chip)
 		pr_err("unable to get batt fcc rc = %d\n", rc);
 	return rc;
 }
-#ifndef CONFIG_VENDOR_EDIT
+#ifndef CONFIG_MACH_APQ8064_FIND5
 static int get_prop_batt_charge_now(struct pm8921_chg_chip *chip, int *cc_uah)
 {
 	int rc;
@@ -2939,8 +2889,15 @@ static int get_prop_batt_charge_now(struct pm8921_chg_chip *chip, int *cc_uah)
 
 static int get_prop_batt_health(struct pm8921_chg_chip *chip)
 {
-	/* OPPO 2012-08-09 chendx Modify begin for reason */
-	#ifndef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	#ifdef AUTO_TEST_FEATURE
+	if(chg_auto_test_feature && chip->auto_test_bat_disconnect)
+		return POWER_SUPPLY_HEALTH_UNKNOWN;
+	#endif
+	print_pm8921(DEBUG_TRACE, "%s batt_health = %d\n", __func__,chip->batt_health);
+	return chip->batt_health;
+	#endif
+#else
 	int temp;
 
 	temp = pm_chg_get_rt_status(chip, BATTTEMP_HOT_IRQ);
@@ -2952,19 +2909,7 @@ static int get_prop_batt_health(struct pm8921_chg_chip *chip)
 		return POWER_SUPPLY_HEALTH_COLD;
 
 	return POWER_SUPPLY_HEALTH_GOOD;
-	#else
-	
-/* OPPO 2013-04-08 chendx Add begin for auto test */
-	#ifdef AUTO_TEST_FEATURE
-	if(chg_auto_test_feature && chip->auto_test_bat_disconnect)
-		return POWER_SUPPLY_HEALTH_UNKNOWN;
-	#endif
-/* OPPO 2013-04-08 chendx Add end */
-	
-	print_pm8921(DEBUG_TRACE, "%s batt_health = %d\n", __func__,chip->batt_health);
-	return chip->batt_health;
-	#endif
-	/* OPPO 2012-08-09 chendx Modify end */
+#endif
 }
 
 static int get_prop_charge_type(struct pm8921_chg_chip *chip)
@@ -2992,7 +2937,9 @@ static int get_prop_charge_type(struct pm8921_chg_chip *chip)
 }
 
 #define MAX_TOLERABLE_BATT_TEMP_DDC	680
+#ifdef CONFIG_MACH_APQ8064_FIND5
 #define MAX_BATT_TEMP_HIGH_COUNTER	15
+#endif
 static int get_prop_batt_temp(struct pm8921_chg_chip *chip, int *temp)
 {
 	int rc;
@@ -3009,19 +2956,7 @@ static int get_prop_batt_temp(struct pm8921_chg_chip *chip, int *temp)
 					chip->vbat_channel, rc);
 		return rc;
 	}
-/* OPPO 2012-10-19 chendx Modify begin for battery temperature */
-#ifndef CONFIG_VENDOR_EDIT
-
-	pr_debug("batt_temp phy = %lld meas = 0x%llx\n", result.physical,
-						result.measurement);
-	if (result.physical > MAX_TOLERABLE_BATT_TEMP_DDC)
-		pr_err("BATT_TEMP= %d > 68degC, device will be shutdown\n",
-							(int) result.physical);
-
-	*temp = (int)result.physical;
-
-	return rc;
-#else
+#ifdef CONFIG_MACH_APQ8064_FIND5
     #ifdef TEMPERATURE_CHARGE_TEST_FEATURE
     /*Use to  charge temperature test*/
     if(chip->chg_temp_test_mode == true)
@@ -3056,8 +2991,17 @@ static int get_prop_batt_temp(struct pm8921_chg_chip *chip, int *temp)
 	chip->battery_temp = (int)result.physical/10;
 	*temp  = (int)result.physical;
     return rc;
+#else
+	pr_debug("batt_temp phy = %lld meas = 0x%llx\n", result.physical,
+						result.measurement);
+	if (result.physical > MAX_TOLERABLE_BATT_TEMP_DDC)
+		pr_err("BATT_TEMP= %d > 68degC, device will be shutdown\n",
+							(int) result.physical);
+
+	*temp = (int)result.physical;
+
+	return rc;
 #endif
-/* OPPO 2012-10-19 chendx Modify end */
 }
 
 static int pm_batt_power_get_property(struct power_supply *psy,
@@ -3111,14 +3055,11 @@ static int pm_batt_power_get_property(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_CURRENT_NOW:
 		rc = get_prop_batt_current(chip, &value);
 		if (!rc)
-			/* OPPO 2012-10-26 chendx Modify begin for current (mA) */
-#ifndef CONFIG_VENDOR_EDIT  //liuhd add 
-
-			val->intval = value;
+#ifdef CONFIG_MACH_APQ8064_FIND5
+			val->intval = value/1000;
 #else
-  			val->intval = value/1000;
+  			val->intval = value;
 #endif			
-/* OPPO 2012-10-26 chendx Modify end */
 		break;
 	case POWER_SUPPLY_PROP_CURRENT_MAX:
 		rc = get_prop_batt_current_max(chip, &value);
@@ -3137,17 +3078,7 @@ static int pm_batt_power_get_property(struct power_supply *psy,
 			rc = 0;
 		}
 		break;
-#ifndef CONFIG_VENDOR_EDIT
-	case POWER_SUPPLY_PROP_CHARGE_NOW:
-		rc = get_prop_batt_charge_now(chip, &value);
-		if (!rc) {
-			val->intval = value;
-			rc = 0;
-		}
-		break;
-#endif
-	/* OPPO 2012-08-06 chendx Add begin for get charger voltage */
-	#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	case POWER_SUPPLY_PROP_CHARGE_NOW:
 		val->intval = get_prop_chg_voltage(chip);
 		break;
@@ -3159,9 +3090,15 @@ static int pm_batt_power_get_property(struct power_supply *psy,
 		/*continue to check soc fall within 5minutes*/
 		val->intval = get_prop_soc_fall_status(chip);
 	break;
-	
-	#endif
-	/* OPPO 2012-08-06 chendx Add end */
+#else
+	case POWER_SUPPLY_PROP_CHARGE_NOW:
+		rc = get_prop_batt_charge_now(chip, &value);
+		if (!rc) {
+			val->intval = value;
+			rc = 0;
+		}
+		break;
+#endif
 	default:
 		rc = -EINVAL;
 	}
@@ -3304,7 +3241,7 @@ void pm8921_charger_vbus_draw(unsigned int mA)
 }
 EXPORT_SYMBOL_GPL(pm8921_charger_vbus_draw);
 
-//add by chendx
+#ifdef CONFIG_MACH_APQ8064_FIND5
 int pm8921_charger_enable(bool enable)
 {
 	int rc;
@@ -3313,11 +3250,7 @@ int pm8921_charger_enable(bool enable)
 		pr_err("called before init\n");
 		return -EINVAL;
 	}
-
-/* OPPO 2013-02-28 chendx Add begin for notify with bms */
 	bms_notify_is_charging_check(enable,the_chip);
-/* OPPO 2013-02-28 chendx Add end */
-	
 	enable = !!enable;
 	rc = pm_chg_auto_enable(the_chip, enable);
 	if (rc)
@@ -3325,7 +3258,7 @@ int pm8921_charger_enable(bool enable)
 	return rc;
 }
 EXPORT_SYMBOL(pm8921_charger_enable);
-//end by chendx
+#endif
 
 int pm8921_is_usb_chg_plugged_in(void)
 {
@@ -3550,12 +3483,9 @@ int pm8921_set_usb_power_supply_type(enum power_supply_type type)
 	if (type < POWER_SUPPLY_TYPE_USB && type > POWER_SUPPLY_TYPE_BATTERY)
 		return -EINVAL;
 
-#ifdef CONFIG_VENDOR_EDIT
-/* OPPO 2012-12-06 chendx Modify begin for usb_psy only support POWER_SUPPLY_TYPE_USB type */
-   //XXX we report support from pm8921-charger.c
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	if(type != POWER_SUPPLY_TYPE_USB)
 		type = POWER_SUPPLY_TYPE_USB; 
-/* OPPO 2012-12-06 chendx Add end */
 #endif
 	the_chip->usb_type = type;
 	power_supply_changed(&the_chip->usb_psy);
@@ -3588,40 +3518,27 @@ static void handle_usb_insertion_removal(struct pm8921_chg_chip *chip)
 	if (chip->usb_present ^ usb_present) {
 		notify_usb_of_the_plugin_event(usb_present);
 		chip->usb_present = usb_present;
-/* OPPO 2012-12-04 chendx Delete begin for not use oppo charge */
-#ifndef CONFIG_VENDOR_EDIT
-
+#ifndef CONFIG_MACH_APQ8064_FIND5
 		power_supply_changed(&chip->usb_psy);
 		power_supply_changed(&chip->batt_psy);
 #endif
-/* OPPO 2012-12-04 chendx Delete end */
 		pm8921_bms_calibrate_hkadc();
 	}
 	if (usb_present) {
 		schedule_delayed_work(&chip->unplug_check_work,
 			msecs_to_jiffies(UNPLUG_CHECK_RAMP_MS));
 		pm8921_chg_enable_irq(chip, CHG_GONE_IRQ);
-/* OPPO 2013-02-28 chendx Add begin for notify with boms */
+#ifdef CONFIG_MACH_APQ8064_FIND5
 		bms_notify_is_charging_check(1,chip);
-/* OPPO 2013-02-28 chendx Add end */
+#endif
 	} else {
 		/* USB unplugged reset target current */
 		usb_target_ma = 0;
 		pm8921_chg_disable_irq(chip, CHG_GONE_IRQ);
-	/* OPPO 2012-08-09 chendx Add begin for USBIN charger remove from otg driver */
-	#ifdef CONFIG_VENDOR_EDIT
-		//pm8921_chg_connected(USB_INVALID_CHARGER);
-	#endif
-	
-/* OPPO 2013-02-28 chendx Add begin for notify with bms */
-		bms_notify_is_charging_check(0,chip);
-/* OPPO 2013-02-28 chendx Add end */
 	}
-/* OPPO 2013-02-23 chendx Delete begin for usb insertion removal notify */
-#if 0
+#ifndef CONFIG_MACH_APQ8064_FIND5
 	bms_notify_check(chip);
 #endif
-/* OPPO 2013-02-23 chendx Delete end */
 }
 
 static void handle_stop_ext_chg(struct pm8921_chg_chip *chip)
@@ -3912,8 +3829,7 @@ static void vin_collapse_check_worker(struct work_struct *work)
 	}
 }
 
-/*OPPO,Jiangsm add begin for bad charger type detecting logic,2013-1-23*/
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 bool is_usb_dc_plugged_in(void)
 {
 	struct pm8921_chg_chip *chip= the_chip;
@@ -3925,16 +3841,14 @@ static void cancel_charge_det_worker(struct work_struct *work)
 	cancel_charger_type_detect_work();
 }
 #endif
-/*OPPO,Jiangsm add end*/
+
 #define VIN_MIN_COLLAPSE_CHECK_MS	50
 static irqreturn_t usbin_valid_irq_handler(int irq, void *data)
 {
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	pr_err("%s:!!!!!!!!,usb_target_ma=%d\n", __func__, usb_target_ma);
-/*OPPO,Jiangsm add begin for bad charger type detecting logic,2013-1-22*/
-#ifdef CONFIG_VENDOR_EDIT
 	schedule_work(&the_chip->cancel_charge_det);
 #endif
-/*OPPO,Jiangsm add end*/
 	if (usb_target_ma)
 		schedule_delayed_work(&the_chip->vin_collapse_check_work,
 			      msecs_to_jiffies(VIN_MIN_COLLAPSE_CHECK_MS));
@@ -3945,9 +3859,7 @@ static irqreturn_t usbin_valid_irq_handler(int irq, void *data)
 
 static irqreturn_t batt_inserted_irq_handler(int irq, void *data)
 {
-/* OPPO 2012-11-30 chendx Delete begin for oppo battery remove check */
-#ifndef CONFIG_VENDOR_EDIT
-
+#ifndef CONFIG_MACH_APQ8064_FIND5
 	struct pm8921_chg_chip *chip = data;
 	int status;
 
@@ -3957,7 +3869,6 @@ static irqreturn_t batt_inserted_irq_handler(int irq, void *data)
 	pr_debug("battery present=%d", status);
 	power_supply_changed(&chip->batt_psy);
 #endif
-/* OPPO 2012-11-30 chendx Delete end */
 	return IRQ_HANDLED;
 }
 
@@ -3972,9 +3883,7 @@ static irqreturn_t batt_inserted_irq_handler(int irq, void *data)
  */
 static irqreturn_t vbatdet_low_irq_handler(int irq, void *data)
 {
-/* OPPO 2012-08-20 chendx Modify begin for recharging not use vbatdet irq */
-#ifndef CONFIG_VENDOR_EDIT
-
+#ifndef CONFIG_MACH_APQ8064_FIND5
 	struct pm8921_chg_chip *chip = data;
 	int high_transition;
 
@@ -3991,12 +3900,7 @@ static irqreturn_t vbatdet_low_irq_handler(int irq, void *data)
 	power_supply_changed(&chip->batt_psy);
 	power_supply_changed(&chip->usb_psy);
 	power_supply_changed(&chip->dc_psy);
-
-	return IRQ_HANDLED;
-#else
-	return IRQ_HANDLED;
 #endif
-/* OPPO 2012-08-20 chendx Modify end */
 	return IRQ_HANDLED;
 }
 
@@ -4032,11 +3936,9 @@ static irqreturn_t chgdone_irq_handler(int irq, void *data)
 
 	handle_stop_ext_chg(chip);
 
-	/* OPPO 2012-08-09 chendx Add begin for reason */
-	#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	pm8921_charger_enable(false);
-	#endif
-	/* OPPO 2012-08-09 chendx Add end */
+#endif
 	power_supply_changed(&chip->batt_psy);
 	power_supply_changed(&chip->usb_psy);
 	power_supply_changed(&chip->dc_psy);
@@ -4327,19 +4229,16 @@ static irqreturn_t trklchg_irq_handler(int irq, void *data)
 
 static irqreturn_t batt_removed_irq_handler(int irq, void *data)
 {
-	/* OPPO 2012-11-30 chendx Delete begin for temp check batt remove */
-	#ifndef CONFIG_VENDOR_EDIT
+#ifndef CONFIG_MACH_APQ8064_FIND5
 	struct pm8921_chg_chip *chip = data;
 	int status;
 
 	status = pm_chg_get_rt_status(chip, BATT_REMOVED_IRQ);
-	pr_info("battery present=%d state=%d", !status,
+	pr_debug("battery present=%d state=%d", !status,
 					 pm_chg_get_fsm_state(data));
-
 	handle_stop_ext_chg(chip);
 	power_supply_changed(&chip->batt_psy);
-	#endif
-	/* OPPO 2012-11-30 chendx Delete end */
+#endif
 	return IRQ_HANDLED;
 }
 
@@ -4403,8 +4302,7 @@ static irqreturn_t chg_gone_irq_handler(int irq, void *data)
  */
 static irqreturn_t bat_temp_ok_irq_handler(int irq, void *data)
 {
-/* OPPO 2012-12-04 chendx Delete begin for not use oppo charge */
-#ifndef CONFIG_VENDOR_EDIT
+#ifndef CONFIG_MACH_APQ8064_FIND5
 	int bat_temp_ok;
 	struct pm8921_chg_chip *chip = data;
 
@@ -4422,7 +4320,6 @@ static irqreturn_t bat_temp_ok_irq_handler(int irq, void *data)
 	power_supply_changed(&chip->usb_psy);
 	bms_notify_check(chip);
 #endif
-/* OPPO 2012-12-04 chendx Delete end */
 	return IRQ_HANDLED;
 }
 
@@ -4542,8 +4439,8 @@ static void pm_batt_external_power_changed(struct power_supply *psy)
 		class_for_each_device(power_supply_class, NULL, psy,
 					 __pm_batt_external_power_changed_work);
 }
-/* OPPO 2012-12-04 chendx add begin for oppo charge */
-#ifdef CONFIG_VENDOR_EDIT
+
+#ifdef CONFIG_MACH_APQ8064_FIND5
 /*add by chedx  Add begin for batt health */
 static int set_prop_batt_health(struct pm8921_chg_chip *chip, int batt_health)
 {
@@ -5736,7 +5633,7 @@ static int eoc_check_with_vbatt(struct pm8921_chg_chip *chip)
 	 return chg_status;
 	 	 
 }
-/* OPPO 2013-01-18 chendx Add end */
+#endif
 
 /**
  * update_heartbeat - internal function to update userspace
@@ -5744,7 +5641,9 @@ static int eoc_check_with_vbatt(struct pm8921_chg_chip *chip)
  *
  */
 #define LOW_SOC_HEARTBEAT_MS	20000
-static int boot_time = 10; //System boottime 60s
+#ifdef CONFIG_MACH_APQ8064_FIND5
+static int boot_time = 10;
+#endif
 static void update_heartbeat(struct work_struct *work)
 {
 	struct delayed_work *dwork = to_delayed_work(work);
@@ -5766,8 +5665,7 @@ static void update_heartbeat(struct work_struct *work)
 	if (chip->btc_override && chg_present &&
 				!wake_lock_active(&chip->eoc_wake_lock))
 		check_temp_thresholds(chip);
-/* OPPO 2012-10-19 chendx Add begin for battery health */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
     static int soc_backup = 0;
 	char *batt_health[] = {
 			"HEALTH_UNKNOWN",
@@ -5777,11 +5675,7 @@ static void update_heartbeat(struct work_struct *work)
 			"HEALTH_OVERVOLTAGE",			
 			"HEALTH_UNSPEC_FAILURE",
 		    "HEALTH_COLD"};
-#endif
-/* OPPO 2012-10-19 chendx Add end */
 
-	/* OPPO 2012-08-07 chendx Add begin for reason */
-	#ifdef CONFIG_VENDOR_EDIT
 	if(boot_time)
 		boot_time--;
 
@@ -5841,8 +5735,7 @@ static void update_heartbeat(struct work_struct *work)
 		schedule_delayed_work(&chip->update_heartbeat_work,
 			      round_jiffies_relative(msecs_to_jiffies
 						     (chip->update_time)));
-	#endif
-	/* OPPO 2012-08-07 chendx Add end */
+#endif
 }
 #define VDD_LOOP_ACTIVE_BIT	BIT(3)
 #define VDD_MAX_INCREASE_MV	400
@@ -5873,8 +5766,7 @@ static void adjust_vdd_max_for_fastchg(struct pm8921_chg_chip *chip,
 		return;
 	}
 
-/* OPPO 2013-02-17 chendx Add begin for reason */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	/* adjust vdd_max only in normal temperature zone */
 	if (Pm8921_battery_temp_region_get(chip) == CV_BATTERY_TEMP_REGION_LITTLE__COLD ||
 		Pm8921_battery_temp_region_get(chip) == CV_BATTERY_TEMP_REGION__WARM){
@@ -5882,7 +5774,6 @@ static void adjust_vdd_max_for_fastchg(struct pm8921_chg_chip *chip,
 		return;
 	}
 #endif
-/* OPPO 2013-02-17 chendx Add end */
 	reg_loop = pm_chg_get_regulation_loop(chip);
 	if (!(reg_loop & VDD_LOOP_ACTIVE_BIT)) {
 		pr_debug("Exiting Vdd loop is not active reg loop=0x%x\n",
@@ -5991,9 +5882,9 @@ static void check_temp_thresholds(struct pm8921_chg_chip *chip)
 {
 	int temp = 0, rc;
 
-/* OPPO 2013-04-09 chendx Add begin for delete qualcomm temp check thresholds*/
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	return;
-/* OPPO 2013-04-09 chendx Add end */
+#endif
 	rc = get_prop_batt_temp(chip, &temp);
 	pr_debug("temp = %d, warm_thr_temp = %d, cool_thr_temp = %d\n",
 			temp, chip->warm_temp_dc,
@@ -6320,8 +6211,7 @@ static void eoc_worker(struct work_struct *work)
 		count = 0;
 	}
 
-	/* OPPO 2012-10-19 chendx Add begin for FTM CHARGER MODE */
-	#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
     #ifdef FTM_CHARGE_MODE_FEATURE
 	if(chip->low_charge_mode == true && chip->recent_reported_soc >= FTM_LOW_CAPACITY_LEVEL){
 		pr_info("%s: Warning charge on FTM mode, charge to 60 finish charge,=%d\n",
@@ -6333,8 +6223,7 @@ static void eoc_worker(struct work_struct *work)
 		count = CONSECUTIVE_COUNT;
 	}
 	#endif
-	#endif
-	/* OPPO 2012-10-19 chendx Add end */
+#endif
 	if (count == CONSECUTIVE_COUNT) {
 		count = 0;
 		pr_info("End of Charging\n");
@@ -6344,8 +6233,7 @@ static void eoc_worker(struct work_struct *work)
 		if (is_ext_charging(chip))
 			chip->ext_charge_done = true;
 
-/* OPPO 2012-11-28 chendx Add begin for charge is finished */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 		chip->charge_is_finished = true;
 
 		/**
@@ -6360,11 +6248,6 @@ static void eoc_worker(struct work_struct *work)
 			      round_jiffies_relative(msecs_to_jiffies
 						     (RECHARGING_MONITOR_MS)));
 	}
-#endif
-/* OPPO 2012-08-22 chendx Add end */
-
-		/* OPPO 2013-02-17 chendx Add begin for warm charge not full */
-		#ifdef CONFIG_VENDOR_EDIT
 		/* adjust vdd_max only in normal temperature zone */
 		if (Pm8921_battery_temp_region_get(chip) == CV_BATTERY_TEMP_REGION_LITTLE__COLD ||
 			Pm8921_battery_temp_region_get(chip) == CV_BATTERY_TEMP_REGION__WARM){
@@ -6373,13 +6256,12 @@ static void eoc_worker(struct work_struct *work)
 		}else{
 			chip->bms_notify.is_battery_full = 1;
 		}
-		#else
+#else
 		if (chip->is_bat_warm || chip->is_bat_cool)
 			chip->bms_notify.is_battery_full = 0;
 		else
 			chip->bms_notify.is_battery_full = 1;
-		#endif
-		/* OPPO 2013-02-17 chendx Add end */
+#endif
 		/* declare end of charging by invoking chgdone interrupt */
 		chgdone_irq_handler(chip->pmic_chg_irq[CHGDONE_IRQ], chip);
 	} else {
@@ -7393,8 +7275,7 @@ static int pm8921_charger_suspend(struct device *dev)
 	return 0;
 }
 
-/* OPPO 2012-09-12 chendx Add begin for pm8921 chg charge suspend mode */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 /**
 * @path :/sys/bus/platform/devices/pm8921-charger/pm8921_suspend_mode
 */
@@ -7560,7 +7441,6 @@ static ssize_t pm8921_chg_store(struct device *dev,
 		the_chip->chg_test_temp = DEFAULT_NORMAL_TEMP;
 	}
 	#endif
-    /* OPPO 2013-04-08 chendx Add end */
 	
     /*  Add begin for charge temperature test */
 	#ifdef TEMPERATURE_CHARGE_TEST_FEATURE
@@ -7596,7 +7476,7 @@ static ssize_t pm8921_chg_store(struct device *dev,
 static DEVICE_ATTR(pm8921_chg, S_IRUGO | S_IWUSR, NULL, pm8921_chg_store);
 #endif
 #endif
-/* OPPO 2012-10-19 chendx Add end */
+
 static int __devinit pm8921_charger_probe(struct platform_device *pdev)
 {
 	int rc = 0;
@@ -7632,8 +7512,7 @@ static int __devinit pm8921_charger_probe(struct platform_device *pdev)
 	chip->batt_temp_channel = pdata->charger_cdata.batt_temp_channel;
 	chip->batt_id_channel = pdata->charger_cdata.batt_id_channel;
 	
-	/* OPPO 2012-08-06 chendx Add begin for oppo charge */
-	#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	chip->chg_voltage_channel = pdata->charger_cdata.chg_voltage_channel;
 	/* Add begin for BTM */
 	chip->normal_resume_voltage_delta = pdata->normal_resume_voltage_delta;
@@ -7709,8 +7588,7 @@ static int __devinit pm8921_charger_probe(struct platform_device *pdev)
 	chip->mBatteryTempBoundT2 = AUTO_CHARGING_BATT_TEMP_T2;
 	chip->mBatteryTempBoundT3 = AUTO_CHARGING_BATT_TEMP_T3;
 	chip->mBatteryTempBoundT4 = AUTO_CHARGING_BATT_TEMP_T4;
-	#endif
-	/* OPPO 2012-08-22 chendx Add end */
+#endif
 	chip->batt_id_min = pdata->batt_id_min;
 	chip->batt_id_max = pdata->batt_id_max;
 	if (pdata->cool_temp != INT_MIN)
@@ -7826,8 +7704,7 @@ static int __devinit pm8921_charger_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, chip);
 	the_chip = chip;
-/* OPPO 2012-08-06 chendx Add begin for oppo charge */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 /*Add begin for charge suspend mode */
 	rc = device_create_file(chip->dev, &dev_attr_pm8921_suspend_mode);
 	if (rc < 0) {
@@ -7844,24 +7721,16 @@ static int __devinit pm8921_charger_probe(struct platform_device *pdev)
 		device_remove_file(chip->dev, &dev_attr_pm8921_chg);
 	}
 #endif
-#endif
-/* OPPO 2012-10-19 chendx Add end */
-
 	/* set initial state of the USB charger type to UNKNOWN */
 	power_supply_set_supply_type(&chip->usb_psy, POWER_SUPPLY_TYPE_UNKNOWN);
-
+#endif
 	wake_lock_init(&chip->eoc_wake_lock, WAKE_LOCK_SUSPEND, "pm8921_eoc");
 	INIT_DELAYED_WORK(&chip->eoc_work, eoc_worker);
 	INIT_DELAYED_WORK(&chip->vin_collapse_check_work,
 						vin_collapse_check_worker);
 	INIT_DELAYED_WORK(&chip->unplug_check_work, unplug_check_worker);
-/*OPPO,Jiangsm add begin for bad charger type detecting logic,2013-1-23*/
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	INIT_WORK(&chip->cancel_charge_det, cancel_charge_det_worker);
-#endif
-/*OPPO,Jiangsm add end*/
-	/* OPPO 2012-08-06 chendx Add begin for oppo charge */
-	#ifdef CONFIG_VENDOR_EDIT
 	/* Add begin for recharging */
 	INIT_DELAYED_WORK(&chip->recharge_monitor_work, recharging_monitor_worker);
     /* Add begin for time out charge */
@@ -7869,8 +7738,7 @@ static int __devinit pm8921_charger_probe(struct platform_device *pdev)
 	/*Add begin for charger valid */
 	INIT_DELAYED_WORK(&chip->charger_valid_work,
 							usbin_charger_valid);
-	#endif
-	/* OPPO 2012-08-15 chendx Add end */
+#endif
 	INIT_WORK(&chip->bms_notify.work, bms_notify);
 	INIT_WORK(&chip->battery_id_valid_work, battery_id_valid);
 
@@ -7890,8 +7758,7 @@ static int __devinit pm8921_charger_probe(struct platform_device *pdev)
 
 	create_debugfs_entries(chip);
 
-	/* OPPO 2012-08-13 chendx Add begin for oppo charge */
-	#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	init_completion(&stanard_mhl_wait);
 
 	/* charger wakelock */
@@ -7900,8 +7767,8 @@ static int __devinit pm8921_charger_probe(struct platform_device *pdev)
 	wake_lock_init(&chip->pm8921_wake_lock, WAKE_LOCK_SUSPEND, "pm8921-charger");
 	wake_lock_init(&chip->prevent_suspend_lock, WAKE_LOCK_SUSPEND, "pm8921-prevent-lock");
 	#endif
-	#endif
-	/* OPPO 2012-08-31 chendx Add end */
+#endif
+
 	/* determine what state the charger is in */
 	determine_initial_state(chip);
 
@@ -7927,16 +7794,13 @@ static int __devexit pm8921_charger_remove(struct platform_device *pdev)
 {
 	struct pm8921_chg_chip *chip = platform_get_drvdata(pdev);
 
-	//regulator_put(chip->vreg_xoadc);
 	free_irqs(chip);
-/* OPPO 2012-08-31 chendx Add begin for charger wakelock */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	/* destroy mutex */
 	#ifdef CONFIG_HAS_WAKELOCK
 	wake_lock_destroy(&chip->pm8921_wake_lock);
 	wake_lock_destroy(&chip->prevent_suspend_lock);
 	#endif
-
 
 	/*charge suspend mode */
 	device_remove_file(chip->dev, &dev_attr_pm8921_suspend_mode);	
@@ -7945,8 +7809,7 @@ static int __devexit pm8921_charger_remove(struct platform_device *pdev)
 #ifdef FTM_CHARGE_MODE_FEATURE
 	device_remove_file(chip->dev, &dev_attr_pm8921_chg);
 #endif
-#endif /*CONFIG_VENDOR_EDIT*/
-/* OPPO 2012-10-19 chendx Add end */
+#endif
 
 	platform_set_drvdata(pdev, NULL);
 	the_chip = NULL;

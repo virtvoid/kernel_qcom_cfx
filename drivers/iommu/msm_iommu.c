@@ -1204,7 +1204,7 @@ irqreturn_t msm_iommu_fault_handler(int irq, void *dev_id)
 						GET_FAR(base, num), 0);
 
 		if (ret == -ENOSYS) {
-/* OPPO 2013-05-24 huanggd Modify for reduce printk rate*/			
+#ifdef CONFIG_MACH_APQ8064_FIND5
 			if (printk_ratelimit()) {			
 				pr_err("Unexpected IOMMU page fault!\n");
 				pr_err("name    = %s\n", drvdata->name);
@@ -1212,7 +1212,13 @@ irqreturn_t msm_iommu_fault_handler(int irq, void *dev_id)
 				pr_err("Interesting registers:\n");
 				print_ctx_regs(base, num);
 			}
-/* OPPO 2013-05-24 huanggd Modify end*/				
+#else
+			pr_err("Unexpected IOMMU page fault!\n");
+			pr_err("name    = %s\n", drvdata->name);
+			pr_err("context = %s (%d)\n", ctx_drvdata->name, num);
+			pr_err("Interesting registers:\n");
+			print_ctx_regs(base, num);
+#endif	
 		}
 
 		SET_FSR(base, num, fsr);
