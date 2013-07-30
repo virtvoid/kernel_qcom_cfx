@@ -91,6 +91,15 @@ struct pm8921_bms_platform_data {
 	int				hold_soc_est;
 };
 
+/* OPPO 2013-01-14 chendx Add begin for get bms vbatt ocv */
+int get_bms_ocv_vbatt(int ibat_ua,int vbat_uv);
+/* OPPO 2013-01-14 chendx Add end for get bms vbatt ocv */
+
+//add for soc backup and read
+void backup_calib_soc(int calib_soc);
+int read_calib_soc(void);
+
+
 #if defined(CONFIG_PM8921_BMS) || defined(CONFIG_PM8921_BMS_MODULE)
 /**
  * pm8921_bms_get_vsense_avg - return the voltage across the sense
