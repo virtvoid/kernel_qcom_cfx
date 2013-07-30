@@ -8478,7 +8478,6 @@ void cfg80211_ap_stopped(struct net_device *netdev, gfp_t gfp)
 }
 EXPORT_SYMBOL(cfg80211_ap_stopped);
 
-
 /* initialisation/exit functions */
 
 int nl80211_init(void)
