@@ -60,6 +60,10 @@ static struct resource msm_fb_resources[] = {
 #define LVDS_CHIMEI_PANEL_NAME "lvds_chimei_wxga"
 #define LVDS_FRC_PANEL_NAME "lvds_frc_fhd"
 #define MIPI_VIDEO_TOSHIBA_WSVGA_PANEL_NAME "mipi_video_toshiba_wsvga"
+#ifdef CONFIG_MACH_APQ8064_FIND5
+#define MIPI_VIDEO_ORISE_720P_PANEL_NAME	"mipi_video_orise_720p"
+#define MDP_SPEEDUP_FOR_MIPI
+#endif
 #define MIPI_VIDEO_CHIMEI_WXGA_PANEL_NAME "mipi_video_chimei_wxga"
 #define HDMI_PANEL_NAME "hdmi_msm"
 #define MHL_PANEL_NAME "hdmi_msm,mhl_8334"
@@ -90,6 +94,12 @@ static void set_mdp_clocks_for_wuxga(void);
 
 static int msm_fb_detect_panel(const char *name)
 {
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	if (!strncmp(name, MIPI_VIDEO_ORISE_720P_PANEL_NAME,
+		strnlen(MIPI_VIDEO_ORISE_720P_PANEL_NAME,
+			PANEL_NAME_MAX_LEN)))
+		return 0;
+#else
 	u32 version;
 	if (machine_is_apq8064_liquid()) {
 		version = socinfo_get_platform_version();
@@ -123,6 +133,7 @@ static int msm_fb_detect_panel(const char *name)
 			return 0;
 		}
 	}
+#endif
 
 	if (!strncmp(name, HDMI_PANEL_NAME,
 			strnlen(HDMI_PANEL_NAME,
@@ -176,8 +187,13 @@ static struct msm_bus_vectors mdp_ui_vectors[] = {
 	{
 		.src = MSM_BUS_MASTER_MDP_PORT0,
 		.dst = MSM_BUS_SLAVE_EBI_CH0,
+#ifdef MDP_SPEEDUP_FOR_MIPI
+		.ab = 2000000000,
+		.ib = 2000000000,
+#else
 		.ab = 216000000 * 2,
 		.ib = 270000000 * 2,
+#endif
 	},
 };
 
@@ -186,8 +202,13 @@ static struct msm_bus_vectors mdp_vga_vectors[] = {
 	{
 		.src = MSM_BUS_MASTER_MDP_PORT0,
 		.dst = MSM_BUS_SLAVE_EBI_CH0,
+#ifdef MDP_SPEEDUP_FOR_MIPI
+		.ab = 2000000000,
+		.ib = 2000000000,
+#else
 		.ab = 216000000 * 2,
 		.ib = 270000000 * 2,
+#endif
 	},
 };
 
@@ -196,8 +217,13 @@ static struct msm_bus_vectors mdp_720p_vectors[] = {
 	{
 		.src = MSM_BUS_MASTER_MDP_PORT0,
 		.dst = MSM_BUS_SLAVE_EBI_CH0,
+#ifdef MDP_SPEEDUP_FOR_MIPI
+		.ab = 2000000000,
+		.ib = 2000000000,
+#else
 		.ab = 230400000 * 2,
 		.ib = 288000000 * 2,
+#endif
 	},
 };
 
@@ -206,8 +232,13 @@ static struct msm_bus_vectors mdp_1080p_vectors[] = {
 	{
 		.src = MSM_BUS_MASTER_MDP_PORT0,
 		.dst = MSM_BUS_SLAVE_EBI_CH0,
+#ifdef MDP_SPEEDUP_FOR_MIPI
+		.ab = 2000000000,
+		.ib = 2000000000,
+#else
 		.ab = 334080000 * 2,
 		.ib = 417600000 * 2,
+#endif
 	},
 };
 
@@ -258,6 +289,17 @@ static struct msm_panel_common_pdata mdp_pdata = {
 	.mem_hid = MEMTYPE_EBI1,
 #endif
 	.mdp_iommu_split_domain = 1,
+#ifdef CONFIG_MACH_APQ8064_FIND5	
+	.cont_splash_enabled = 0x01,
+	.splash_screen_addr = 0x00,
+	.splash_screen_size = 0x00,
+};
+	
+static char mipi_dsi_splash_is_enabled(void)
+{   
+	return mdp_pdata.cont_splash_enabled;
+}
+#endif
 };
 
 void __init apq8064_mdp_writeback(struct memtype_reserve* reserve_table)
@@ -348,11 +390,24 @@ static struct platform_device wfd_device = {
 #define HDMI_DDC_DATA_GPIO	71
 #define HDMI_HPD_GPIO		72
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
+#define LCD_5V_EN			85
+#define LCD_5V_EN_DVT		81
+
+static bool dsi_power_on;
+int mipi_dsi_panel_power(int on)
+{
+	static struct regulator *reg_lvs7, *reg_l2, *reg_l11, *reg_l22, *reg_ext_3p3v;
+	static int gpio36, gpio25, gpio26, mpp3;
+
+#else
+
 static bool dsi_power_on;
 static int mipi_dsi_panel_power(int on)
 {
 	static struct regulator *reg_lvs7, *reg_l2, *reg_l11, *reg_ext_3p3v;
 	static int gpio36, gpio25, gpio26, mpp3;
+#endif
 	int rc;
 
 	pr_debug("%s: on=%d\n", __func__, on);
@@ -386,11 +441,30 @@ static int mipi_dsi_panel_power(int on)
 						PTR_ERR(reg_l11));
 				return -ENODEV;
 		}
+#ifdef CONFIG_MACH_APQ8064_FIND5
+		rc = regulator_set_voltage(reg_l11, 3100000, 3100000);
+#else
 		rc = regulator_set_voltage(reg_l11, 3000000, 3000000);
+#endif
 		if (rc) {
 				pr_err("set_voltage l11 failed, rc=%d\n", rc);
 				return -EINVAL;
 		}
+
+#ifdef CONFIG_MACH_APQ8064_FIND5	
+		reg_l22 = regulator_get(NULL, "8921_l22");
+		if (IS_ERR(reg_l22)) {
+				pr_err("could not get 8921_l22, rc = %ld\n",
+						PTR_ERR(reg_l22));
+				return -ENODEV;
+		}
+
+		rc = regulator_set_voltage(reg_l22, 1800000, 1800000);
+		if (rc) {
+				pr_err("set_voltage l22 failed, rc=%d\n", rc);
+				return -EINVAL;
+		}
+#endif
 
 		if (machine_is_apq8064_liquid()) {
 			reg_ext_3p3v = regulator_get(&msm_mipi_dsi1_device.dev,
@@ -430,6 +504,14 @@ static int mipi_dsi_panel_power(int on)
 			return -ENODEV;
 		}
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
+		rc = gpio_request(LCD_5V_EN_DVT, "lcd_5v_en");
+
+		if (rc) {
+			pr_err("request gpio 86 failed, rc=%d\n", rc);
+			return -ENODEV;
+		}
+#endif
 		dsi_power_on = true;
 	}
 
@@ -439,7 +521,24 @@ static int mipi_dsi_panel_power(int on)
 			pr_err("enable lvs7 failed, rc=%d\n", rc);
 			return -ENODEV;
 		}
+#ifdef CONFIG_MACH_APQ8064_FIND5
+		rc = regulator_enable(reg_l22);
+		if (rc) {
+			pr_err("enable l22 failed, rc=%d\n", rc);
+			return -ENODEV;
+		}
+		mdelay(10);
 
+		rc = gpio_direction_output(LCD_5V_EN_DVT, 1);
+
+		if (rc) {
+			pr_err("%s: unable to enable LCD_5V_EN!\n", __func__);
+			return -ENODEV;
+		}
+
+		gpio_set_value_cansleep(gpio36, 0);
+		gpio_set_value_cansleep(gpio25, 1);
+#endif
 		rc = regulator_set_optimum_mode(reg_l11, 110000);
 		if (rc < 0) {
 			pr_err("set_optimum_mode l11 failed, rc=%d\n", rc);
@@ -499,6 +598,20 @@ static int mipi_dsi_panel_power(int on)
 			return -ENODEV;
 		}
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
+		rc = gpio_direction_output(LCD_5V_EN_DVT, 0);
+
+		if (rc) {
+			pr_err("%s: unable to enable LCD_5V_EN!!!!!!!!!!!!\n", __func__);
+			return -ENODEV;
+		}
+		mdelay(10);
+		rc = regulator_disable(reg_l22);
+		if (rc) {
+			pr_err("disable reg_l22 failed, rc=%d\n", rc);
+			return -ENODEV;
+		}
+#endif
 		rc = regulator_disable(reg_lvs7);
 		if (rc) {
 			pr_err("disable reg_lvs7 failed, rc=%d\n", rc);
@@ -515,8 +628,14 @@ static int mipi_dsi_panel_power(int on)
 	return 0;
 }
 
+#ifdef CONFIG_MACH_APQ8064_FIND5	
+static char mipi_dsi_splash_is_enabled(void);
+#endif
 static struct mipi_dsi_platform_data mipi_dsi_pdata = {
 	.dsi_power_save = mipi_dsi_panel_power,
+#ifdef CONFIG_MACH_APQ8064_FIND5			
+	.splash_is_enabled = mipi_dsi_splash_is_enabled,
+#endif
 };
 
 static bool lvds_power_on;
@@ -705,6 +824,23 @@ static struct platform_device mipi_dsi2lvds_bridge_device = {
 	.dev.platform_data = &mipi_dsi2lvds_pdata,
 };
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
+static int orise_gpio[] = {LPM_CHANNEL};
+static struct mipi_dsi_panel_platform_data orise_pdata = {
+	.gpio = orise_gpio,
+};
+
+static struct platform_device mipi_dsi_orise_panel_device = {
+
+	.name = "mipi_orise",
+	.id = 0,
+	.dev = {
+			.platform_data = &orise_pdata,
+	}
+};
+
+#else
+
 static int toshiba_gpio[] = {LPM_CHANNEL};
 static struct mipi_dsi_panel_platform_data toshiba_pdata = {
 	.gpio = toshiba_gpio,
@@ -717,6 +853,7 @@ static struct platform_device mipi_dsi_toshiba_panel_device = {
 			.platform_data = &toshiba_pdata,
 	}
 };
+#endif
 
 static struct msm_bus_vectors dtv_bus_init_vectors[] = {
 	{
@@ -1022,7 +1159,12 @@ void __init apq8064_init_fb(void)
 	if (machine_is_apq8064_liquid())
 		platform_device_register(&mipi_dsi2lvds_bridge_device);
 	if (machine_is_apq8064_mtp())
+#ifdef CONFIG_MACH_APQ8064_FIND5
+		platform_device_register(&mipi_dsi_orise_panel_device);
+#else
 		platform_device_register(&mipi_dsi_toshiba_panel_device);
+#endif
+
 	if (machine_is_mpq8064_dtv())
 		platform_device_register(&lvds_frc_panel_device);
 

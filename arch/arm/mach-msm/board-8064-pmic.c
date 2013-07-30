@@ -115,8 +115,13 @@ struct pm8xxx_mpp_init {
 /* Initial PM8921 GPIO configurations */
 static struct pm8xxx_gpio_init pm8921_gpios[] __initdata = {
 	PM8921_GPIO_OUTPUT(14, 1, HIGH),	/* HDMI Mux Selector */
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	PM8921_GPIO_OUTPUT(23, 0, HIGH),	/* touchscreen power FET */
+	PM8921_GPIO_OUTPUT_BUFCONF(25, 1, LOW, CMOS), /* DISP_RESET_N */
+#else
 	PM8921_GPIO_OUTPUT_BUFCONF(25, 0, LOW, CMOS), /* DISP_RESET_N */
 	PM8921_GPIO_OUTPUT_FUNC(26, 0, PM_GPIO_FUNC_2), /* Bl: Off, PWM mode */
+#endif
 	PM8921_GPIO_OUTPUT_VIN(30, 1, PM_GPIO_VIN_VPH), /* SMB349 susp line */
 	PM8921_GPIO_OUTPUT_BUFCONF(36, 1, LOW, OPEN_DRAIN),
 	PM8921_GPIO_OUTPUT_FUNC(44, 0, PM_GPIO_FUNC_2),
@@ -268,7 +273,11 @@ static struct pm8xxx_misc_platform_data apq8064_pm8921_misc_pdata = {
 	.priority		= 0,
 };
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
+#define PM8921_LC_LED_MAX_CURRENT	14	/* I = 4mA */
+#else
 #define PM8921_LC_LED_MAX_CURRENT	12	/* I = 12mA */
+#endif
 #define PM8921_LC_LED_LOW_CURRENT	1	/* I = 1mA */
 #define PM8XXX_LED_PWM_PERIOD		1000
 #define PM8XXX_LED_PWM_DUTY_MS		20
@@ -279,6 +288,11 @@ static struct pm8xxx_misc_platform_data apq8064_pm8921_misc_pdata = {
 #define PM8XXX_PWM_CHANNEL_NONE		-1
 
 static struct led_info pm8921_led_info[] = {
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	[0] = {
+		.name			= "button-backlight",
+		.default_trigger	= "ac-online",
+#else
 	[0] = {
 		.name			= "led:red",
 		.default_trigger	= "battery-charging",
@@ -286,6 +300,7 @@ static struct led_info pm8921_led_info[] = {
 	[1] = {
 		.name			= "led:green",
 		.default_trigger	= "battery-full",
+#endif
 	},
 };
 
@@ -294,6 +309,7 @@ static struct led_platform_data pm8921_led_core_pdata = {
 	.leds = pm8921_led_info,
 };
 
+#ifndef CONFIG_MACH_APQ8064_FIND5
 static int pm8921_led0_pwm_duty_pcts[56] = {
 	1, 4, 8, 12, 16, 20, 24, 28, 32, 36,
 	40, 44, 46, 52, 56, 60, 64, 68, 72, 76,
@@ -314,6 +330,7 @@ static struct pm8xxx_pwm_duty_cycles pm8921_led0_pwm_duty_cycles = {
 	.duty_ms = PM8XXX_LED_PWM_DUTY_MS,
 	.start_idx = 1,
 };
+#endif
 
 static struct pm8xxx_led_config pm8921_led_configs[] = {
 	[0] = {
@@ -322,7 +339,9 @@ static struct pm8xxx_led_config pm8921_led_configs[] = {
 		.max_current = PM8921_LC_LED_MAX_CURRENT,
 		.pwm_channel = 5,
 		.pwm_period_us = PM8XXX_LED_PWM_PERIOD,
+#ifndef CONFIG_MACH_APQ8064_FIND5
 		.pwm_duty_cycles = &pm8921_led0_pwm_duty_cycles,
+#endif
 	},
 	[1] = {
 		.id = PM8XXX_ID_LED_1,
@@ -405,7 +424,11 @@ apq8064_pm8921_irq_pdata __devinitdata = {
 static struct pm8xxx_rtc_platform_data
 apq8064_pm8921_rtc_pdata = {
 	.rtc_write_enable       = false,
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	.rtc_alarm_powerup      = true,
+#else
 	.rtc_alarm_powerup      = false,
+#endif
 };
 
 static int apq8064_pm8921_therm_mitigation[] = {
@@ -415,10 +438,47 @@ static int apq8064_pm8921_therm_mitigation[] = {
 	325,
 };
 
-#define MAX_VOLTAGE_MV          4200
+#ifdef CONFIG_MACH_APQ8064_FIND5
+#define RSENSE_MOHM		20
+#ifdef CONFIG_MACH_APQ8064_FIND5
+#define MAX_VOLTAGE_MV          4350
+#else
+#define MAX_VOLTAGE_MV          4200	
+#endif
+
 #define CHG_TERM_MA		100
 static struct pm8921_charger_platform_data
 apq8064_pm8921_chg_pdata __devinitdata = {
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	.update_time		= 6000,
+	.max_voltage		= MAX_VOLTAGE_MV,
+	.min_voltage		= 3200,
+	.uvd_thresh_voltage	= 4050,
+	.resume_voltage_delta	= 30,
+    .alarm_low_mv           = 3400,
+    .alarm_high_mv          = 4000,
+    .resume_charge_percent  = 99,
+	.normal_resume_voltage_delta = 30,
+	.term_current		= CHG_TERM_MA,
+	.cool_temp		= 10,
+	.warm_temp		= 45,
+	.temp_check_period	= 1,
+	.max_bat_chg_current	= 1000,
+	.little_cold_bat_chg_current	= 225,
+	.cool_bat_chg_current	= 400,
+	.normal_dcp_chg_current	= 1050,
+	.mhl_chg_current	= 1000,
+	.nonstanard_mhl_chg_current	= 500,
+	.normal_sdp_chg_current	= 500,
+	.warm_bat_chg_current	= 400,
+	.little_cold_bat_voltage	= 4000,
+	.cool_bat_voltage	= 4300,
+	.normal_bat_voltage	= MAX_VOLTAGE_MV,
+	.warm_bat_voltage	= 4150,
+	.vin_min  = 4500,
+	
+	.r_sense		= RSENSE_MOHM,
+#else
 	.update_time		= 60000,
 	.max_voltage		= MAX_VOLTAGE_MV,
 	.min_voltage		= 3200,
@@ -436,25 +496,42 @@ apq8064_pm8921_chg_pdata __devinitdata = {
 	.warm_bat_chg_current	= 350,
 	.cool_bat_voltage	= 4100,
 	.warm_bat_voltage	= 4100,
+#endif
 	.thermal_mitigation	= apq8064_pm8921_therm_mitigation,
 	.thermal_levels		= ARRAY_SIZE(apq8064_pm8921_therm_mitigation),
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	.rconn_mohm		= 28,
+#else
 	.rconn_mohm		= 18,
+#endif
 	.enable_tcxo_warmup_delay = true,
 };
 
 static struct pm8xxx_ccadc_platform_data
 apq8064_pm8xxx_ccadc_pdata = {
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	.r_sense_uohm		= 10000,
 	.calib_delay_ms		= 600000,
+#else
+	.r_sense_uohm		= RSENSE_MOHM*1000,
+	.calib_delay_ms		= 600000,
+#endif
 };
 
 static struct pm8921_bms_platform_data
 apq8064_pm8921_bms_pdata __devinitdata = {
 	.battery_type			= BATT_UNKNOWN,
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	.r_sense_uohm		= RSENSE_MOHM*1000,
+	.v_cutoff			= 3600,
+	.max_voltage_uv			= MAX_VOLTAGE_MV * 1000,
+	.rconn_mohm			= 28,
+#else
 	.r_sense_uohm			= 10000,
 	.v_cutoff			= 3400,
 	.max_voltage_uv			= MAX_VOLTAGE_MV * 1000,
 	.rconn_mohm			= 18,
+#endif
 	.shutdown_soc_valid_limit	= 20,
 	.adjust_soc_low_threshold	= 25,
 	.chg_term_ua			= CHG_TERM_MA * 1000,
@@ -471,6 +548,15 @@ apq8064_pm8921_bms_pdata __devinitdata = {
 	.min_fcc_learning_samples	= 5,
 };
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
+static struct pm8xxx_vibrator_platform_data
+apq8064_pm8921_vib_pdata = {
+	.initial_vibrate_ms  = 0,
+	.level_mV = 3000,
+	.max_timeout_ms = 15000,
+};
+#endif
+
 static struct pm8921_platform_data
 apq8064_pm8921_platform_data __devinitdata = {
 	.irq_pdata		= &apq8064_pm8921_irq_pdata,
@@ -484,6 +570,9 @@ apq8064_pm8921_platform_data __devinitdata = {
 	.charger_pdata		= &apq8064_pm8921_chg_pdata,
 	.bms_pdata		= &apq8064_pm8921_bms_pdata,
 	.ccadc_pdata		= &apq8064_pm8xxx_ccadc_pdata,
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	.vibrator_pdata	= &apq8064_pm8921_vib_pdata,
+#endif
 };
 
 static struct pm8xxx_irq_platform_data

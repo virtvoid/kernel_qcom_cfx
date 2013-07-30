@@ -25,6 +25,16 @@
 #include "devices.h"
 #include "board-8064.h"
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
+/* OPPO 2012-11-14 DuYuanHua Add to enable/disable the HOTSWAP feature 
+*   If enabled, we will use GPIO_72 as the sim card detection pin
+*   Level High -- Card Inserted
+*   Level Low  -- Card Removed
+*/
+#define OPPO_FEATURE_UIM_CARD_HOTSWAP
+/* OPPO 2012-11-14 DuYuanHua Add End*/
+#endif
+
 #if defined(CONFIG_KS8851) || defined(CONFIG_KS8851_MODULE)
 static struct gpiomux_setting gpio_eth_config = {
 	.pull = GPIOMUX_PULL_NONE,
@@ -64,12 +74,14 @@ static struct gpiomux_setting gpio_spi_cs_config = {
 	.pull = GPIOMUX_PULL_UP,
 };
 
+#ifndef CONFIG_MACH_APQ8064_FIND5
 /* Chip selects for EPM SPI clients */
 static struct gpiomux_setting gpio_epm_spi_cs_config = {
 	.func = GPIOMUX_FUNC_6,
 	.drv = GPIOMUX_DRV_12MA,
 	.pull = GPIOMUX_PULL_UP,
 };
+#endif
 
 #ifdef CONFIG_MSM_VCAP
 static struct gpiomux_setting gpio_vcap_config[] = {
@@ -129,6 +141,21 @@ static struct gpiomux_setting gpio_vcap_config[] = {
 		.pull = GPIOMUX_PULL_DOWN,
 	},
 };
+
+#ifdef CONFIG_MACH_APQ8064_FIND5
+static struct gpiomux_setting panel_configs[] = {
+	{
+		.func = GPIOMUX_FUNC_GPIO,
+		.drv = GPIOMUX_DRV_2MA,
+		.pull = GPIOMUX_PULL_NONE,
+	},
+	{
+		.func = GPIOMUX_FUNC_GPIO,
+		.drv = GPIOMUX_DRV_2MA,
+		.pull = GPIOMUX_PULL_DOWN,
+	},
+};
+#endif
 
 struct msm_gpiomux_config vcap_configs[] = {
 	{
@@ -250,6 +277,15 @@ struct msm_gpiomux_config vcap_configs[] = {
 			[GPIOMUX_ACTIVE] =		&gpio_vcap_config[2],
 		}
 	},
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	{
+		.gpio = 81,
+		.settings = {
+			[GPIOMUX_SUSPENDED] =	&panel_configs[0],
+			[GPIOMUX_ACTIVE] =		&panel_configs[0],
+		}
+	},
+#else
 	{
 		.gpio = 86,
 		.settings = {
@@ -257,6 +293,7 @@ struct msm_gpiomux_config vcap_configs[] = {
 			[GPIOMUX_ACTIVE] =		&gpio_vcap_config[1],
 		}
 	},
+#endif	
 	{
 		.gpio = 85,
 		.settings = {
@@ -350,7 +387,11 @@ static struct gpiomux_setting mbhc_hs_detect = {
 
 static struct gpiomux_setting cdc_mclk = {
 	.func = GPIOMUX_FUNC_1,
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	.drv = GPIOMUX_DRV_2MA,
+#else
 	.drv = GPIOMUX_DRV_8MA,
+#endif
 	.pull = GPIOMUX_PULL_NONE,
 };
 
@@ -416,12 +457,28 @@ static struct gpiomux_setting hdmi_suspend_cfg = {
 	.pull = GPIOMUX_PULL_DOWN,
 };
 
+#ifdef OPPO_FEATURE_UIM_CARD_HOTSWAP
+static struct gpiomux_setting uim_card_detection_active_cfg = {
+	.func = GPIOMUX_FUNC_GPIO,
+	.drv = GPIOMUX_DRV_2MA,
+	.pull = GPIOMUX_PULL_NONE,
+	.dir = GPIOMUX_IN,
+};
+static struct gpiomux_setting uim_card_detection_suspend_cfg = {
+	.func = GPIOMUX_FUNC_GPIO,
+	.drv = GPIOMUX_DRV_2MA,
+	.pull = GPIOMUX_PULL_NONE,
+	.dir = GPIOMUX_IN,
+};
+#endif
+
 static struct gpiomux_setting hdmi_active_1_cfg = {
 	.func = GPIOMUX_FUNC_1,
 	.drv = GPIOMUX_DRV_2MA,
 	.pull = GPIOMUX_PULL_UP,
 };
 
+#ifndef CONFIG_MACH_APQ8064_FIND5
 static struct gpiomux_setting hdmi_active_2_cfg = {
 	.func = GPIOMUX_FUNC_1,
 	.drv = GPIOMUX_DRV_16MA,
@@ -439,6 +496,22 @@ static struct gpiomux_setting gsbi5_active_cfg = {
 	.drv = GPIOMUX_DRV_12MA,
 	.pull = GPIOMUX_PULL_NONE,
 };
+#endif
+
+#ifdef CONFIG_MACH_APQ8064_FIND5
+static struct gpiomux_setting gsbi5_uart_suspended_cfg = {
+	.func = GPIOMUX_FUNC_2,
+	.drv = GPIOMUX_DRV_8MA,
+	.pull = GPIOMUX_PULL_NONE,
+};
+
+static struct gpiomux_setting gsbi5_uart_active_cfg = {
+	.func = GPIOMUX_FUNC_2,
+	.drv = GPIOMUX_DRV_8MA,
+	.pull = GPIOMUX_PULL_NONE,
+};
+
+#else
 
 static struct gpiomux_setting sx150x_suspended_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
@@ -451,6 +524,7 @@ static struct gpiomux_setting sx150x_active_cfg = {
 	.drv = GPIOMUX_DRV_8MA,
 	.pull = GPIOMUX_PULL_NONE,
 };
+#endif
 
 #ifdef CONFIG_USB_EHCI_MSM_HSIC
 static struct gpiomux_setting cyts_sleep_sus_cfg = {
@@ -586,6 +660,18 @@ static struct gpiomux_setting mxt_int_act_cfg = {
 	.pull = GPIOMUX_PULL_UP,
 };
 
+#ifdef OPPO_FEATURE_UIM_CARD_HOTSWAP
+static struct msm_gpiomux_config apq8064_uim_card_detection_configs[] __initdata = {
+	{
+		.gpio = 72,
+		.settings = {
+			[GPIOMUX_ACTIVE]    = &uim_card_detection_active_cfg,
+			[GPIOMUX_SUSPENDED] = &uim_card_detection_suspend_cfg,
+		},
+	},
+};
+#endif
+
 static struct msm_gpiomux_config apq8064_hdmi_configs[] __initdata = {
 	{
 		.gpio = 69,
@@ -608,6 +694,7 @@ static struct msm_gpiomux_config apq8064_hdmi_configs[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &hdmi_suspend_cfg,
 		},
 	},
+#ifndef CONFIG_MACH_APQ8064_FIND5
 	{
 		.gpio = 72,
 		.settings = {
@@ -615,6 +702,7 @@ static struct msm_gpiomux_config apq8064_hdmi_configs[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &hdmi_suspend_cfg,
 		},
 	},
+#endif
 };
 
 static struct msm_gpiomux_config apq8064_gsbi_configs[] __initdata = {
@@ -645,6 +733,7 @@ static struct msm_gpiomux_config apq8064_gsbi_configs[] __initdata = {
 		},
 	},
 #if defined(CONFIG_KS8851) || defined(CONFIG_KS8851_MODULE)
+#if CONFIG_MACH_APQ8064_FIND5
 	{
 		.gpio      = 51,		/* GSBI5 QUP SPI_DATA_MOSI */
 		.settings = {
@@ -657,6 +746,7 @@ static struct msm_gpiomux_config apq8064_gsbi_configs[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &gpio_spi_config,
 		},
 	},
+#endif
 	{
 		.gpio      = 53,		/* Funny CS0 */
 		.settings = {
@@ -676,18 +766,36 @@ static struct msm_gpiomux_config apq8064_gsbi_configs[] __initdata = {
 		},
 	},
 #endif
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	{
+		.gpio      = 51,		/* GSBI5 UART*/
+		.settings = {
+			[GPIOMUX_ACTIVE] = &gsbi5_uart_active_cfg,
+			[GPIOMUX_SUSPENDED] = &gsbi5_uart_suspended_cfg,
+		},
+	},
+	{
+		.gpio      = 52,		/* GSBI5 UART */
+		.settings = {
+			[GPIOMUX_ACTIVE] = &gsbi5_uart_active_cfg,
+			[GPIOMUX_SUSPENDED] = &gsbi5_uart_suspended_cfg,
+		},
+	},
+#endif	
 	{
 		.gpio      = 30,		/* FP CS */
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &gpio_spi_cs_config,
 		},
 	},
+#ifndef CONFIG_MACH_APQ8064_FIND5
 	{
 		.gpio      = 32,		/* EPM CS */
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &gpio_epm_spi_cs_config,
 		},
 	},
+#endif
 	{
 		.gpio      = 53,		/* NOR CS */
 		.settings = {
@@ -721,6 +829,24 @@ static struct msm_gpiomux_config apq8064_gsbi_configs[] __initdata = {
 		},
 	},
 };
+#ifdef CONFIG_MACH_APQ8064_FIND5
+static struct msm_gpiomux_config apq8064_gsbi7_i2c_config[] __initdata = {
+	{
+		.gpio      = 85,		/* GSBI7 QUP I2C_CLK */
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &gpio_vcap_config[3],
+			[GPIOMUX_ACTIVE] = &gpio_vcap_config[3],
+		},
+	},
+	{
+		.gpio      = 84,		/* GSBI7 QUP I2C_DATA */
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &gpio_vcap_config[2],
+			[GPIOMUX_ACTIVE] = &gpio_vcap_config[2],
+		},
+	},
+};
+#endif
 
 static struct msm_gpiomux_config apq8064_slimbus_config[] __initdata = {
 	{
@@ -794,6 +920,27 @@ static struct msm_gpiomux_config apq8064_ext_regulator_configs[] __initdata = {
 		},
 	},
 };
+//OPPO 2012-11-2 huyu add for lcd backlight enabl
+#ifdef CONFIG_VENDOR_EDIT
+static struct gpiomux_setting gpio_backlight_enable = {
+	.func = GPIOMUX_FUNC_GPIO,
+	.drv = GPIOMUX_DRV_2MA,
+	.pull = GPIOMUX_PULL_UP,
+};
+
+static struct msm_gpiomux_config apq8064_backlight_enable[] __initdata = {
+
+{
+	.gpio = 86,
+	.settings = {
+		[GPIOMUX_SUSPENDED] =	&gpio_backlight_enable,
+		[GPIOMUX_ACTIVE] =		&gpio_backlight_enable,
+	}
+},
+
+};
+#endif
+//OPPO 2012-11-2 huyu add for lcd backlight enable
 
 static struct gpiomux_setting ap2mdm_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
@@ -1156,6 +1303,8 @@ static struct msm_gpiomux_config wcnss_5wire_interface[] = {
 	},
 };
 
+/* OPPO 2013-03-18 zhenwx  Delete begin for del unused code */
+#if 0
 static struct msm_gpiomux_config mpq8064_gsbi5_i2c_configs[] __initdata = {
 	{
 		.gpio      = 53,			/* GSBI5 I2C QUP SDA */
@@ -1172,6 +1321,8 @@ static struct msm_gpiomux_config mpq8064_gsbi5_i2c_configs[] __initdata = {
 		},
 	},
 };
+#endif
+/* OPPO 2013-03-18 zhenwx  Delete end */
 
 static struct gpiomux_setting ir_suspended_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
@@ -1194,7 +1345,8 @@ static struct msm_gpiomux_config mpq8064_ir_configs[] __initdata = {
 		},
 	},
 };
-
+//OPPO 2012-12-18 huyu del for lcd 5V_enable for dvt
+#ifndef CONFIG_VENDOR_EDIT
 static struct msm_gpiomux_config sx150x_int_configs[] __initdata = {
 	{
 		.gpio      = 81,
@@ -1204,7 +1356,8 @@ static struct msm_gpiomux_config sx150x_int_configs[] __initdata = {
 		},
 	},
 };
-
+#endif
+//OPPO 2012-12-18 huyu del for lcd 5V_enable for dvt
 #ifdef CONFIG_MMC_MSM_SDC2_SUPPORT
 static struct gpiomux_setting sdc2_clk_active_cfg = {
 	.func = GPIOMUX_FUNC_2,
@@ -1365,6 +1518,10 @@ static struct msm_gpiomux_config apq8064_sdc3_configs[] __initdata = {
 		},
 	},
 };
+/* OPPO 2013-02-04 kangjian added begin for s5k6a3yx's I2C */
+
+#include <linux/pcb_version.h>
+/* OPPO 2013-02-04 kangjian added end */
 
 static struct msm_gpiomux_config sglte2_qsc_configs[] __initdata = {
 	/* MDM2AP_STATUS */
@@ -1485,14 +1642,22 @@ void __init apq8064_init_gpiomux(void)
 
 	if (machine_is_mpq8064_cdp() || machine_is_mpq8064_hrd() ||
 		 machine_is_mpq8064_dtv()) {
+/* OPPO 2013-03-18 zhenwx  Delete begin for del unused code */
+#if 0
 		msm_gpiomux_install(mpq8064_gsbi5_i2c_configs,
 				ARRAY_SIZE(mpq8064_gsbi5_i2c_configs));
+#endif
+/* OPPO 2013-03-18 zhenwx  Delete end */
 #ifdef CONFIG_MSM_VCAP
 		msm_gpiomux_install(vcap_configs,
 				ARRAY_SIZE(vcap_configs));
 #endif
+//OPPO 2012-12-18 huyu del for lcd 5V_enable for dvt
+#ifndef CONFIG_VENDOR_EDIT
 		msm_gpiomux_install(sx150x_int_configs,
 				ARRAY_SIZE(sx150x_int_configs));
+#endif
+//OPPO 2012-12-18 huyu del for lcd 5V_enable for dvt
 	} else {
 		#if defined(CONFIG_KS8851) || defined(CONFIG_KS8851_MODULE)
 		msm_gpiomux_install(apq8064_ethernet_configs,
@@ -1501,6 +1666,11 @@ void __init apq8064_init_gpiomux(void)
 
 		msm_gpiomux_install(apq8064_gsbi_configs,
 				ARRAY_SIZE(apq8064_gsbi_configs));
+/* OPPO 2013-02-04 kangjian added begin for s5k6a3yx's I2C */
+		if (get_pcb_version() >= PCB_VERSION_DVT) {
+			msm_gpiomux_install(apq8064_gsbi7_i2c_config, ARRAY_SIZE(apq8064_gsbi7_i2c_config));
+		}
+/* OPPO 2013-02-04 kangjian added end */
 	}
 
 	msm_gpiomux_install(apq8064_slimbus_config,
@@ -1526,6 +1696,13 @@ void __init apq8064_init_gpiomux(void)
 
 	msm_gpiomux_install(apq8064_ext_regulator_configs,
 			ARRAY_SIZE(apq8064_ext_regulator_configs));
+
+//OPPO 2012-11-2 huyu add for lcd backlight enabl
+#ifdef CONFIG_VENDOR_EDIT
+	msm_gpiomux_install(apq8064_backlight_enable,
+			ARRAY_SIZE(apq8064_backlight_enable));
+#endif
+//OPPO 2012-11-2 huyu add for lcd backlight enabl
 
 	if (machine_is_apq8064_mtp()) {
 		if (socinfo_get_platform_subtype() == PLATFORM_SUBTYPE_DSDA2) {
@@ -1574,6 +1751,13 @@ void __init apq8064_init_gpiomux(void)
 
 	msm_gpiomux_install(apq8064_hdmi_configs,
 			ARRAY_SIZE(apq8064_hdmi_configs));
+	
+/* OPPO 2012-11-14 DuYuanHua Add to config GPIO_72 as input pin for sim card detection */
+#ifdef OPPO_FEATURE_UIM_CARD_HOTSWAP
+	msm_gpiomux_install(apq8064_uim_card_detection_configs,
+			ARRAY_SIZE(apq8064_uim_card_detection_configs));
+#endif
+/* OPPO 2012-11-14 DuYuanHua Add End*/
 
 	 if (machine_is_mpq8064_cdp())
 		msm_gpiomux_install(mpq8064_ir_configs,

@@ -60,6 +60,11 @@ static void smsm_state_cb_hdlr(void *data, uint32_t old_state,
 						MODULE_NAME);
 		return;
 	}
+	
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	pr_err("WCNSS3660 restart independent-\n");
+	enable_riva_ssr = 1 ;
+#endif
 
 	if (!enable_riva_ssr)
 		panic(MODULE_NAME ": SMSM reset request received from Riva");
@@ -97,6 +102,11 @@ static irqreturn_t riva_wdog_bite_irq_hdlr(int irq, void *dev_id)
 						MODULE_NAME);
 		return IRQ_HANDLED;
 	}
+	
+#ifdef CONFIG_MACH_APQ8064_FIND5
+		pr_err("WCNSS3660 restart because of Watchdog-\n");
+		enable_riva_ssr = 1 ;
+#endif
 
 	if (!enable_riva_ssr)
 		panic(MODULE_NAME ": Watchdog bite received from Riva");

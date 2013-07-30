@@ -66,7 +66,15 @@ static void *dload_mode_addr;
 
 /* Download mode master kill-switch */
 static int dload_set(const char *val, struct kernel_param *kp);
+#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef CONFIG_MODEM_ERR_ENTER_RAMDUMP
+	int download_mode = 0;
+#else
+static int download_mode = 0;
+#else
 static int download_mode = 1;
+#endif
+
 module_param_call(download_mode, dload_set, param_get_int,
 			&download_mode, 0644);
 
@@ -195,6 +203,14 @@ static irqreturn_t resout_irq_handler(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
+#define FACTORY_MODE	0x77665504
+#define WLAN_MODE		0x77665505
+#define RF_MODE			0x77665506
+#define RECOVERY_MODE   0x77665502
+#define FASTBOOT_MODE   0x77665500
+#endif
+
 #ifdef CONFIG_LGE_CRASH_HANDLER
 #define SUBSYS_NAME_MAX_LENGTH	40
 
@@ -235,6 +251,14 @@ void set_kernel_crash_magic_number(void)
 void msm_restart(char mode, const char *cmd)
 {
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	if (system_state == SYSTEM_POWER_OFF)
+	{
+		printk(KERN_NOTICE "system_state power off, cancel restart\n");
+		msm_power_off();
+	}
+#endif
+
 #ifdef CONFIG_MSM_DLOAD_MODE
 
 	/* This looks like a normal reboot at this point. */
@@ -261,6 +285,32 @@ void msm_restart(char mode, const char *cmd)
 
 	pm8xxx_reset_pwr_off(1);
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	if (cmd != NULL) {
+		if (!strncmp(cmd, "bootloader", 10)) {
+			__raw_writel(FASTBOOT_MODE, restart_reason);
+		} else if (!strncmp(cmd, "recovery", 8)) {
+			__raw_writel(RECOVERY_MODE, restart_reason);
+		}  else if (!strncmp(cmd, "rf", 2)) {
+			__raw_writel(RF_MODE, restart_reason);
+		}   else if (!strncmp(cmd, "wlan", 4)) {
+			__raw_writel(WLAN_MODE, restart_reason);
+		}   else if (!strncmp(cmd, "ftm", 3)) {
+			__raw_writel(FACTORY_MODE, restart_reason);
+		} else if (!strncmp(cmd, "oem-", 4)) {
+			unsigned long code;
+			code = simple_strtoul(cmd + 4, NULL, 16) & 0xff;
+			__raw_writel(0x6f656d00 | code, restart_reason);
+		} else if (!strncmp(cmd, "kernel", 6)) {
+            __raw_writel(0x7766550a, restart_reason);
+        } else if (!strncmp(cmd, "modem", 5)) {
+            __raw_writel(0x7766550b, restart_reason);
+        } else if (!strncmp(cmd, "android", 7)) {
+            __raw_writel(0x7766550c, restart_reason);
+        } else {
+			__raw_writel(0x77665501, restart_reason);
+		}
+#else
 	if (cmd != NULL) {
 		if (!strncmp(cmd, "bootloader", 10)) {
 			__raw_writel(0x77665500, restart_reason);
@@ -273,6 +323,7 @@ void msm_restart(char mode, const char *cmd)
 		} else {
 			__raw_writel(0x77665501, restart_reason);
 		}
+#endif
 	} else {
 		__raw_writel(0x77665501, restart_reason);
 	}
@@ -335,6 +386,9 @@ static int __init msm_restart_init(void)
 #endif
 	msm_tmr0_base = msm_timer_get_timer0_base();
 	restart_reason = MSM_IMEM_BASE + RESTART_REASON_ADDR;
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	__raw_writel(0x7766550a, restart_reason);
+#endif
 	pm_power_off = msm_power_off;
 
 	return 0;

@@ -293,7 +293,6 @@ static int __die(const char *str, int err, struct thread_info *thread, struct pt
 
 static DEFINE_RAW_SPINLOCK(die_lock);
 
-/* OPPO 2012-10-11 chendx Add begin for debug tools */
 #ifdef CONFIG_OPPO_DEBUG_ASSERT
 extern bool is_otrace_on(void);
 #ifdef CONFIG_VT
@@ -301,7 +300,6 @@ extern int oppo_init_kernel_print_to_lcd(void);
 extern int oppo_finalize_print_to_lcd(void);
 #endif
 #endif
-/* OPPO 2012-10-11 chendx Add end */
 
 /*
  * This function is protected against re-entrancy.
@@ -312,16 +310,12 @@ void die(const char *str, struct pt_regs *regs, int err)
 	int ret;
 	enum bug_trap_type bug_type = BUG_TRAP_TYPE_NONE;
 
-
-/* OPPO 2012-10-11 chendx Add begin for debug tools */
 #ifdef CONFIG_OPPO_DEBUG_ASSERT
 #ifdef CONFIG_VT
 	if(is_otrace_on())
 		oppo_init_kernel_print_to_lcd();
 #endif
 #endif
-/* OPPO 2012-10-11 chendx Add end */
-
 
 	oops_enter();
 
@@ -342,8 +336,6 @@ void die(const char *str, struct pt_regs *regs, int err)
 	raw_spin_unlock_irq(&die_lock);
 	oops_exit();
 
-
-/* OPPO 2012-10-11 chendx Add begin for debug tools */
 #ifdef CONFIG_OPPO_DEBUG_ASSERT
 #ifdef CONFIG_VT
 	if(is_otrace_on()){
@@ -352,8 +344,6 @@ void die(const char *str, struct pt_regs *regs, int err)
 	}
 #endif
 #endif
-/* OPPO 2012-10-11 chendx Add end */
-
 
 	if (in_interrupt())
 		panic("Fatal exception in interrupt");
