@@ -45,8 +45,11 @@ do { \
 #endif
 
 #define DDL_MSG_INFO(x...)   printk(KERN_INFO x)
-#define DDL_MSG_ERROR(x...)  printk(KERN_INFO x)
-#define DDL_MSG_FATAL(x...)  printk(KERN_INFO x)
+#define DDL_MSG_ERROR(x...)  do{ if (printk_ratelimit()) \
+								    printk(KERN_INFO x);} while(0)
+#define DDL_MSG_FATAL(x...)  do{ if (printk_ratelimit()) \
+							           printk(KERN_INFO x);} while(0)
+/* OPPO 2013-04-16 huanggd Modify end*/
 
 #define DDL_ALIGN_SIZE(sz, guard_bytes, align_mask) \
 	(((u32)(sz) + guard_bytes) & align_mask)
