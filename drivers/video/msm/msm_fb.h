@@ -47,6 +47,10 @@
 #include "msm_fb_panel.h"
 #include "mdp.h"
 
+#ifdef CONFIG_MACH_APQ8064_FIND5	
+#define SPLASH_SCREEN_BUFFER_FOR_1080P
+#endif
+
 #define MSM_FB_DEFAULT_PAGE_SIZE 2
 #define MFD_KEY  0x11161126
 #define MSM_FB_MAX_DEV_LIST 32
@@ -215,7 +219,13 @@ struct msm_fb_data_type {
 	boolean panel_driver_on;
 	int vsync_sysfs_created;
 	void *copy_splash_buf;
+#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef SPLASH_SCREEN_BUFFER_FOR_1080P
+	dma_addr_t copy_splash_phys;
+#else	
 	unsigned char *copy_splash_phys;
+#endif
+#endif
 	uint32 sec_mapped;
 	uint32 sec_active;
 	uint32 max_map_size;
@@ -255,6 +265,12 @@ int msm_fb_check_frame_rate(struct msm_fb_data_type *mfd,
 
 #ifdef CONFIG_FB_MSM_LOGO
 #define INIT_IMAGE_FILE "/initlogo.rle"
+#ifdef CONFIG_MACH_APQ8064_FIND5
+#define	INIT_IMAGE_WLAN "wlan.rle"
+#define	INIT_IMAGE_RF "rf.rle"
+#define	INIT_IMAGE_FASTBOOT "fastboot.rle"
+#define	INIT_IMAGE_AT "at.rle"
+#endif
 int load_565rle_image(char *filename, bool bf_supported);
 #endif
 

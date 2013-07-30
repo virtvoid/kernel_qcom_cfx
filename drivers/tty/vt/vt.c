@@ -2711,7 +2711,6 @@ static int con_write(struct tty_struct *tty, const unsigned char *buf, int count
 	return retval;
 }
 
-/* OPPO 2012-10-11 chendx Add begin for OPPO debug tools */
 #ifdef CONFIG_OPPO_DEBUG_ASSERT
 
 #ifdef CONFIG_FRAMEBUFFER_CONSOLE
@@ -2756,7 +2755,6 @@ int oppo_con_write(const unsigned char *buf, int count)
 
 #ifdef CONFIG_FRAMEBUFFER_CONSOLE
 #ifndef CONFIG_FB_BACKLIGHT
-    //otracer_lcd_backlight_en();
 #endif
 #endif
 
@@ -2857,7 +2855,6 @@ int oppo_finalize_print_to_lcd(void)
 EXPORT_SYMBOL(oppo_finalize_print_to_lcd);
 
 #endif
-/* OPPO 2012-10-11 chendx Add end */
 
 static int con_put_char(struct tty_struct *tty, unsigned char ch)
 {

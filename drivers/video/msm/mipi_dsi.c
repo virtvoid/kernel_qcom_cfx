@@ -43,8 +43,13 @@ static boolean tlmm_settings = FALSE;
 static int mipi_dsi_probe(struct platform_device *pdev);
 static int mipi_dsi_remove(struct platform_device *pdev);
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
+int mipi_dsi_off(struct platform_device *pdev);
+int mipi_dsi_on(struct platform_device *pdev);
+#else
 static int mipi_dsi_off(struct platform_device *pdev);
 static int mipi_dsi_on(struct platform_device *pdev);
+#endif
 static int mipi_dsi_fps_level_change(struct platform_device *pdev,
 					u32 fps_level);
 
@@ -72,8 +77,11 @@ static int mipi_dsi_fps_level_change(struct platform_device *pdev,
 	mipi_dsi_configure_fb_divider(fps_level);
 	return 0;
 }
-
+#ifdef CONFIG_MACH_APQ8064_FIND5
+int mipi_dsi_off(struct platform_device *pdev)
+#else
 static int mipi_dsi_off(struct platform_device *pdev)
+#endif
 {
 	int ret = 0;
 	struct msm_fb_data_type *mfd;
@@ -143,7 +151,11 @@ static int mipi_dsi_off(struct platform_device *pdev)
 	return ret;
 }
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
+int mipi_dsi_on(struct platform_device *pdev)
+#else
 static int mipi_dsi_on(struct platform_device *pdev)
+#endif
 {
 	int ret = 0;
 	u32 clk_rate;
@@ -163,6 +175,9 @@ static int mipi_dsi_on(struct platform_device *pdev)
 	fbi = mfd->fbi;
 	var = &fbi->var;
 	pinfo = &mfd->panel_info;
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	esc_byte_ratio = pinfo->mipi.esc_byte_ratio;
+#endif
 
 	if (mipi_dsi_pdata && mipi_dsi_pdata->dsi_power_save)
 		mipi_dsi_pdata->dsi_power_save(1);
@@ -346,6 +361,9 @@ static int mipi_dsi_late_init(struct platform_device *pdev)
 
 
 static int mipi_dsi_resource_initialized;
+#ifdef CONFIG_MACH_APQ8064_FIND5
+struct platform_device *g_mdp_dev = NULL;
+#endif
 
 static int mipi_dsi_probe(struct platform_device *pdev)
 {
@@ -465,9 +483,18 @@ static int mipi_dsi_probe(struct platform_device *pdev)
 	if (pdev_list_cnt >= MSM_FB_MAX_DEV_LIST)
 		return -ENOMEM;
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	if (!mfd->cont_splash_done)
+		cont_splash_clk_ctrl(1);
+#endif
+
 	mdp_dev = platform_device_alloc("mdp", pdev->id);
 	if (!mdp_dev)
 		return -ENOMEM;
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	g_mdp_dev = mdp_dev;
+#endif
+
 
 	/*
 	 * link to the latest pdev

@@ -424,10 +424,10 @@ int vt_ioctl(struct tty_struct *tty,
 			return -EPERM;
 		switch (arg) {
 		case KD_GRAPHICS:
-/* OPPO 2012-10-11 chendx Add begin for debug tools */
+#ifdef CONFIG_MACH_APQ8064_FIND5
 			pr_info("%s KD_GRAPHICS comm:%s, pid:%d\n", 
 						__func__, current->comm, current->pid);
-/* OPPO 2012-10-11 chendx Add end */
+#endif
 			break;
 		case KD_TEXT0:
 		case KD_TEXT1:

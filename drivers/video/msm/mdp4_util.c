@@ -524,7 +524,11 @@ irqreturn_t mdp4_isr(int irq, void *ptr)
 	outpdw(MDP_INTR_CLEAR, isr);
 
 	if (isr & INTR_PRIMARY_INTF_UDERRUN) {
+#ifdef CONFIG_MACH_APQ8064_FIND5
+		pr_err("%s: UNDERRUN -- primary, cnt=%lu\n", __func__, mdp4_stat.intr_underrun_p);
+#else
 		pr_debug("%s: UNDERRUN -- primary\n", __func__);
+#endif
 		mdp4_stat.intr_underrun_p++;
 		/* When underun occurs mdp clear the histogram registers
 		that are set before in hw_init so restore them back so

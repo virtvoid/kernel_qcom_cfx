@@ -44,6 +44,15 @@
 #endif
 #include "mipi_dsi.h"
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
+#define FORBID_POWER_COLLAPSE
+#ifdef FORBID_POWER_COLLAPSE
+#include <linux/pm_qos.h>
+#define MDP_LATENCY	1300
+struct pm_qos_request mdp_pm_qos_req_dma;
+#endif
+#endif
+
 uint32 mdp4_extn_disp;
 u32 mdp_iommu_max_map_size;
 static struct clk *mdp_clk;
@@ -64,7 +73,11 @@ static struct res_mmu_clk mdp_sec_mmu_clks[] = {
 int mdp_rev;
 int mdp_iommu_split_domain;
 u32 mdp_max_clk = 266667000;
+#ifdef CONFIG_MACH_APQ8064_FIND5
+u64 mdp_max_bw = 3080000000UL; 
+#else
 u64 mdp_max_bw = 2000000000;
+#endif
 u32 mdp_bw_ab_factor = MDP4_BW_AB_DEFAULT_FACTOR;
 u32 mdp_bw_ib_factor = MDP4_BW_IB_DEFAULT_FACTOR;
 static struct platform_device *mdp_init_pdev;
@@ -171,6 +184,18 @@ struct list_head mdp_hist_lut_list;
 DEFINE_MUTEX(mdp_hist_lut_list_mutex);
 uint32_t last_lut[MDP_HIST_LUT_SIZE];
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
+extern int get_boot_mode(void);
+enum{
+	MSM_BOOT_MODE__NORMAL,
+	MSM_BOOT_MODE__FASTBOOT,
+	MSM_BOOT_MODE__RECOVERY,
+	MSM_BOOT_MODE__FACTORY,
+	MSM_BOOT_MODE__RF,
+	MSM_BOOT_MODE__WLAN,
+	MSM_BOOT_MODE__CHARGE,
+};
+#endif
 uint32_t mdp_block2base(uint32_t block)
 {
 	uint32_t base = 0x0;
@@ -2848,9 +2873,22 @@ static int mdp_probe(struct platform_device *pdev)
 			mdp_bw_ib_factor = mdp_pdata->mdp_bw_ib_factor;
 
 		mdp_rev = mdp_pdata->mdp_rev;
-
+#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef FORBID_POWER_COLLAPSE
+		pm_qos_add_request(&mdp_pm_qos_req_dma,
+				PM_QOS_CPU_DMA_LATENCY, PM_QOS_DEFAULT_VALUE);
+		pm_qos_update_request(&mdp_pm_qos_req_dma,
+				MDP_LATENCY + 1);
+		printk ("%s: pm_qos_update_request", __func__);
+#endif
+#endif
 		mdp_iommu_split_domain = mdp_pdata->mdp_iommu_split_domain;
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
+		if((get_boot_mode() != MSM_BOOT_MODE__NORMAL) 
+			&& (get_boot_mode() != MSM_BOOT_MODE__RECOVERY))
+			mdp_pdata->cont_splash_enabled = 0;
+#endif
 		rc = mdp_irq_clk_setup(pdev, mdp_pdata->cont_splash_enabled);
 
 		if (rc)
@@ -3453,6 +3491,13 @@ static int mdp_remove(struct platform_device *pdev)
 		msm_bus_scale_unregister_client(mdp_bus_scale_handle);
 		mdp_bus_scale_handle = 0;
 	}
+#endif
+#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef FORBID_POWER_COLLAPSE
+	pm_qos_update_request(&mdp_pm_qos_req_dma,
+			PM_QOS_DEFAULT_VALUE);
+	printk ("%s: pm_qos_update_request", __func__);
+#endif
 #endif
 	return 0;
 }
