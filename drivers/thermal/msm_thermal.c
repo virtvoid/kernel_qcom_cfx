@@ -275,36 +275,7 @@ reschedule:
     return;
 }
 
-static int __cpuinit msm_thermal_cpu_callback(struct notifier_block *nfb,
-		unsigned long action, void *hcpu)
-{
-	unsigned int cpu = (unsigned long)hcpu;
-
-	if (action == CPU_UP_PREPARE || action == CPU_UP_PREPARE_FROZEN) {
-		if (core_control_enabled &&
-			(msm_thermal_info.core_control_mask & BIT(cpu)) &&
-			(cpus_offlined & BIT(cpu))) {
-			pr_info(
-			"%s: Preventing cpu%d from coming online.\n",
-				KBUILD_MODNAME, cpu);
-			return NOTIFY_BAD;
-		}
-	}
-
-
-	return NOTIFY_OK;
-}
-
-static struct notifier_block __refdata msm_thermal_cpu_notifier = {
-	.notifier_call = msm_thermal_cpu_callback,
-};
-
-/**
- * We will reset the cpu frequencies limits here. The core online/offline
- * status will be carried over to the process stopping the msm_thermal, as
- * we dont want to online a core and bring in the thermal issues.
- */
-static void __cpuinit disable_msm_thermal(void)
+static void disable_msm_thermal(void)
 {
     int cpu = 0;
     struct cpufreq_policy *cpu_policy = NULL;
@@ -338,7 +309,7 @@ static void enable_msm_thermal(void)
     pr_info("msm_thermal: Thermal guard enabled.");
 }
 
-static int __cpuinit set_enabled(const char *val, const struct kernel_param *kp)
+static int set_enabled(const char *val, const struct kernel_param *kp)
 {
     int ret = 0;
 
