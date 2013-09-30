@@ -94,6 +94,9 @@ extern struct platform_device apq8064_device_uart_gsbi7;
 extern struct platform_device apq8064_device_qup_i2c_gsbi1;
 extern struct platform_device apq8064_device_qup_i2c_gsbi3;
 extern struct platform_device apq8064_device_qup_i2c_gsbi4;
+#ifdef CONFIG_MACH_N1
+extern struct platform_device apq8064_device_qup_i2c_gsbi5;
+#endif
 #ifdef CONFIG_MACH_APQ8064_FIND5
 extern struct platform_device apq8064_device_qup_i2c_gsbi7;
 #endif
@@ -431,7 +434,7 @@ extern struct platform_device msm_device_csic1;
 extern struct platform_device msm_device_vfe;
 extern struct platform_device msm_device_vpe;
 extern struct platform_device mpq8064_device_qup_i2c_gsbi5;
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined CONFIG_MACH_APQ8064_FIND5 || defined CONFIG_MACH_N1
 extern struct platform_device apq8064_device_uart_gsbi5;
 #endif
 
