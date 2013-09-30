@@ -79,6 +79,10 @@ static int download_mode = 0;
 static int download_mode = 1;
 #endif
 
+#ifdef CONFIG_MACH_N1
+static int download_mode = 0;
+#endif
+
 module_param_call(download_mode, dload_set, param_get_int,
 			&download_mode, 0644);
 
@@ -320,6 +324,20 @@ void msm_restart(char mode, const char *cmd)
 			__raw_writel(0x77665500, restart_reason);
 		} else if (!strncmp(cmd, "recovery", 8)) {
 			__raw_writel(0x77665502, restart_reason);
+#ifdef CONFIG_MACH_N1
+		} else if (!strncmp(cmd, "rf", 2)) {
+			__raw_writel(RF_MODE, restart_reason);
+		} else if (!strncmp(cmd, "wlan", 4)) {
+			__raw_writel(WLAN_MODE, restart_reason);
+		} else if (!strncmp(cmd, "ftm", 3)) {
+			__raw_writel(FACTORY_MODE, restart_reason);
+		} else if (!strncmp(cmd, "kernel", 6)) {
+			__raw_writel(KERNEL_MODE, restart_reason);
+		} else if (!strncmp(cmd, "modem", 5)) {
+			__raw_writel(MODEM_MODE, restart_reason);
+		} else if (!strncmp(cmd, "android", 7)) {
+			__raw_writel(ANDROID_MODE, restart_reason);
+#endif
 		} else if (!strncmp(cmd, "oem-", 4)) {
 			unsigned long code;
 			code = simple_strtoul(cmd + 4, NULL, 16) & 0xff;
@@ -394,6 +412,9 @@ static int __init msm_restart_init(void)
 	__raw_writel(0x7766550a, restart_reason);
 #endif
 	pm_power_off = msm_power_off;
+#ifdef CONFIG_MACH_N1
+	__raw_writel(KERNEL_MODE, restart_reason);
+#endif
 
 	return 0;
 }
