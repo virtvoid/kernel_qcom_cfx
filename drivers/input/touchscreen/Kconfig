@@ -1014,5 +1014,11 @@ config TOUCHSCREEN_SYNAPTICS_S3202_I2C_RMI
 	help
 	  This enables support for Synaptics s3202 RMI over I2C based touchscreens.
 
+config TOUCHSCREEN_Y8C20X66A
+	tristate "Y8C20X66A back touchscreen device"
+	depends on I2C
+	help
+	  Say Y here to enable support for Y8C20X66A back touchscreen driver.
+
 endif
 

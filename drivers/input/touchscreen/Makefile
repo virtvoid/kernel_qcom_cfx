@@ -88,3 +88,4 @@ obj-$(CONFIG_TOUCHSCREEN_SYNAPTICS_DSX_RMI4_DEV)	+= synaptics_rmi_dev.o
 obj-$(CONFIG_TOUCHSCREEN_SYNAPTICS_DSX_FW_UPDATE) 	+= synaptics_fw_update.o
 obj-$(CONFIG_TOUCHSCREEN_SYNAPTICS_S3202_I2C_RMI) += synaptics_s3202_i2c_rmi.o
 obj-$(CONFIG_TOUCHSCREEN_SYNAPTICS_S3202_I2C_RMI) += synaptics_update_firmware.o
+obj-$(CONFIG_TOUCHSCREEN_Y8C20X66A)	+= touch_y8c20x66a.o
