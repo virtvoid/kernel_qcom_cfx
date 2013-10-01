@@ -5,6 +5,19 @@
 #ifndef _PCB_VERSION_H
 #define _PCB_VERSION_H
 
+#ifdef CONFIG_MACH_N1
+enum {
+	MSM_BOOT_MODE_NORMAL,
+	MSM_BOOT_MODE_FASTBOOT,
+	MSM_BOOT_MODE_RECOVERY,
+	MSM_BOOT_MODE_FACTORY,
+	MSM_BOOT_MODE_RF,
+	MSM_BOOT_MODE_WLAN,
+	MSM_BOOT_MODE_CHARGE,
+};
+#endif
+
+/*OPPO 2013-08-23 zhangpan add begin for read hw version*/
 enum {
 	PCB_VERSION_EVB,
 	PCB_VERSION_EVT,
@@ -17,11 +30,26 @@ enum {
 	PCB_VERSION_PVT2_TD,
 	PCB_VERSION_PVT3_TD,
 
+#ifdef CONFIG_MACH_N1
+	PCB_VERSION_EVT_N1,	 //900mv
+	PCB_VERSION_EVT_N1F,	 //1800mv
+	PCB_VERSION_EVT3_N1F,
+	PCB_VERSION_DVT_N1F,
+	PCB_VERSION_PVT_N1F,
+	PCB_VERSION_EVT3_N1T,
+	PCB_VERSION_DVT_N1T,
+	PCB_VERSION_PVT_N1T,
+#endif
+
 	PCB_VERSION_UNKNOWN,
 };
+/*OPPO 2013-08-23 zhangpan add end for read hw version*/
 
+ifdef CONFIG_MACH_N1
+int get_boot_mode(void);
+int get_pcb_version(void);
+#else
 extern int get_pcb_version(void);
+#endif
 
 #endif /* _PCB_VERSION_H */
-
-
