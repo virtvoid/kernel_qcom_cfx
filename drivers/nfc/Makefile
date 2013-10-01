@@ -4,6 +4,7 @@
 
 obj-$(CONFIG_OPPO_PN544_NFC)	+= oppo_pn544.o
 obj-$(CONFIG_PN544_NFC)		+= pn544.o
+obj-$(CONFIG_PN544_NFC_OPPO)	+= pn544-oppo.o
 obj-$(CONFIG_NFC_PN533)		+= pn533.o
 obj-$(CONFIG_NFC_WILINK)	+= nfcwilink.o
 obj-$(CONFIG_BCM2079X)		+= bcm2079x-i2c.o
