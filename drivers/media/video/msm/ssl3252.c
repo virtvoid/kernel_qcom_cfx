@@ -11,6 +11,7 @@
 #include <linux/i2c/ssl3252.h>
 #include <linux/leds.h>
 #include <linux/gpio.h>
+#include <linux/pcb_version.h>
 
 //#define SSL3252_DEBUG 1
 #define CAMERA_FLASH_SSL3252_DEBUG
@@ -402,7 +403,10 @@ void ssl3252_set_torch_control(unsigned long cur)
 	} else if(cur == 0) {
 /* OPPO 2013-08-09 huanggd Modify begin for less print in system sleep/wakeup, may reduce system power*/				
 		//CDBG_FLASH("cur is 0\n");
-/* OPPO 2013-08-09 huanggd Modify end*/					
+/* OPPO 2013-08-09 huanggd Modify end*/
+#ifdef CONFIG_MACH_N1
+		CDBG_FLASH("cur is 0\n");
+#endif
 		if(current_state == 1){
 			ssl3252_torch_control(ssl3252_client, cur);
 			ssl3252_shutdown();
@@ -593,6 +597,9 @@ static void ssl3252_set_brightness(struct led_classdev *led_cdev,
 /* OPPO 2013-08-09 huanggd Modify begin for less print in system sleep/wakeup, may reduce system power*/
 	//CDBG_FLASH("%s", __func__);
 /* OPPO 2013-08-09 huanggd Modify end*/	
+#ifdef CONFIG_MACH_N1
+	CDBG_FLASH("%s", __func__);
+#endif
 	ssl3252_set_torch_control(brightness);
 	current_britness = brightness;
 }
@@ -749,7 +756,22 @@ static struct i2c_driver ssl3252_i2c_driver = {
 /*-----------------------------------------------------------------*/
 static int __init ssl3252_init(void) 
 {
+#if !defined CONFIG_MACH_N1
 	return i2c_add_driver(&ssl3252_i2c_driver);
+#else
+	/* OPPO 2013-09-13 liubin Modify for N1 not use ssl3232 start */
+	#if 0
+	return i2c_add_driver(&ssl3252_i2c_driver);
+	#else
+	int rc = 0;
+	if (get_pcb_version() < PCB_VERSION_EVT_N1)
+	{
+		rc = i2c_add_driver(&ssl3252_i2c_driver);
+	}
+	return rc;
+	#endif
+	/* OPPO 2013-09-13 liubin Modify end */
+#endif
 }
 
 static void __exit ssl3252_eixt(void)
