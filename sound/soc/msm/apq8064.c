@@ -141,7 +141,7 @@ static struct tabla_mbhc_config mbhc_cfg = {
 	.mclk_rate = TABLA_EXT_CLK_RATE,
 	.gpio = 0,
 	.gpio_irq = 0,
-#ifndef CONFIG_MACH_APQ8064_FIND5
+#if !defined (CONFIG_MACH_APQ8064_FIND5) && !defined (CONFIG_MACH_N1)
 	.gpio_level_insert = 1,
 #else
 	.gpio_level_insert = 0,
@@ -538,6 +538,12 @@ static const struct snd_soc_dapm_widget apq8064_dapm_widgets[] = {
 	SND_SOC_DAPM_MIC("Digital Mic4", NULL),
 	SND_SOC_DAPM_MIC("Digital Mic5", NULL),
 	SND_SOC_DAPM_MIC("Digital Mic6", NULL),
+
+#ifdef CONFIG_MACH_N1
+	SND_SOC_DAPM_MIC("Main Mic", NULL),
+	SND_SOC_DAPM_MIC("Second Mic", NULL),
+	SND_SOC_DAPM_MIC("ANC Mic", NULL),
+#endif
 };
 
 static const struct snd_soc_dapm_route apq8064_common_audio_map[] = {
@@ -571,7 +577,7 @@ static const struct snd_soc_dapm_route apq8064_common_audio_map[] = {
 	{"AMIC2", NULL, "MIC BIAS2 External"},
 	{"MIC BIAS2 External", NULL, "Headset Mic"},
 
-#ifndef CONFIG_SND_SOC_DUAL_AMIC
+#if !defined(CONFIG_SND_SOC_DUAL_AMIC) && !defined(CONFIG_MACH_N1)
 	/* Headset ANC microphones */
 #ifndef CONFIG_MACH_APQ8064_FIND5
 	{"AMIC3", NULL, "MIC BIAS3 Internal1"},
@@ -587,6 +593,15 @@ static const struct snd_soc_dapm_route apq8064_common_audio_map[] = {
 	{"AMIC4", NULL, "MIC BIAS1 Internal1"},
 	{"MIC BIAS1 Internal1", NULL, "Second Mic"},
 #endif
+#endif
+
+#ifdef CONFIG_MACH_N1
+	{"AMIC3", NULL, "MIC BIAS1 Internal1"},
+	{"MIC BIAS1 Internal1", NULL, "Main Mic"},
+	{"AMIC4", NULL, "MIC BIAS1 Internal1"},
+	{"MIC BIAS1 Internal1", NULL, "Second Mic"},
+	{"AMIC5", NULL, "MIC BIAS1 Internal1"},
+	{"MIC BIAS1 Internal1", NULL, "ANC Mic"},
 #endif
 };
 
@@ -935,7 +950,7 @@ static void *def_tabla_mbhc_cal(void)
 	S(mic_current, TABLA_PID_MIC_5_UA);
 	S(hph_current, TABLA_PID_MIC_5_UA);
 	S(t_mic_pid, 100);
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 	S(t_ins_complete, 200);
 #else
 	S(t_ins_complete, 250);
@@ -943,7 +958,7 @@ static void *def_tabla_mbhc_cal(void)
 	S(t_ins_retry, 200);
 #undef S
 #define S(X, Y) ((TABLA_MBHC_CAL_PLUG_TYPE_PTR(tabla_cal)->X) = (Y))
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 	S(v_no_mic, 100);
 	S(v_hs_max, 2000);
 #else
@@ -1365,11 +1380,11 @@ static int msm_audrx_init(struct snd_soc_pcm_runtime *rtd)
 		apq8064_hs_detect_use_gpio = 1;
 	}
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 	apq8064_hs_detect_use_gpio = 1;
 #endif
-	if (apq8064_hs_detect_use_gpio == 1) 
-	{
+
+	if (apq8064_hs_detect_use_gpio == 1) {
 		pr_debug("%s: Using MBHC mechanical switch\n", __func__);
 		mbhc_cfg.gpio = JACK_DETECT_GPIO;
 		mbhc_cfg.gpio_irq = gpio_to_irq(JACK_DETECT_GPIO);
