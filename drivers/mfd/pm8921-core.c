@@ -683,7 +683,7 @@ pm8921_add_subdevices(const struct pm8921_platform_data *pdata,
 						= CHANNEL_BATT_THERM;
 		pdata->charger_pdata->charger_cdata.batt_id_channel
 						= CHANNEL_BATT_ID;
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 		pdata->charger_pdata->charger_cdata.chg_voltage_channel
 						= CHANNEL_USBIN;
 #endif
