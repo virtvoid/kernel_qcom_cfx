@@ -35,8 +35,8 @@ extern u32 mdp_bw_ab_factor;
 extern u32 mdp_bw_ib_factor;
 extern u32 mdp_iommu_max_map_size;
 #ifdef CONFIG_MACH_APQ8064_FIND5
-#define MDP4_BW_AB_FACTOR (200)	/* 2.00 */
-#define MDP4_BW_IB_FACTOR (210)	/* 2.10 */
+#define MDP4_BW_AB_DEFAULT_FACTOR (200)	/* 2.00 */
+#define MDP4_BW_IB_DEFAULT_FACTOR (210)	/* 2.10 */
 #else
 #define MDP4_BW_AB_DEFAULT_FACTOR (115)	/* 1.15 */
 #define MDP4_BW_IB_DEFAULT_FACTOR (150)	/* 1.5 */

@@ -2759,11 +2759,6 @@ static int mdp4_overlay_req2pipe(struct mdp_overlay *req, int mixer,
 	return 0;
 }
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
-static int mdp4_calc_req_mdp_clk(struct msm_fb_data_type *mfd,
-				 u32 src_h, u32 dst_h, u32 src_w, u32 dst_w)
-#endif
-
 static int mdp4_calc_req_mdp_clk(struct msm_fb_data_type *mfd,
 				 u32 src_h, u32 dst_h, u32 src_w, u32 dst_w)
 {
@@ -2958,45 +2953,19 @@ static int mdp4_calc_pipe_mdp_clk(struct msm_fb_data_type *mfd,
 	pipe->req_clk = mdp4_calc_req_mdp_clk
 		(mfd, pipe->src_h, pipe->dst_h, pipe->src_w, pipe->dst_w);
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
-	if (!pipe) {
-		pr_debug("%s: pipe is null!\n", __func__);
-		return ret;
-	}
-	if (!mfd) {
-		pr_debug("%s: mfd is null!\n", __func__);
-		return ret;
-	}
-
-	/*
-	 * Serveral special cases require the max mdp clk but cannot
-	 * be explained by mdp clk equation.
-	 */
-	if (pipe->flags & MDP_DEINTERLACE) {
-		pr_debug("%s deinterlace requires max mdp clk.\n",
-			__func__);
-		pipe->req_clk = mdp_max_clk;
-		return 0;
-	}
-
-	pr_debug("%s: src(w,h)(%d,%d),src(x,y)(%d,%d)\n",
-		 __func__,  pipe->src_w, pipe->src_h, pipe->src_x, pipe->src_y);
-	pr_debug("%s: dst(w,h)(%d,%d),dst(x,y)(%d,%d)\n",
-		 __func__, pipe->dst_w, pipe->dst_h, pipe->dst_x, pipe->dst_y);
-
-	pipe->req_clk = mdp4_calc_req_mdp_clk
-		(mfd, pipe->src_h, pipe->dst_h, pipe->src_w, pipe->dst_w);
-	pr_debug("Neal %s: required mdp clk %d mixer %d pipe ndx %d\n",
-		 __func__, pipe->req_clk, pipe->mixer_num, pipe->pipe_ndx);
-
-		pipe->req_clk = (((pipe->req_clk) >> shift) * 23 / 20) << shift;
-#else
 	pr_debug("%s: required mdp clk %d mixer %d pipe ndx %d\n",
 		 __func__, pipe->req_clk, pipe->mixer_num, pipe->pipe_ndx);
-#endif
+
 	return 0;
 }
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
+    pr_debug("%s: required mdp clk %d mixer %d pipe ndx %d\n",
+		 __func__, pipe->req_clk, pipe->mixer_num, pipe->pipe_ndx);
+
+	return 0;
+}
+#endif
 static int mdp4_calc_pipe_mdp_bw(struct msm_fb_data_type *mfd,
 			 struct mdp4_overlay_pipe *pipe)
 {
@@ -3188,7 +3157,6 @@ int mdp4_overlay_mdp_perf_req(struct msm_fb_data_type *mfd)
 			perf_req->use_ov_blt[pipe->mixer_num] = 1;
 #endif
 		}
-/* OPPO Neal modify end*/
 		if (pipe->mixer_num == MDP4_MIXER2)
 			perf_req->use_ov_blt[MDP4_MIXER2] = 1;
 
