@@ -4275,6 +4275,7 @@ static int __devexit pm8921_bms_remove(struct platform_device *pdev)
 	return 0;
 }
 
+#ifndef CONFIG_MACH_APQ8064_FIND5
 static int pm8921_bms_suspend(struct device *dev)
 {
 	struct pm8921_bms_chip *chip = dev_get_drvdata(dev);
@@ -4285,6 +4286,7 @@ static int pm8921_bms_suspend(struct device *dev)
 
 	return 0;
 }
+#endif
 
 #ifdef CONFIG_MACH_APQ8064_FIND5
 extern int msmrtc_alarm_read_time(struct rtc_time *tm);
@@ -4355,6 +4357,7 @@ static int pm8921_bms_suspend(struct device *dev)
         return 0;
 }
 #endif
+
 static const struct dev_pm_ops pm8921_bms_pm_ops = {
 	.resume		= pm8921_bms_resume,
 	.suspend	= pm8921_bms_suspend,
