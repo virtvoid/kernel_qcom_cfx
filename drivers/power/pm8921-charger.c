@@ -1654,7 +1654,7 @@ static int pm_chg_uvd_threshold_set(struct pm8921_chg_chip *chip, int thresh_mv)
 				PM8917_USB_UVD_MASK, temp);
 }
 
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 #define PM8921_CHG_IBATMAX_MIN	225
 #else
 #define PM8921_CHG_IBATMAX_MIN	325	
@@ -5530,8 +5530,6 @@ static int eoc_chg_done_hanlde(struct pm8921_chg_chip *chip)
 	    pr_info("End of charging!\n");
 		pm_chg_auto_enable(chip, 0);
 		chip->charge_is_finished = true;
-		/* OPPO 2013-02-17 chendx Add begin for warm charge not full */
-		#ifdef CONFIG_VENDOR_EDIT
 		/* adjust vdd_max only in normal temperature zone */
 		if (Pm8921_battery_temp_region_get(the_chip) == CV_BATTERY_TEMP_REGION_LITTLE__COLD ||
 			Pm8921_battery_temp_region_get(the_chip) == CV_BATTERY_TEMP_REGION__WARM){
@@ -5540,8 +5538,6 @@ static int eoc_chg_done_hanlde(struct pm8921_chg_chip *chip)
 		}else{
 			chip->bms_notify.is_battery_full = 1;
 		}
-		#endif
-		/* OPPO 2013-02-17 chendx Add end */
 		
 		/**
 		 **XXX stop teoc work
@@ -5651,6 +5647,18 @@ static void update_heartbeat(struct work_struct *work)
 				struct pm8921_chg_chip, update_heartbeat_work);
 	bool chg_present = chip->usb_present || chip->dc_present;
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
+    static int soc_backup = 0;
+	char *batt_health[] = {
+			"HEALTH_UNKNOWN",
+		    "HEALTH_GOOD",
+			"HEALTH_OVERHEAT",
+			"HEALTH_DEAD",
+			"HEALTH_OVERVOLTAGE",			
+			"HEALTH_UNSPEC_FAILURE",
+		    "HEALTH_COLD"};
+#endif
+
 	/* for battery health when charger is not connected */
 	if (chip->btc_override && !chg_present)
 		schedule_delayed_work(&chip->btc_override_work,
@@ -5665,16 +5673,6 @@ static void update_heartbeat(struct work_struct *work)
 	if (chip->btc_override && chg_present &&
 				!wake_lock_active(&chip->eoc_wake_lock))
 		check_temp_thresholds(chip);
-#ifdef CONFIG_MACH_APQ8064_FIND5
-    static int soc_backup = 0;
-	char *batt_health[] = {
-			"HEALTH_UNKNOWN",
-		    "HEALTH_GOOD",
-			"HEALTH_OVERHEAT",
-			"HEALTH_DEAD",
-			"HEALTH_OVERVOLTAGE",			
-			"HEALTH_UNSPEC_FAILURE",
-		    "HEALTH_COLD"};
 
 	if(boot_time)
 		boot_time--;
