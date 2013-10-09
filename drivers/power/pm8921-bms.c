@@ -483,19 +483,6 @@ static void pm8921_bms_low_voltage_config(struct pm8921_bms_chip *chip,
 						msecs_to_jiffies(ms));
 }
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
-/**
-* XXX:#define DEFAULT_THRESHOLD_LOWER		3400
-         #define DEFAULT_THRESHOLD_UPPER		4350
-         threshold define with pm8xxx-batt-alarm.c pm8xxx_batt_alarm_config_defaults()
-*/
-static int pm8921_battery_gauge_alarm_notify(struct notifier_block *nb,
-		unsigned long status, void *unused);
-static struct notifier_block alarm_notifier = {
-	.notifier_call = pm8921_battery_gauge_alarm_notify,
-};
-#endif
-
 static int pm8921_bms_enable_batt_alarm(struct pm8921_bms_chip *chip)
 {
 	int rc = 0;
