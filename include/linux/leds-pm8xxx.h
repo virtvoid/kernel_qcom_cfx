@@ -72,7 +72,7 @@ enum wled_ovp_threshold {
 	WLED_OVP_35V,
 	WLED_OVP_32V,
 	WLED_OVP_29V,
-	WLED_OVP_27V,
+	WLED_OVP_37V,
 };
 
 /**
