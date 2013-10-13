@@ -47,7 +47,7 @@
 #include "msm_fb_panel.h"
 #include "mdp.h"
 
-#ifdef CONFIG_MACH_APQ8064_FIND5	
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 #define SPLASH_SCREEN_BUFFER_FOR_1080P
 #endif
 
@@ -219,7 +219,7 @@ struct msm_fb_data_type {
 	boolean panel_driver_on;
 	int vsync_sysfs_created;
 	void *copy_splash_buf;
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 #ifdef SPLASH_SCREEN_BUFFER_FOR_1080P
 	dma_addr_t copy_splash_phys;
 #else	
@@ -265,6 +265,7 @@ int msm_fb_check_frame_rate(struct msm_fb_data_type *mfd,
 
 #ifdef CONFIG_FB_MSM_LOGO
 #define INIT_IMAGE_FILE "/initlogo.rle"
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 #ifdef CONFIG_MACH_APQ8064_FIND5
 #define	INIT_IMAGE_WLAN "wlan.rle"
 #define	INIT_IMAGE_RF "rf.rle"
