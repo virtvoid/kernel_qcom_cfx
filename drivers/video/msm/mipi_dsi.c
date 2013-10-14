@@ -43,7 +43,7 @@ static boolean tlmm_settings = FALSE;
 static int mipi_dsi_probe(struct platform_device *pdev);
 static int mipi_dsi_remove(struct platform_device *pdev);
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 int mipi_dsi_off(struct platform_device *pdev);
 int mipi_dsi_on(struct platform_device *pdev);
 #else
@@ -77,7 +77,7 @@ static int mipi_dsi_fps_level_change(struct platform_device *pdev,
 	mipi_dsi_configure_fb_divider(fps_level);
 	return 0;
 }
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 int mipi_dsi_off(struct platform_device *pdev)
 #else
 static int mipi_dsi_off(struct platform_device *pdev)
@@ -151,7 +151,7 @@ static int mipi_dsi_off(struct platform_device *pdev)
 	return ret;
 }
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 int mipi_dsi_on(struct platform_device *pdev)
 #else
 static int mipi_dsi_on(struct platform_device *pdev)
@@ -361,6 +361,7 @@ static int mipi_dsi_late_init(struct platform_device *pdev)
 
 
 static int mipi_dsi_resource_initialized;
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 #ifdef CONFIG_MACH_APQ8064_FIND5
 struct platform_device *g_mdp_dev = NULL;
 #endif
@@ -495,6 +496,12 @@ static int mipi_dsi_probe(struct platform_device *pdev)
 	g_mdp_dev = mdp_dev;
 #endif
 
+
+    /* OPPO 2013-02-04 zhengzk Add begin for reason */
+#ifdef CONFIG_MACH_OPPO
+    g_mdp_dev = mdp_dev;
+#endif
+    /* OPPO 2013-02-04 zhengzk Add end */
 
 	/*
 	 * link to the latest pdev
