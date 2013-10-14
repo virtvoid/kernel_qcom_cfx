@@ -501,7 +501,7 @@ power_attr(wake_lock);
 power_attr(wake_unlock);
 #endif
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 extern char pwron_event[];
 
 static ssize_t startup_mode_show(struct kobject *kobj, struct kobj_attribute *attr,
@@ -536,7 +536,7 @@ static ssize_t app_boot_show(struct kobject *kobj, struct kobj_attribute *attr,
         return sprintf(buf, "normal");
 #endif
 }
- 
+
 static ssize_t app_boot_store(struct kobject *kobj, struct kobj_attribute *attr,
 			   const char *buf, size_t n)
 {	
@@ -592,7 +592,7 @@ static struct attribute *g[] = {
 	&wake_unlock_attr.attr,
 #endif
 #endif
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 	&app_boot_attr.attr,
 	&startup_mode_attr.attr,
 	&all_active_wakelock_attr.attr,

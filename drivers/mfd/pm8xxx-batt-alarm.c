@@ -96,7 +96,7 @@
  * pm8xxx_batt_alarm_state_set.
  */
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 #define DEFAULT_THRESHOLD_LOWER		3550
 #else
 #define DEFAULT_THRESHOLD_LOWER		3200
