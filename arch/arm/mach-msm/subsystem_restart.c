@@ -35,6 +35,8 @@
 #include <mach/subsystem_notif.h>
 #include <mach/subsystem_restart.h>
 
+#include <linux/pcb_version.h>
+
 #include "smd_private.h"
 
 struct subsys_soc_restart_order {
@@ -483,7 +485,7 @@ static void __subsystem_restart_dev(struct subsys_device *dev)
 	spin_unlock_irqrestore(&dev->restart_lock, flags);
 }
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 extern void set_need_pin_process_flag(int flag);
 extern int get_sim_status(void);
 int modem_reset_num = 0;
@@ -510,16 +512,30 @@ int subsystem_restart_dev(struct subsys_device *dev)
 
 	pr_info("Restart sequence requested for %s, restart_level = %d.\n",
 		name, restart_level);
-#ifdef CONFIG_MACH_APQ8064_FIND5
+
 	if(!strncmp("external_modem", name,SUBSYS_NAME_MAX_LENGTH))
 	{
 		modem_reset_num++;
-		if(get_sim_status() == 1)
-		{
-			set_need_pin_process_flag(1);
+#ifdef CONFIG_MACH_N1
+		if((get_pcb_version() >=PCB_VERSION_EVT_N1)&&(get_pcb_version() <= PCB_VERSION_PVT_N1T)){
+			if(get_sim_status() == 0)
+			{
+				set_need_pin_process_flag(1);
+			}
+		}else{
+			if(get_sim_status() == 1)
+			{
+				set_need_pin_process_flag(1);
+			}
 		}
-	}
+#else
+        if(get_sim_status() == 1)
+        {
+            set_need_pin_process_flag(1);
+        }
 #endif
+	}
+
 	switch (restart_level) {
 
 	case RESET_SUBSYS_COUPLED:
@@ -659,7 +675,7 @@ static int __init ssr_init_soc_restart_orders(void)
 
 static int __init subsys_restart_init(void)
 {
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 	restart_level = RESET_SUBSYS_COUPLED;
 #else
 	restart_level = RESET_SOC;
