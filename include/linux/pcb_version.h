@@ -46,8 +46,8 @@ enum {
 /*OPPO 2013-08-23 zhangpan add end for read hw version*/
 
 ifdef CONFIG_MACH_N1
-int get_boot_mode(void);
-int get_pcb_version(void);
+char * get_boot_mode_str(void);
+char * get_start_reason(void);
 #else
 extern int get_pcb_version(void);
 #endif
