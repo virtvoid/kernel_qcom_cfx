@@ -48,6 +48,8 @@ enum {
 ifdef CONFIG_MACH_N1
 char * get_boot_mode_str(void);
 char * get_start_reason(void);
+void set_need_pin_process_flag(int flag);
+int get_sim_status(void);
 #else
 extern int get_pcb_version(void);
 #endif
