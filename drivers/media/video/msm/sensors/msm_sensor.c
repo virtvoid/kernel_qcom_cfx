@@ -17,10 +17,14 @@
 #include "msm_ispif.h"
 #include "msm_camera_i2c_mux.h"
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 #include <linux/regulator/consumer.h>
 #include <mach/vreg.h>
 #include <linux/i2c/ssl3252.h>
+#endif
+
+#ifdef CONFIG_MACH_N1
+#include <linux/pcb_version.h>
 #endif
 
 /*=============================================================*/
@@ -2013,7 +2017,6 @@ int msm_sensor_enable_debugfs(struct msm_sensor_ctrl_t *s_ctrl)
 	return 0;
 }
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
 	static struct regulator *ldo8;
 	static struct regulator *lvs5;
 	static struct regulator *ldo16;
