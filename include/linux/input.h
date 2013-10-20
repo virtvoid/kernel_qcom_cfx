@@ -472,6 +472,17 @@ struct input_keymap_entry {
 #ifdef CONFIG_MACH_APQ8064_FIND5
 #define KEY_DOUBLE_TAP  250
 #endif
+
+#ifdef CONFIG_MACH_N1
+/* N1 specific keycode */
+#define KEY_FLIP_CAMERA         249
+#define KEY_GESTURE_CIRCLE      250
+#define KEY_GESTURE_SWIPE_DOWN  251
+#define KEY_GESTURE_V           252
+#define KEY_GESTURE_LTR         253
+#define KEY_GESTURE_GTR         254
+#endif
+
 /* Code 255 is reserved for special needs of AT keyboard driver */
 
 #define BTN_MISC		0x100
