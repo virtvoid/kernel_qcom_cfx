@@ -420,7 +420,7 @@ static ssize_t adb_write(struct file *fp, const char __user *buf,
 
 static int adb_open(struct inode *ip, struct file *fp)
 {
-	static DEFINE_RATELIMIT_STATE(rl, 10*HZ, 1);
+	static DEFINE_RATELIMIT_STATE(rl, 120*HZ, 1); /* OPPO 2013-09-06 zhangzhilong modify for reduce log info 10->120 */
 
 	if (__ratelimit(&rl))
 		pr_info("adb_open\n");
@@ -446,7 +446,7 @@ static int adb_open(struct inode *ip, struct file *fp)
 
 static int adb_release(struct inode *ip, struct file *fp)
 {
-	static DEFINE_RATELIMIT_STATE(rl, 10*HZ, 1);
+	static DEFINE_RATELIMIT_STATE(rl, 120*HZ, 1);/* OPPO 2013-09-06 zhangzhilong modify for reduce log info 10->120 */
 
 	if (__ratelimit(&rl))
 		pr_info("adb_release\n");

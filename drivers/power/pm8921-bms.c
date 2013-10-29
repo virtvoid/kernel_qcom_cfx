@@ -441,7 +441,6 @@ static int usb_chg_plugged_in(struct pm8921_bms_chip *chip)
 			if((reg1&0x60)==0x20) //bit6:5 CHG_PATH
 				val = 1;
 			
-			pr_info("%s 111usb_chg = %d\n",__func__,val);
 			return val;
 		}
 	
@@ -453,6 +452,7 @@ static int usb_chg_plugged_in(struct pm8921_bms_chip *chip)
 #else
 	int val = pm8921_is_usb_chg_plugged_in();
 #endif
+	
 	/* if the charger driver was not initialized, use the restart reason */
 #ifdef CONFIG_MACH_APQ8064_FIND5
 	if (ret == -EINVAL) {
@@ -1657,8 +1657,10 @@ static int calculate_unusable_charge_uah(struct pm8921_bms_chip *chip,
 	if (iavg_num_samples != 0) {
 		for (i = 0; i < iavg_num_samples; i++) {
 			pr_debug("iavg_samples[%d] = %d\n", i, iavg_samples[i]);
+#ifdef CONFIG_MACH_APQ8064_FIND5
 			if(iavg_samples[i]==0)
 				iavg_samples[i] = 250;
+#endif
 			iavg_ma += iavg_samples[i];
 		}
 
@@ -2562,6 +2564,38 @@ static void calib_hkadc_check(struct pm8921_bms_chip *chip, int batt_temp)
 	}
 }
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
+static int current_cc_uah;
+
+static ssize_t pm_average_current_show(struct device *dev,
+        struct device_attribute *attr, char *buf) {
+
+    static int coulomb0, coulomb1;
+    static unsigned long seconds0, seconds1;
+    int average_current, seconds;
+    
+    coulomb1 = current_cc_uah;
+    seconds1 = get_seconds();
+    seconds = (int)(seconds1 - seconds0);
+    
+    if(coulomb0 != 0) {
+        average_current = 
+            (coulomb1 - coulomb0) * SECONDS_PER_HOUR / (int)(seconds1 - seconds0);
+    } else {
+        average_current = 0;
+    }
+    printk("[AVERAGE CURRENT] %s: coulomb: %d -- %d, sec: %ld -- %ld\n", __func__,
+        coulomb0, coulomb1, seconds0, seconds1);
+    coulomb0 = coulomb1;
+    seconds0 = seconds1;
+
+    return sprintf(buf, "current: %d uA\ntime: %d s\n", 
+                   average_current, seconds);
+}
+
+static DEVICE_ATTR(pm_average_current, 0644,
+                    pm_average_current_show, NULL);
+#endif
 /*
  * Remaining Usable Charge = remaining_charge (charge at ocv instance)
  *				- coloumb counter charge
@@ -2599,6 +2633,9 @@ static int calculate_state_of_charge(struct pm8921_bms_chip *chip,
 						&rbatt,
 						&iavg_ua);
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
+    current_cc_uah = cc_uah;
+#endif
 	/* calculate remaining usable charge */
 	remaining_usable_charge_uah = remaining_charge_uah
 					- cc_uah
@@ -2745,6 +2782,10 @@ static int calculate_state_of_charge(struct pm8921_bms_chip *chip,
 		update_power_supply(chip);
 	}
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	if(shutdown_soc_invalid)
+		calculated_soc = new_calculated_soc;
+#endif
 	firsttime = 0;
 	get_current_time(&chip->last_recalc_time);
 
@@ -4216,6 +4257,13 @@ static int __devinit pm8921_bms_probe(struct platform_device *pdev)
 	the_chip = chip;
 	create_debugfs_entries(chip);
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
+    rc = device_create_file(chip->dev, &dev_attr_pm_average_current);
+    if(rc) {
+        pr_err("couldn't create file pm_average_current, rc=%d\n", rc);
+        device_remove_file(chip->dev, &dev_attr_pm_average_current);
+    }
+#endif
 	rc = read_ocv_trim(chip);
 	if (rc) {
 		pr_err("couldn't adjust ocv_trim rc= %d\n", rc);
@@ -4265,6 +4313,9 @@ static int __devexit pm8921_bms_remove(struct platform_device *pdev)
 {
 	struct pm8921_bms_chip *chip = platform_get_drvdata(pdev);
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
+    device_remove_file(chip->dev, &dev_attr_pm_average_current);
+#endif
 	free_irqs(chip);
 	kfree(chip->adjusted_fcc_temp_lut);
 	platform_set_drvdata(pdev, NULL);

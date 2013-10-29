@@ -825,7 +825,7 @@ int msm_server_streamoff(struct msm_cam_v4l2_device *pcam, int idx)
 
 	/* send command to config thread in usersspace, and get return value */
 	rc = msm_server_control(&g_server_dev, 0, &ctrlcmd);
-
+	printk("%s kangjian rc = %d\n",__func__,rc);//test log
 	return rc;
 }
 

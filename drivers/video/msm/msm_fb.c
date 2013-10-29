@@ -903,8 +903,10 @@ static int msm_fb_ext_suspend(struct device *dev)
 
 		/* Turn off the HPD circuitry */
 		if (pdata->power_ctrl) {
-			MSM_FB_INFO("%s: Turning off HPD circuitry\n",
-					__func__);
+/* OPPO 2013-08-09 huanggd Modify begin for less print in system sleep/wakeup, may reduce system power*/			
+			//MSM_FB_INFO("%s: Turning off HPD circuitry\n",
+			//		__func__);
+/* OPPO 2013-08-09 huanggd Modify end*/
 			pdata->power_ctrl(FALSE);
 		}
 	}
@@ -933,8 +935,10 @@ static int msm_fb_ext_resume(struct device *dev)
 		/* Turn on the HPD circuitry */
 		if (pdata->power_ctrl) {
 			pdata->power_ctrl(TRUE);
-			MSM_FB_INFO("%s: Turning on HPD circuitry\n",
-					__func__);
+/* OPPO 2013-08-09 huanggd Modify begin for less print in system sleep/wakeup, may reduce system power*/			
+			//MSM_FB_INFO("%s: Turning on HPD circuitry\n",
+			//		__func__);
+/* OPPO 2013-08-09 huanggd Modify end*/			
 		}
 
 		ret = msm_fb_resume_sub(mfd);
@@ -3523,8 +3527,11 @@ static int msmfb_overlay_set(struct fb_info *info, void __user *p)
 
 	ret = mdp4_overlay_set(info, &req);
 	if (ret) {
-		printk(KERN_ERR "%s: ioctl failed, rc=%d\n",
-			__func__, ret);
+/* OPPO 2013-08-06 huanggd Modify for reduce printk rate*/		
+		if (printk_ratelimit())				
+			printk(KERN_ERR "%s: ioctl failed, rc=%d\n",
+				__func__, ret);
+/* OPPO 2013-08-06 huanggd Modify end*/			
 		return ret;
 	}
 

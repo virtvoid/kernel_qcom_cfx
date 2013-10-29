@@ -658,9 +658,13 @@ static bool msm_pm_power_collapse(bool from_idle)
 		mb();
 		gic_dist_pending &= gic_dist_enabled;
 
-		if (gic_dist_pending)
-			pr_err("CPU %d interrupted during hotplug.Pending int 0x%x\n",
+		if (gic_dist_pending) {
+/* OPPO 2013-08-29 huanggd Modify for reduce printk rate*/			
+ 			if (printk_ratelimit())		
+				pr_err("CPU %d interrupted during hotplug.Pending int 0x%x\n",
 					cpu, gic_dist_pending);
+/* OPPO 2013-08-29 huanggd Modify end*/				
+		}
 	}
 
 

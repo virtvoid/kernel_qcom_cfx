@@ -358,8 +358,8 @@ static irqreturn_t msm_l2_erp_irq(int irq, void *dev_id)
 	l2ear1 = get_l2_indirect_reg(L2EAR1_IND_ADDR);
 
 	print_alert = print_access_errors() || (l2esr & L2ESR_ACCESS_ERR_MASK);
-
-	if (print_alert) {
+/* OPPO 2013-08-19 huanggd Modify for reduce printk rate*/	
+	if ((print_alert) && (printk_ratelimit())){
 		pr_alert("L2 Error detected!\n");
 		pr_alert("\tL2ESR    = 0x%08x\n", l2esr);
 		pr_alert("\tL2ESYNR0 = 0x%08x\n", l2esynr0);
@@ -371,57 +371,63 @@ static irqreturn_t msm_l2_erp_irq(int irq, void *dev_id)
 	}
 
 	if (l2esr & L2ESR_MPDCD) {
-		if (print_alert)
+		if ((print_alert) && (printk_ratelimit()))
 			pr_alert("L2 master port decode error\n");
 		port_error++;
 		msm_l2_erp_stats.mpdcd++;
 	}
 
 	if (l2esr & L2ESR_MPSLV) {
-		if (print_alert)
+		if ((print_alert) && (printk_ratelimit()))
 			pr_alert("L2 master port slave error\n");
 		port_error++;
 		msm_l2_erp_stats.mpslv++;
 	}
 
 	if (l2esr & L2ESR_TSESB) {
-		pr_alert("L2 tag soft error, single-bit\n");
+		if (printk_ratelimit())
+			pr_alert("L2 tag soft error, single-bit\n");
 		soft_error++;
 		msm_l2_erp_stats.tsesb++;
 	}
 
 	if (l2esr & L2ESR_TSEDB) {
-		pr_alert("L2 tag soft error, double-bit\n");
+		if (printk_ratelimit())
+			pr_alert("L2 tag soft error, double-bit\n");
 		soft_error++;
 		unrecoverable++;
 		msm_l2_erp_stats.tsedb++;
 	}
 
 	if (l2esr & L2ESR_DSESB) {
-		pr_alert("L2 data soft error, single-bit\n");
+		if (printk_ratelimit())
+			pr_alert("L2 data soft error, single-bit\n");
 		soft_error++;
 		msm_l2_erp_stats.dsesb++;
 	}
 
 	if (l2esr & L2ESR_DSEDB) {
-		pr_alert("L2 data soft error, double-bit\n");
+		if (printk_ratelimit())
+			pr_alert("L2 data soft error, double-bit\n");
 		soft_error++;
 		unrecoverable++;
 		msm_l2_erp_stats.dsedb++;
 	}
 
 	if (l2esr & L2ESR_MSE) {
-		pr_alert("L2 modified soft error\n");
+		if (printk_ratelimit())
+			pr_alert("L2 modified soft error\n");
 		soft_error++;
 		msm_l2_erp_stats.mse++;
 	}
 
 	if (l2esr & L2ESR_MPLDREXNOK) {
-		pr_alert("L2 master port LDREX received Normal OK response\n");
+		if (printk_ratelimit())
+			pr_alert("L2 master port LDREX received Normal OK response\n");
 		port_error++;
 		msm_l2_erp_stats.mplxrexnok++;
 	}
-
+/* OPPO 2013-08-19 huanggd Modify end*/	
 	if (port_error && print_alert)
 		ERP_PORT_ERR("L2 master port error detected");
 

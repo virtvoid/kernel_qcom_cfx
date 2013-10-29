@@ -348,7 +348,10 @@ int fat_ent_read(struct inode *inode, struct fat_entry *fatent, int entry)
 
 	if (entry < FAT_START_ENT || sbi->max_cluster <= entry) {
 		fatent_brelse(fatent);
+/* OPPO 2013-08-29 huanggd Modify for reduce printk rate*/
+ 	if (printk_ratelimit())	
 		fat_fs_error(sb, "invalid access to FAT (entry 0x%08x)", entry);
+/* OPPO 2013-08-29 huanggd Modify end*/		
 		return -EIO;
 	}
 

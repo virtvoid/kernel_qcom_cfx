@@ -3611,9 +3611,6 @@ static int ci13xxx_stop(struct usb_gadget_driver *driver)
  * This function returns IRQ_HANDLED if the IRQ has been handled
  * It locks access to registers
  */
-#ifdef CONFIG_MACH_APQ8064_FIND5
-extern void cancel_nonstandard_worker_fn(char *fn_str);
-#endif
 static irqreturn_t udc_irq(void)
 {
 	struct ci13xxx *udc = _udc;

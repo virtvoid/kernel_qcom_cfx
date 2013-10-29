@@ -245,7 +245,13 @@ static struct kgsl_device_platform_data kgsl_3d0_pdata = {
 			.bus_freq = 0,
 		},
 	},
+/* CONFIG_VENDOR_EDIT modify by qiujianfeng 2013-7-15, change init level to 2 */
+#if 0
 	.init_level = 1,
+#else
+	.init_level = 2,
+#endif
+/* CONFIG_VENDOR_EDIT modify by qiujianfeng 2013-7-15 end */
 	.num_levels = 5,
 	.set_grp_async = NULL,
 	.idle_timeout = HZ/10,

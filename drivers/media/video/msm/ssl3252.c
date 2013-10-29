@@ -400,7 +400,9 @@ void ssl3252_set_torch_control(unsigned long cur)
 			ssl3252_torch_control(ssl3252_client, cur);
 		current_state = 1;
 	} else if(cur == 0) {
-		CDBG_FLASH("cur is 0\n");
+/* OPPO 2013-08-09 huanggd Modify begin for less print in system sleep/wakeup, may reduce system power*/				
+		//CDBG_FLASH("cur is 0\n");
+/* OPPO 2013-08-09 huanggd Modify end*/					
 		if(current_state == 1){
 			ssl3252_torch_control(ssl3252_client, cur);
 			ssl3252_shutdown();
@@ -588,7 +590,9 @@ int ssl3252_dev_init(int power_on)
 static void ssl3252_set_brightness(struct led_classdev *led_cdev,
 				      enum led_brightness brightness)
 {
-	CDBG_FLASH("%s", __func__);
+/* OPPO 2013-08-09 huanggd Modify begin for less print in system sleep/wakeup, may reduce system power*/
+	//CDBG_FLASH("%s", __func__);
+/* OPPO 2013-08-09 huanggd Modify end*/	
 	ssl3252_set_torch_control(brightness);
 	current_britness = brightness;
 }

@@ -260,6 +260,15 @@ static int msm_ipc_router_create(struct net *net,
 {
 	struct sock *sk;
 	struct msm_ipc_port *port_ptr;
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	void *pil;
+
+	if (!check_permissions()) {
+		if (printk_ratelimit())		
+			pr_err("%s: Do not have permissions\n", __func__);
+		return -EPERM;
+	}
+#endif
 
 	if (unlikely(protocol != 0)) {
 		pr_err("%s: Protocol not supported\n", __func__);

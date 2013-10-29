@@ -217,7 +217,6 @@ static int lm3528_i2c_remove(struct i2c_client *client)
 static int lm3528_suspend(struct i2c_client *client, pm_message_t mesg)
 {
 	int rc ;
-	
 	rc = gpio_direction_output(LM3528_ENABLE_GPIO, 0);
 	if (rc) {
 		pr_err("%s: unable to enable!!!!!!!!!!!!\n", __func__);
@@ -229,7 +228,6 @@ static int lm3528_suspend(struct i2c_client *client, pm_message_t mesg)
 static int lm3528_resume(struct i2c_client *client)
 {
 	int rc ;
-
 	rc = gpio_direction_output(LM3528_ENABLE_GPIO, 1);
 	if (rc) {
 		pr_err("%s: unable to enable!!!!!!!!!!!!\n", __func__);

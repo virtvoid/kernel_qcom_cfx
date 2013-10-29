@@ -1242,7 +1242,9 @@ static int qseecom_receive_req(struct qseecom_dev_handle *data)
 		if (wait_event_freezable(this_lstnr->rcv_req_wq,
 				__qseecom_listener_has_rcvd_req(data,
 				this_lstnr))) {
-			pr_warning("Interrupted: exiting wait_rcv_req loop\n");
+/* OPPO 2013-08-09 huanggd Modify begin for less print in system sleep/wakeup, may reduce system power*/				
+			//pr_warning("Interrupted: exiting wait_rcv_req loop\n");
+/* OPPO 2013-08-09 huanggd Modify end*/			
 			/* woken up for different reason */
 			return -ERESTARTSYS;
 		}
@@ -2087,8 +2089,10 @@ static long qseecom_ioctl(struct file *file, unsigned cmd,
 		ret = qseecom_receive_req(data);
 		atomic_dec(&data->ioctl_count);
 		wake_up_all(&data->abort_wq);
-		if (ret)
-			pr_err("failed qseecom_receive_req: %d\n", ret);
+/* OPPO 2013-08-09 huanggd Modify begin for less print in system sleep/wakeup, may reduce system power*/		
+		//if (ret)
+			//pr_err("failed qseecom_receive_req: %d\n", ret);
+/* OPPO 2013-08-09 huanggd Modify end*/			
 		break;
 	}
 	case QSEECOM_IOCTL_SEND_RESP_REQ: {

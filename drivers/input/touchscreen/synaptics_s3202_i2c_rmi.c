@@ -1043,7 +1043,7 @@ static int synaptics_init_panel(struct synaptics_ts_data *ts)
 	ts->current_page = MASK_16BIT;
 	ts->need_hardware_reset = 0;
 
-	ret = synaptics_i2c_byte_write(ts, F01_CTRL_DEVICE_CONTROL, 0x84);
+	ret = synaptics_i2c_byte_write(ts, F01_CTRL_DEVICE_CONTROL, 0x80);//huanggd for reduce tp current
 
 	if (ret < 0)
 		dev_err(&ts->client->dev, "%s: i2c_smbus_write_byte_data failed\n", __func__);
@@ -1228,13 +1228,21 @@ static void synaptics_ts_work_func(struct work_struct *work)
 	{
 		if(buf_status[0] != 0)
 		{
+/* OPPO 2013-08-16 huanggd Modify begin for softreset is no use when sometimes tp error*/		
+#if 0
 			print_ts(TS_WARNING, "TP interrupt register status unnormal , software reset !\n");
 			synaptics_software_reset(ts);
+#else
+			print_ts(TS_WARNING, "TP interrupt register status unnormal , hardware reset !\n");
+			synaptics_hardware_reset(ts);			
+#endif
+/* OPPO 2013-08-16 huanggd Modify end*/				
 /* OPPO 2013-05-02 huanggd Add begin for double tap*/			
 #if SUPPORT_DOUBLE_TAP
 			if (ts->is_tp_suspended
 				&&atomic_read(&ts->double_tap_enable)) {
 
+				print_ts(TS_WARNING, "reinit double tp after hardware reset !\n");
 				synaptics_set_int_mask(ts, 0);
 				synaptics_set_report_mode(ts, 0x04);
 				enable_irq_wake(ts->client->irq);

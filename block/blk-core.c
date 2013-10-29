@@ -1448,13 +1448,16 @@ static void handle_bad_sector(struct bio *bio)
 {
 	char b[BDEVNAME_SIZE];
 
-	printk(KERN_INFO "attempt to access beyond end of device\n");
-	printk(KERN_INFO "%s: rw=%ld, want=%Lu, limit=%Lu\n",
+/* OPPO 2013-08-29 huanggd Modify for reduce printk rate*/
+ 	if (printk_ratelimit()) {
+		printk(KERN_INFO "attempt to access beyond end of device\n");
+		printk(KERN_INFO "%s: rw=%ld, want=%Lu, limit=%Lu\n",
 			bdevname(bio->bi_bdev, b),
 			bio->bi_rw,
 			(unsigned long long)bio->bi_sector + bio_sectors(bio),
 			(long long)(i_size_read(bio->bi_bdev->bd_inode) >> 9));
-
+ 	}	
+/* OPPO 2013-08-29 huanggd Modify end*/
 	set_bit(BIO_EOF, &bio->bi_flags);
 }
 

@@ -4446,9 +4446,10 @@ static void vfe32_process_overflow_error(
 			
 			overflow_cnt = 0;
 		}
-	}	
-	pr_err("vfe32: process overflow err %d output mode 0x%x\n",
-		overflow_cnt,share_ctrl->comp_output_mode);
+	}
+	if (printk_ratelimit())	
+		pr_err("vfe32: process overflow err %d output mode 0x%x\n",
+			overflow_cnt,share_ctrl->comp_output_mode);
 }
 #endif
 
@@ -4618,6 +4619,32 @@ static void vfe32_process_common_error_irq(
 #endif
 
 	if (errStatus & VFE32_IMASK_IMG_MAST_0_BUS_OVFL)
+
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	if ((errStatus & VFE32_IMASK_IMG_MAST_0_BUS_OVFL) && printk_ratelimit())
+		pr_err("vfe32_irq: image master 0 bus overflow\n");
+
+	if ((errStatus & VFE32_IMASK_IMG_MAST_1_BUS_OVFL) && printk_ratelimit())
+		pr_err("vfe32_irq: image master 1 bus overflow\n");
+
+	if ((errStatus & VFE32_IMASK_IMG_MAST_2_BUS_OVFL) && printk_ratelimit())
+		pr_err("vfe32_irq: image master 2 bus overflow\n");
+
+	if ((errStatus & VFE32_IMASK_IMG_MAST_3_BUS_OVFL) && printk_ratelimit())
+		pr_err("vfe32_irq: image master 3 bus overflow\n");
+
+	if ((errStatus & VFE32_IMASK_IMG_MAST_4_BUS_OVFL) && printk_ratelimit())
+		pr_err("vfe32_irq: image master 4 bus overflow\n");
+
+	if ((errStatus & VFE32_IMASK_IMG_MAST_5_BUS_OVFL) && printk_ratelimit())
+		pr_err("vfe32_irq: image master 5 bus overflow\n");
+
+	if ((errStatus & VFE32_IMASK_IMG_MAST_6_BUS_OVFL) && printk_ratelimit())
+		pr_err("vfe32_irq: image master 6 bus overflow\n");
+
+	if ((errStatus & VFE32_IMASK_AXI_ERROR) && printk_ratelimit())
+		pr_err("vfe32_irq: axi error\n");
+#else
 		pr_err("vfe32_irq: image master 0 bus overflow\n");
 
 	if (errStatus & VFE32_IMASK_IMG_MAST_1_BUS_OVFL)
@@ -4640,6 +4667,7 @@ static void vfe32_process_common_error_irq(
 
 	if (errStatus & VFE32_IMASK_AXI_ERROR)
 		pr_err("vfe32_irq: axi error\n");
+#endif
 }
 
 
@@ -5830,10 +5858,17 @@ static void axi32_do_tasklet(unsigned long data)
 				(void *)VFE_IMASK_WHILE_STOPPING_1);
 
 		if (atomic_read(&axi_ctrl->share_ctrl->handle_common_irq)) {
+#ifndef CONFIG_MACH_APQ8064_FIND5
 			if ((qcmd->vfeInterruptStatus1 &
 				VFE32_IMASK_COMMON_ERROR_ONLY_1) &&
 				atomic_read(&recovery_active) != 1) {
 				pr_err("irq	errorIrq\n");
+#else
+			if (qcmd->vfeInterruptStatus1 &
+					VFE32_IMASK_COMMON_ERROR_ONLY_1) {
+				if (printk_ratelimit())		
+					pr_err("irq	errorIrq\n");
+#endif
 				vfe32_process_common_error_irq(
 					axi_ctrl,
 					qcmd->vfeInterruptStatus1 &
@@ -5870,7 +5905,10 @@ static void axi32_do_tasklet(unsigned long data)
 					!atomic_read(&recovery_active)) {
 			if (qcmd->vfeInterruptStatus1 &
 					VFE32_IMASK_VFE_ERROR_ONLY_1) {
-				pr_err("irq	errorIrq\n");
+#ifdef CONFIG_MACH_APQ8064_FIND5
+				if (printk_ratelimit())		
+#endif
+					pr_err("irq	errorIrq\n");
 				vfe32_process_error_irq(
 					axi_ctrl,
 					qcmd->vfeInterruptStatus1 &

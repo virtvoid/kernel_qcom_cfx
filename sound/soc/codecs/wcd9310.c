@@ -8086,7 +8086,9 @@ static void tabla_hs_gpio_handler(struct snd_soc_codec *codec)
 	
 	if(tabla->hs_on == insert)
 	{
-		printk(KERN_INFO"headset detect handle don't response:%d\n",tabla->hs_on);
+/* OPPO 2013-08-09 huanggd Modify begin for less print in system sleep/wakeup, may reduce system power*/	
+		//printk(KERN_INFO"headset detect handle don't response:%d\n",tabla->hs_on);
+/* OPPO 2013-08-09 huanggd Modify end*/		
 		if((tabla->hs_on == 0)/* && l15_users*/)
 		{
 			snd_soc_update_bits(codec, TABLA_A_RX_HPH_L_DAC_CTL, 0xc0, 0x00);
