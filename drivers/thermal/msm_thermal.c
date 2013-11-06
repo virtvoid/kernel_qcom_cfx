@@ -26,6 +26,9 @@
 #include <linux/of.h>
 #include <linux/hrtimer.h>
 #include <mach/cpufreq.h>
+#ifdef CONFIG_MSM_MPDEC_INPUTBOOST_CPUMIN
+#include "../../arch/arm/mach-msm/msm_mpdecision.h"
+#endif
 
 static DEFINE_MUTEX(emergency_shutdown_mutex);
 
@@ -101,67 +104,29 @@ static int update_cpu_max_freq(struct cpufreq_policy *cpu_policy,
     return ret;
 }
 
-static void __cpuinit do_core_control(long temp)
+#ifdef CONFIG_MSM_MPDEC_INPUTBOOST_CPUMIN
+static int update_cpu_min_freq(struct cpufreq_policy *cpu_policy,
+                               int cpu, int new_freq)
 {
-	int i = 0;
-	int ret = 0;
+    int ret = 0;
 
-	if (!core_control_enabled)
-		return;
+    if (!cpu_policy)
+        return -EINVAL;
 
-	/**
-	 *  Offline cores starting from the max MPIDR to 1, when above limit,
-	 *  The core control mask is non zero and allows the core to be turned
-	 *  off.
-	 *  The core was not previously offlined by this module
-	 *  The core is the next in sequence.
-	 *  If the core was online for some reason, even after it was offlined
-	 *  by this module, offline it again.
-	 *  Online the back on if the temp is below the hysteresis and was
-	 *  offlined by this module and not already online.
-	 */
-	mutex_lock(&core_control_mutex);
-	if (msm_thermal_info.core_control_mask &&
-		temp >= msm_thermal_info.core_limit_temp_degC) {
-		for (i = num_possible_cpus(); i > 0; i--) {
-			if (!(msm_thermal_info.core_control_mask & BIT(i)))
-				continue;
-			if (cpus_offlined & BIT(i) && !cpu_online(i))
-				continue;
-			pr_info("%s: Set Offline: CPU%d Temp: %ld\n",
-					KBUILD_MODNAME, i, temp);
-			ret = cpu_down(i);
-			if (ret)
-				pr_err("%s: Error %d offline core %d\n",
-					KBUILD_MODNAME, ret, i);
-			cpus_offlined |= BIT(i);
-			break;
-		}
-	} else if (msm_thermal_info.core_control_mask && cpus_offlined &&
-		temp <= (msm_thermal_info.core_limit_temp_degC -
-			msm_thermal_info.core_temp_hysteresis_degC)) {
-		for (i = 0; i < num_possible_cpus(); i++) {
-			if (!(cpus_offlined & BIT(i)))
-				continue;
-			cpus_offlined &= ~BIT(i);
-			pr_info("%s: Allow Online CPU%d Temp: %ld\n",
-					KBUILD_MODNAME, i, temp);
-			/* If this core is already online, then bring up the
-			 * next offlined core.
-			 */
-			if (cpu_online(i))
-				continue;
-			ret = cpu_up(i);
-			if (ret)
-				pr_err("%s: Error %d online core %d\n",
-						KBUILD_MODNAME, ret, i);
-			break;
-		}
-	}
-	mutex_unlock(&core_control_mutex);
+    cpufreq_verify_within_limits(cpu_policy, new_freq, cpu_policy->max);
+    cpu_policy->user_policy.min = new_freq;
+
+    ret = cpufreq_update_policy(cpu);
+    if (!ret) {
+        pr_debug("msm_thermal: Setting CPU%d min frequency to %d\n",
+            cpu, new_freq);
+    }
+    return ret;
 }
 
-static void __cpuinit check_temp(struct work_struct *work)
+DECLARE_PER_CPU(struct msm_mpdec_cpudata_t, msm_mpdec_cpudata);
+#endif
+static void check_temp(struct work_struct *work)
 {
     struct cpufreq_policy *cpu_policy = NULL;
     struct tsens_device tsens_dev;
@@ -242,6 +207,17 @@ static void __cpuinit check_temp(struct work_struct *work)
                 pr_warn("msm_thermal: Low thermal throttle ended! temp:%lu by:%u\n",
                         temp, msm_thermal_info.sensor_id);
             }
+
+#ifdef CONFIG_MSM_MPDEC_INPUTBOOST_CPUMIN
+            if (cpu_online(cpu)) {
+                if (mutex_trylock(&per_cpu(msm_mpdec_cpudata, cpu).unboost_mutex)) {
+                    per_cpu(msm_mpdec_cpudata, cpu).is_boosted = false;
+                    update_cpu_min_freq(cpu_policy, cpu, per_cpu(msm_mpdec_cpudata, cpu).norm_min_freq);
+                    mutex_unlock(&per_cpu(msm_mpdec_cpudata, cpu).unboost_mutex);
+                }
+            }
+#endif
+
         //mid trip point
         } else if ((temp >= msm_thermal_info.allowed_mid_high) &&
                (temp < msm_thermal_info.allowed_max_high) &&
