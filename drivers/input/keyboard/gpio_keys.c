@@ -11,6 +11,7 @@
 
 #include <linux/module.h>
 
+#include <linux/earlysuspend.h>
 #include <linux/init.h>
 #include <linux/fs.h>
 #include <linux/interrupt.h>
@@ -323,6 +324,9 @@ static struct attribute *gpio_keys_attrs[] = {
 static struct attribute_group gpio_keys_attr_group = {
 	.attrs = gpio_keys_attrs,
 };
+
+static int block_keypad = 0;
+static struct early_suspend gpio_keys_early_suspend_data;
 
 static void gpio_keys_gpio_report_event(struct gpio_button_data *bdata)
 {
@@ -650,6 +654,21 @@ static void gpio_remove_key(struct gpio_button_data *bdata)
 		gpio_free(bdata->button->gpio);
 }
 
+#ifdef CONFIG_HAS_EARLYSUSPEND
+
+static void gpio_keys_early_suspend(struct early_suspend *h)
+{
+	block_keypad = 1;
+}
+
+static void gpio_keys_late_resume(struct early_suspend *h)
+{
+	block_keypad = 0;
+}
+
+#endif
+
+
 static int __devinit gpio_keys_probe(struct platform_device *pdev)
 {
 	const struct gpio_keys_platform_data *pdata = pdev->dev.platform_data;
@@ -737,6 +756,13 @@ static int __devinit gpio_keys_probe(struct platform_device *pdev)
 
 	device_init_wakeup(&pdev->dev, wakeup);
 
+#ifdef CONFIG_HAS_EARLYSUSPEND
+	gpio_keys_early_suspend_data.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN + 1;
+	gpio_keys_early_suspend_data.suspend = gpio_keys_early_suspend;
+	gpio_keys_early_suspend_data.resume = gpio_keys_late_resume;
+	register_early_suspend(&gpio_keys_early_suspend_data);
+#endif
+
 	return 0;
 
  fail3:
@@ -765,6 +791,10 @@ static int __devexit gpio_keys_remove(struct platform_device *pdev)
 	sysfs_remove_group(&pdev->dev.kobj, &gpio_keys_attr_group);
 
 	device_init_wakeup(&pdev->dev, 0);
+
+#ifdef CONFIG_HAS_EARLYSUSPEND
+	unregister_early_suspend(&gpio_keys_early_suspend_data);
+#endif
 
 	for (i = 0; i < ddata->n_buttons; i++)
 		gpio_remove_key(&ddata->data[i]);

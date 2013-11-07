@@ -20,6 +20,7 @@
 #include <mach/vreg.h>
 #include <linux/err.h>
 #include <linux/i2c/lm3630_bl.h>
+#include <linux/boot_mode.h>
 
 #ifdef CONFIG_MACH_N1
 #include <linux/boot_mode.h>
@@ -51,8 +52,6 @@ static char *DEVICE_MANUFACUTRE = "ti";
 static bool sleep_mode = true;
 static bool backlight_pwm_state_change = false;
 #endif
-
-//static bool sleep_mode = true;
 
 static struct i2c_client *lm3630_client;
 
@@ -174,12 +173,6 @@ static int lm3630_i2c_write(unsigned char   raddr, unsigned char  rdata)
 int set_backlight_pwm(int state)
 {
     int rc = 0;
-
-	if (!lm3630_client)
-    {
-        pr_err("%s: lm3630_client == null!\n", __func__);
-        return rc;
-    }
 
     if(state == 1)
     {
@@ -373,13 +366,11 @@ static int lm3630_resume(struct i2c_client *client)
     mdelay(10);
     rc = lm3630_i2c_write(0x50, 0x03);
     rc = lm3630_i2c_write(0x01, LM3630_PWM_OFF);
-/* OPPO 2013-10-04 gousj Modify begin for Radio Frequency Interference */
 #ifndef CONFIG_MACH_N1
     rc = lm3630_i2c_write(0x02, 0x79);
 #else
 	rc = lm3630_i2c_write(0x02, 0x38);
 #endif
-/* OPPO 2013-10-04 gousj Modify end */
     rc = lm3630_i2c_write(0x05, 0x14);
     rc = lm3630_i2c_write(0x06, 0x14);
     rc = lm3630_i2c_write(0x07, 0x00);

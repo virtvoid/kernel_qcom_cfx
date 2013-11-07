@@ -32,8 +32,11 @@
 ** ranfei@OnlineRD.Driver.TouchSCreen   2013/10/15   1.3        修改睡眠唤醒时断电与上电的bug
 ** ranfei@OnlineRD.Driver.TouchSCreen   2013/10/28   1.4        在断电之后把中断处理给取消掉
 ** ranfei@OnlineRD.Driver.TouchSCreen   2013/10/28   1.5        在检测到大面积的时候压力上报0，减少误操作
+<<<<<<< HEAD
 ** ranfei@OnlineRD.Driver.TouchSCreen   2013/11/15   1.6        增加设备厂家信息
 ** ranfei@OnlineRD.Driver.TouchSCreen   2013/11/19   1.7        modify the /proc/devinfo/back_tp version info
+=======
+>>>>>>> 4bb1842... Update from OPPO
 ** ------------------------------------------------------------------------------
 ** 
 ************************************************************************************/

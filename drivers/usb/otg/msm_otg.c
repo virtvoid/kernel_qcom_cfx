@@ -11,6 +11,8 @@
  *
  */
 
+#define DEBUG
+
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/platform_device.h>
@@ -116,7 +118,6 @@ static struct msm_otg *the_msm_otg;
 static bool debug_aca_enabled;
 static bool debug_bus_voting_enabled;
 static bool mhl_det_in_progress;
-
 static struct regulator *hsusb_3p3;
 static struct regulator *hsusb_1p8;
 static struct regulator *hsusb_vddcx;
@@ -2393,6 +2394,8 @@ static void nonstandard_detect_work(struct work_struct *w)
 		msm_otg_notify_charger(motg, IDEV_CHG_MIN);
 		if (motg->chg_type == USB_NON_DCP_CHARGER)
 			smb358_charger_connected(CHARGER_TYPE__NON_DCP);
+		else if (motg->chg_type == USB_DCP_CHARGER)//sjc1030
+			smb358_charger_connected(CHARGER_TYPE__DCP);
 		else if (motg->chg_type == USB_HDMI_CHARGER)
 			smb358_charger_connected(CHARGER_TYPE__HDMI);
 	} else if (motg->chg_type != USB_SDP_CHARGER) {
@@ -2601,8 +2604,11 @@ static void msm_otg_sm_work(struct work_struct *w)
 #if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 					motg->chg_type = USB_NON_DCP_CHARGER;
 					cancel_delayed_work_sync(&motg->nonstandard_detect_work);
+					/* OPPO 2013-10-30 sjc Add begin for reason */
 					enable_nonstandard_worker_fn("schedule_delayed_work");
+					/* OPPO 2013-10-30 sjc Add end */
 					schedule_delayed_work(&motg->nonstandard_detect_work, USB_NONSTANDARD_DET_DELAY);
+					/* OPPO 2012-08-09 chendx Add end */
 					schedule_delayed_work(&motg->nonstandard_detect_work,
 							USB_NONSTANDARD_DET_DELAY);
 #endif
@@ -3471,6 +3477,43 @@ const struct file_operations msm_otg_state_fops = {
 	.release = single_release,
 };
 
+/*****************added by songxh for engineermode test otg begain**********************/
+/*
+static struct kobject *otg_engineermode_state_kobj;
+
+static ssize_t msm_otg_engineermode_state_show(struct kobject *kobj, struct kobj_attribute *attr,
+			     char *buf)
+{    
+	printk("-- songxh OTG --%s, otg_enable=%d\n",__FUNCTION__, otg_enable);
+	return sprintf(buf, "%d\n", otg_enable);
+}
+
+static ssize_t msm_otg_engineermode_state_store(struct kobject *kobj, struct kobj_attribute *attr,
+			 const char *buf, size_t count){
+	char *after;
+	unsigned long status = simple_strtoul(buf, &after, 10);
+	otg_enable = (bool)status;
+	printk("-- songxh OTG --%s, otg_enable=%d\n",__FUNCTION__, otg_enable);
+	return count;
+}
+
+struct kobj_attribute otg_engineermode_state_attr = {
+    .attr = {"otg_engineermode_state", 0660},   
+    .show = &msm_otg_engineermode_state_show,
+    .store = &msm_otg_engineermode_state_store,
+};
+
+static struct attribute * otg_engineermode_attr[] = {
+	&otg_engineermode_state_attr.attr,	
+	NULL,
+};
+
+static struct attribute_group otg_engineermode_state_attr_group = {
+	.attrs = otg_engineermode_attr,
+};*/
+
+/*****************added by songxh for engineermode test otg end**********************/
+
 static int msm_otg_show_chg_type(struct seq_file *s, void *unused)
 {
 	struct msm_otg *motg = s->private;
@@ -4124,7 +4167,7 @@ free_motg:
 	return ret;
 }
 
-static int __devexit msm_otg_remove(struct platform_device *pdev)
+static int  __exit  msm_otg_remove(struct platform_device *pdev)
 {
 	struct msm_otg *motg = platform_get_drvdata(pdev);
 	struct usb_otg *otg = motg->phy.otg;
@@ -4288,6 +4331,7 @@ static void  msm_otg_shutdown(struct platform_device *pdev)
 }
 /*****************added by songxh for shutdowm otg end**********************/
 #endif
+
 #ifdef CONFIG_PM_RUNTIME
 static int msm_otg_runtime_idle(struct device *dev)
 {
@@ -4394,6 +4438,13 @@ static struct platform_driver msm_otg_driver = {
 
 static int __init msm_otg_init(void)
 {
+/*****************added by songxh for engineermode test otg begain**********************/
+/*	int rc = 0;
+	otg_engineermode_state_kobj = kobject_create_and_add("otg_engineermode_state", NULL);
+	printk("---songxh--- create otg_engineermode_state node!\n");
+	if (otg_engineermode_state_kobj)
+		rc = sysfs_create_group(otg_engineermode_state_kobj, &otg_engineermode_state_attr_group);*/
+/*****************added by songxh for engineermode test otg end**********************/
 	return platform_driver_probe(&msm_otg_driver, msm_otg_probe);
 }
 

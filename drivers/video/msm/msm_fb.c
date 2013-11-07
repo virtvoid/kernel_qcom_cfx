@@ -1109,19 +1109,10 @@ void msm_fb_set_backlight(struct msm_fb_data_type *mfd, __u32 bkl_lvl)
 {
 	struct msm_fb_panel_data *pdata;
 	__u32 temp = bkl_lvl;
-#ifdef CONFIG_MACH_N1
-    if (((get_boot_mode()==MSM_BOOT_MODE__NORMAL) || (get_boot_mode()==MSM_BOOT_MODE__RECOVERY)) && (!mfd->panel_power_on || !bl_updated)) {
-#endif
 		unset_bl_level = bkl_lvl;
-#ifdef CONFIG_MACH_APQ8064_FIND5
-	if (!mfd->panel_power_on || !bl_updated)
-#endif
+	if (!mfd->panel_power_on || !bl_updated) {
 		return;
-#ifdef CONFIG_MACH_N1
-	} else {
-		unset_bl_level = 0;
 	}
-#endif
 	pdata = (struct msm_fb_panel_data *)mfd->pdev->dev.platform_data;
 
 	if ((pdata) && (pdata->set_backlight)) {
@@ -4147,8 +4138,8 @@ static int msmfb_handle_buf_sync_ioctl(struct msm_fb_data_type *mfd,
 	if (buf_sync->flags & MDP_BUF_SYNC_FLAG_WAIT) {
 		msm_fb_wait_for_fence(mfd);
 	}
-	if ((mfd->panel.type == MIPI_CMD_PANEL) ||
-		(mfd->panel.type == WRITEBACK_PANEL))
+	if ((mfd->panel.type == WRITEBACK_PANEL) ||
+		(mfd->panel.type == MIPI_CMD_PANEL))
 		threshold = 1;
 	else
 		threshold = 2;

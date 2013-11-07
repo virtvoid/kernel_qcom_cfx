@@ -42,11 +42,9 @@ u32 esc_byte_ratio;
 
 static boolean tlmm_settings = FALSE;
 
-#ifdef CONFIG_MACH_N1
-#define PANEL_SRE
+//#define PANEL_SRE
 #ifdef PANEL_SRE
 struct mutex sre_mutex;
-#endif
 #endif
 
 static int mipi_dsi_probe(struct platform_device *pdev);
