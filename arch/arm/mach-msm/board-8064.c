@@ -1582,146 +1582,7 @@ static struct i2c_board_info isa1200_board_info[] __initdata = {
 	},
 };
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
-#if defined(CONFIG_TOUCHSCREEN_SYNAPTICS_S3202_I2C_RMI)
-static struct regulator *vreg_tp_2P8V = NULL;
-static DEFINE_MUTEX(TP_POWER_LOCK);
-
-static int init_tp_regulator(void)
-{
-	int rc = 0;
-	if(vreg_tp_2P8V == NULL)
-	{
-		vreg_tp_2P8V = regulator_get(NULL, "8921_l16");						
-		if (IS_ERR(vreg_tp_2P8V))
-			return PTR_ERR(vreg_tp_2P8V);
-
-		rc = regulator_set_voltage(vreg_tp_2P8V, 2800000, 2800000);
-		if (rc)
-		{
-			pr_err("%s: unable to set the voltage for regulator vreg_2P8V\n", __func__);
-			regulator_put(vreg_tp_2P8V);
-            vreg_tp_2P8V = NULL;
-			return rc;
-		}
-	}
-	return rc;
-}
-
-static int inline enable_tp_regulator(struct regulator **vreg_tp)
-{
-	int rc = regulator_enable(*vreg_tp);
-	if (rc)
-	{
-		pr_err("%s: unable to enable tp regulator \n",	__func__);
-		regulator_put(*vreg_tp);
-		*vreg_tp = NULL;
-	}
-	return rc;
-}
-
-static int inline disable_tp_regulator(struct regulator *vreg_tp)
-{
-	int rc = regulator_disable(vreg_tp);
-	if (rc)
-		pr_err("%s: Unable to disable tp regulator\n",	__func__);
-	return rc;
-}
-
-static int oppo_touchscreen_power(int on)
-{
-	int rc = 0;
-
-	mutex_lock(&TP_POWER_LOCK);
-
-	rc = init_tp_regulator();
-	if (rc)
-		goto oppo_tp_power_return;
-
-	if(on == 0xEF)
-	{
-		// Power reset
-		rc = disable_tp_regulator(vreg_tp_2P8V);
-		if (rc)
-			goto oppo_tp_power_return;
-		msleep(20);
-
-		rc = enable_tp_regulator(&vreg_tp_2P8V);
-		if (rc)
-			goto oppo_tp_power_return;
-		mdelay(50);
-
-		pr_debug("[TSP] %s: power reset\n", __func__);
-	} 
-	else if (on)
-	{
-		// Power on
-		rc = enable_tp_regulator(&vreg_tp_2P8V);
-		if (rc)
-			goto oppo_tp_power_return;
-		mdelay(50);
-
-		pr_debug("[TSP] %s: power on\n", __func__);
-	}
-	else
-	{
-		// Power off
-		rc = disable_tp_regulator(vreg_tp_2P8V);
-		if (rc)
-			goto oppo_tp_power_return;
-		mdelay(5);
-
-		pr_debug("[TSP] %s: power off\n", __func__);
-	}
-	pr_info("tp power %s, now:%d.\n", on?"on":"off", regulator_is_enabled(vreg_tp_2P8V));
-
-oppo_tp_power_return:
-	mutex_unlock(&TP_POWER_LOCK);
-	return rc;
- }
-#endif
-
-#define GPIO_TOUCH_INT	6
-#define GPIO_TP_WAKEUP  (14)
-#define GPIO_TP_ID      (15)
-
-static void touch_init_hw(void)
-{
-	gpio_request(GPIO_TOUCH_INT, "TOUCH_INT");
-	gpio_direction_input(GPIO_TOUCH_INT);
-#ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_S3202_I2C_RMI
-	if (get_pcb_version() >= PCB_VERSION_EVT)
-	{
-		gpio_tlmm_config(GPIO_CFG(GPIO_TP_WAKEUP, 0, GPIO_CFG_INPUT,
-				GPIO_CFG_PULL_UP, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
-		gpio_tlmm_config(GPIO_CFG(GPIO_TP_ID, 0, GPIO_CFG_INPUT,
-				GPIO_CFG_PULL_UP, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
-
-		oppo_touchscreen_power(1);
-	}
-#endif
-}
-
-#ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_S3202_I2C_RMI
-static struct synaptics_i2c_rmi_platform_data synap_s3202_touch_platform_data[] = {
-	{
-		.version = 0x0101,
-		.power = oppo_touchscreen_power,
-		.flags = SYNAPTICS_SNAP_TO_INACTIVE_EDGE,
-		.irqflags = IRQF_TRIGGER_LOW,
-	}
-};
-
-static struct i2c_board_info synaptics_s3202_touch_info[] = {
-	{
-		I2C_BOARD_INFO(SYNAPTICS_I2C_RMI_NAME, 0x20),
-		.irq		= MSM_GPIO_TO_INT(GPIO_TOUCH_INT),
-		.platform_data = synap_s3202_touch_platform_data,
-	}
-};
-
-#else
-
+#ifndef CONFIG_MACH_APQ8064_FIND5
 /* configuration data for mxt1386e using V2.1 firmware */
 static const u8 mxt1386e_config_data_v2_1[] = {
 	/* T6 Object */
@@ -1940,7 +1801,157 @@ static struct i2c_board_info cyttsp_info[] __initdata = {
 		.irq = MSM_GPIO_TO_INT(CYTTSP_TS_GPIO_IRQ),
 	},
 };
+#else
+
+#if defined(CONFIG_TOUCHSCREEN_SYNAPTICS_S3202_I2C_RMI)
+static struct regulator *vreg_tp_2P8V = NULL;
+static DEFINE_MUTEX(TP_POWER_LOCK);
+
+static int init_tp_regulator(void)
+{
+	int rc = 0;
+	if(vreg_tp_2P8V == NULL)
+	{
+		vreg_tp_2P8V = regulator_get(NULL, "8921_l16");						
+		if (IS_ERR(vreg_tp_2P8V))
+			return PTR_ERR(vreg_tp_2P8V);
+
+		rc = regulator_set_voltage(vreg_tp_2P8V, 2800000, 2800000);
+		if (rc)
+		{
+			pr_err("%s: unable to set the voltage for regulator vreg_2P8V\n", __func__);
+			regulator_put(vreg_tp_2P8V);
+            vreg_tp_2P8V = NULL;
+			return rc;
+		}
+	}
+	return rc;
+}
+
+static int inline enable_tp_regulator(struct regulator **vreg_tp)
+{
+	int rc = regulator_enable(*vreg_tp);
+	if (rc)
+	{
+		pr_err("%s: unable to enable tp regulator \n",	__func__);
+		regulator_put(*vreg_tp);
+		*vreg_tp = NULL;
+	}
+	return rc;
+}
+
+static int inline disable_tp_regulator(struct regulator *vreg_tp)
+{
+	int rc = regulator_disable(vreg_tp);
+	if (rc)
+		pr_err("%s: Unable to disable tp regulator\n",	__func__);
+	return rc;
+}
+
+static int oppo_touchscreen_power(int on)
+{
+	int rc = 0;
+
+	mutex_lock(&TP_POWER_LOCK);
+
+	rc = init_tp_regulator();
+	if (rc)
+		goto oppo_tp_power_return;
+
+	if(on == 0xEF)
+	{
+		// Power reset
+		rc = disable_tp_regulator(vreg_tp_2P8V);
+		if (rc)
+			goto oppo_tp_power_return;
+		msleep(20);
+
+		rc = enable_tp_regulator(&vreg_tp_2P8V);
+		if (rc)
+			goto oppo_tp_power_return;
+		mdelay(50);
+
+		pr_debug("[TSP] %s: power reset\n", __func__);
+	} 
+	else if (on)
+	{
+		// Power on
+		rc = enable_tp_regulator(&vreg_tp_2P8V);
+		if (rc)
+			goto oppo_tp_power_return;
+		mdelay(50);
+
+		pr_debug("[TSP] %s: power on\n", __func__);
+	}
+	else
+	{
+		// Power off
+		rc = disable_tp_regulator(vreg_tp_2P8V);
+		if (rc)
+			goto oppo_tp_power_return;
+		mdelay(5);
+
+		pr_debug("[TSP] %s: power off\n", __func__);
+	}
+	pr_info("tp power %s, now:%d.\n", on?"on":"off", regulator_is_enabled(vreg_tp_2P8V));
+
+oppo_tp_power_return:
+	mutex_unlock(&TP_POWER_LOCK);
+	return rc;
+ }
 #endif
+
+#define GPIO_TOUCH_RST  7
+#define GPIO_TOUCH_INT	6
+#define GPIO_TP_WAKEUP  (14)
+#define GPIO_TP_ID      (15)
+
+int remote_rmi4_get_irq_gpio(void)   //add by yben
+{
+	return (int)GPIO_TOUCH_INT ;
+}
+
+static void touch_init_hw(void)
+{
+	gpio_request(GPIO_TOUCH_INT, "TOUCH_INT");
+	gpio_direction_input(GPIO_TOUCH_INT);
+#ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_S3202_I2C_RMI
+	if (get_pcb_version() >= PCB_VERSION_EVT)
+	{
+		gpio_tlmm_config(GPIO_CFG(GPIO_TP_WAKEUP, 0, GPIO_CFG_INPUT,
+				GPIO_CFG_PULL_UP, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
+		gpio_tlmm_config(GPIO_CFG(GPIO_TP_ID, 0, GPIO_CFG_INPUT,
+				GPIO_CFG_PULL_UP, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
+        gpio_tlmm_config(GPIO_CFG(GPIO_TOUCH_RST, 0, GPIO_CFG_OUTPUT,
+				GPIO_CFG_PULL_UP, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
+        gpio_request(GPIO_TOUCH_RST, "TOUCH_RST");
+	    gpio_direction_output(GPIO_TOUCH_RST, 1);
+
+		oppo_touchscreen_power(1);
+	}
+#endif
+}
+
+#ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_S3202_I2C_RMI
+static struct synaptics_i2c_rmi_platform_data synap_s3202_touch_platform_data[] = {
+	{
+		.version = 0x0101,
+		.power = oppo_touchscreen_power,
+		.flags = SYNAPTICS_SNAP_TO_INACTIVE_EDGE,
+		.irqflags = IRQF_TRIGGER_LOW,//IRQF_TRIGGER_FALLING,
+	}
+};
+
+static struct i2c_board_info synaptics_s3202_touch_info[] = {
+	{
+		I2C_BOARD_INFO(SYNAPTICS_I2C_RMI_NAME, 0x20),
+		.irq		= MSM_GPIO_TO_INT(GPIO_TOUCH_INT),
+		.platform_data = synap_s3202_touch_platform_data,
+	}
+};
+#endif
+
+
 #endif
 
 #define MSM_WCNSS_PHYS	0x03000000
@@ -3710,6 +3721,10 @@ static void SN3193_power_init(void)
 }
 
 static struct i2c_board_info lcd_1080p_info[] = {
+
+	{
+		I2C_BOARD_INFO("lm3630", 0x38),
+	},
 
 	{
 		I2C_BOARD_INFO("lm3528", 0x36),
