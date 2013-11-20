@@ -341,10 +341,9 @@ static void msm_fb_set_bl_brightness(struct led_classdev *led_cdev,
 #ifdef CONFIG_MACH_APQ8064_FIND5
 		bl_lvl = get_bright_level(value);
 #else
-		//Neal
 		if(get_pcb_version() >= PCB_VERSION_EVT_N1)
 		{
-			bl_lvl = value;
+			bl_lvl = value; 
 		}
 		else
 		{

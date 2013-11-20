@@ -45,6 +45,7 @@ static volatile int flash_state = 0;
 static volatile bool capture_enable_out = false;
 static volatile bool m9mo_ready_to_out = false;
 static volatile bool m9mo_output_send = false;
+static volatile bool m9mo_burst_stop = false; //add for muti entry
 static volatile bool capture_notify = false;
 static volatile bool g_bCapture = false;
 static volatile bool g_bCapture_raw = false;
@@ -65,6 +66,7 @@ static volatile bool g_bRotate = false;
 static volatile bool Rotate_delay = false;
 static int last_MR_ROTATE_GPIO;
 static int rotate_gpio_num = 44;
+static int poll_num = 0;//add for wait timeout creti
 struct gpio_button_data *rotate_bdata = NULL;
 static volatile bool led_is_on = false;
 
@@ -81,10 +83,6 @@ struct timer_list m9mo_p_timer;
 
 /*speed up*/
 static bool need_speed_up = false;
-
-//the fd set count
-static uint32_t fd_set_cnt = 0;
-static m9mo_ae_mode ae_mode = M9MO_AE_MODE_AUTO;
 
 /*exif info*/
 static struct exif_info last_exif = {0};
@@ -280,6 +278,29 @@ static void m9mo_set_mirror_flip(struct msm_sensor_ctrl_t *s_ctrl)
 {
 	char sensor_reverse_h_v_cmd[8] = {0x08,0x02,0x02,0x05,0x01,0x01,0x01,0x01};
 	int gpio_value = 0;
+	char resp[5] = {0x05,0x01,0x02,0x05,0x04};
+	
+	if (m9mo_para.flip_hint)
+	{
+		/* get current flip setting */
+		msm_vendor_i2c_rxdata(s_ctrl->sensor_i2c_client,resp,5,5);
+		if (resp[2] == 0x01)
+		{
+			sensor_reverse_h_v_cmd[4] = 0x01;
+			sensor_reverse_h_v_cmd[5] = 0x00;
+			sensor_reverse_h_v_cmd[6] = 0x01;
+			sensor_reverse_h_v_cmd[7] = 0x00;
+		}
+		else
+		{
+			sensor_reverse_h_v_cmd[4] = 0x01;
+			sensor_reverse_h_v_cmd[5] = 0x01;
+			sensor_reverse_h_v_cmd[6] = 0x01;
+			sensor_reverse_h_v_cmd[7] = 0x01;
+		}
+		msm_camera_i2c_txdata(s_ctrl->sensor_i2c_client,sensor_reverse_h_v_cmd, 8);
+		return;
+	}
 	
 	/* sensor output reversely H/V */
 	gpio_value = gpio_get_value(rotate_gpio_num);
@@ -307,12 +328,12 @@ static void m9mo_set_mirror_flip(struct msm_sensor_ctrl_t *s_ctrl)
 	msm_camera_i2c_txdata(s_ctrl->sensor_i2c_client,sensor_reverse_h_v_cmd, 8);
 }
 
-static void m9mo_check_if_at_focusing(struct msm_sensor_ctrl_t *s_ctrl)
+static void m9mo_check_if_at_focusing(struct msm_sensor_ctrl_t *s_ctrl, bool force_af_stop)
 {
 	char E_cmd[5] = {0x05,0x02,0x00,0x10,0x08};
 	char resp[5] = {0x05,0x01,0x0A,0x03,0x01};
 	int poll_cnt = 0;
-		
+	
 	//check if at focusing
 	resp[0] = 0x05;
 	resp[1] = 0x01;
@@ -323,13 +344,16 @@ static void m9mo_check_if_at_focusing(struct msm_sensor_ctrl_t *s_ctrl)
 
 	if (resp[1] == 0x00 || (resp[1]&0xF0) == 0xF0)
 	{
-		//force AF stop
-		E_cmd[2] = 0x0A;
-		E_cmd[3] = 0x02;
-		E_cmd[4] = 0x00;
-		msm_camera_i2c_txdata(s_ctrl->sensor_i2c_client,E_cmd,5);
+		if (force_af_stop)
+		{
+			//force AF stop
+			E_cmd[2] = 0x0A;
+			E_cmd[3] = 0x02;
+			E_cmd[4] = 0x00;
+			msm_camera_i2c_txdata(s_ctrl->sensor_i2c_client,E_cmd,5);
+		}
 
-		while (poll_cnt++ < 100)
+		while (poll_cnt++ < 50)
 		{
 			resp[0] = 0x05;
 			resp[1] = 0x01;
@@ -342,7 +366,15 @@ static void m9mo_check_if_at_focusing(struct msm_sensor_ctrl_t *s_ctrl)
 			{
 				break;
 			}
-			msleep(33);
+			if (poll_cnt > 40)
+			{
+				//force AF stop
+				E_cmd[2] = 0x0A;
+				E_cmd[3] = 0x02;
+				E_cmd[4] = 0x00;
+				msm_camera_i2c_txdata(s_ctrl->sensor_i2c_client,E_cmd,5);
+			}
+			msleep(50);
 		}
 	}
 }
@@ -397,16 +429,20 @@ static void ZSL_preview_output(struct msm_sensor_ctrl_t *s_ctrl)
 	E_cmd[3] = 0x03;
 	E_cmd[4] = 0x00;
 	msm_camera_i2c_txdata(s_ctrl->sensor_i2c_client,E_cmd,5);
-	
-	//set AE mode
-	E_cmd[2] = 0x03;
-	E_cmd[3] = 0x01;
-	E_cmd[4] = 0x01;
-	msm_camera_i2c_txdata(s_ctrl->sensor_i2c_client,E_cmd,5);
+
+	if (!g_FrameInfo.has_faces)
+	{
+		//set AE mode
+		E_cmd[2] = 0x03;
+		E_cmd[3] = 0x01;
+		E_cmd[4] = 0x01;
+		msm_camera_i2c_txdata(s_ctrl->sensor_i2c_client,E_cmd,5);
+	}
 	
 	#ifdef ZSL_ENABLE
 	if (m9mo_para.slow_shutter)
 	{
+		m9mo_debug("%s: ZSL OFF \r\n", __func__);
 		E_cmd[2] = 0x03;
 		E_cmd[3] = 0x0B;
 		E_cmd[4] = 0x16;
@@ -423,6 +459,7 @@ static void ZSL_preview_output(struct msm_sensor_ctrl_t *s_ctrl)
 	}
 	else
 	{
+		m9mo_debug("%s: ZSL ON \r\n", __func__);
 		//set monitor size
 		E_cmd[2] = 0x01;
 		E_cmd[3] = 0x01;
@@ -467,14 +504,11 @@ static void ZSL_capture(struct msm_sensor_ctrl_t *s_ctrl)
 		{
 			ZSL_YUV_output(s_ctrl);
 		}
-		return;
+		m9mo_output_send = false;
+		goto protect;
 	}
 	
-	if (!m9mo_para.slow_shutter)
-		capture_enable_out = false;
-	else
-		capture_enable_out = true;
-	
+	capture_enable_out = false;
 	m9mo_ready_to_out = false;
 	m9mo_output_send = false;
 	
@@ -484,7 +518,8 @@ static void ZSL_capture(struct msm_sensor_ctrl_t *s_ctrl)
 	m9mo_para.need_update = true;
 	g_FrameInfo.capture_start = true;
 	g_FrameInfo.single_af = false;
-	m9mo_check_if_at_focusing(s_ctrl);
+	camera_work = false;
+	m9mo_check_if_at_focusing(s_ctrl, false);
 	
 	//set capture yuv output
 	E_cmd[2] = 0x0B;
@@ -510,7 +545,8 @@ static void ZSL_capture(struct msm_sensor_ctrl_t *s_ctrl)
 	E_cmd[4] = 0x03;
 	msm_camera_i2c_txdata(s_ctrl->sensor_i2c_client,E_cmd,5);
 	m9mo_debug("%s E\n", __func__);
-	
+
+protect:
 	if (!flash_state)
 	{
 	    int timed_out = 500;
@@ -541,9 +577,9 @@ static void burst_capture(struct msm_sensor_ctrl_t *s_ctrl)
 	m9mo_ready_to_out = false;
 	capture_enable_out = true;
 	m9mo_output_send = false;
-
+    m9mo_burst_stop = false;
 	m9mo_para.need_update = true;		
-	m9mo_check_if_at_focusing(s_ctrl);
+	m9mo_check_if_at_focusing(s_ctrl, false);
 	
 	//Enable INT
 	msm_camera_i2c_txdata(s_ctrl->sensor_i2c_client,E_cmd,5);
@@ -577,8 +613,7 @@ static void raw_capture(struct msm_sensor_ctrl_t *s_ctrl)
 		capture_enable_out = true;
 		if (m9mo_ready_to_out)
 		{
-				//m9mo_action[s_ctrl->curr_res].output(s_ctrl);
-				ZSL_raw_output(s_ctrl);
+			ZSL_raw_output(s_ctrl);
 		}
 		return;
 	}
@@ -590,7 +625,7 @@ static void raw_capture(struct msm_sensor_ctrl_t *s_ctrl)
 	m9mo_output_send = false;
 
 	m9mo_para.need_update = true;	
-	m9mo_check_if_at_focusing(s_ctrl);
+	m9mo_check_if_at_focusing(s_ctrl, false);
 	
 	//Enable raw-jpeg capture
 	msm_camera_i2c_txdata(s_ctrl->sensor_i2c_client,E_cmd,5);
@@ -612,7 +647,7 @@ static void raw_capture(struct msm_sensor_ctrl_t *s_ctrl)
 
 /*for jpeg 422 out put dimension:1920X1080 no blanks*/
 static void ZSL_raw_output(struct msm_sensor_ctrl_t *s_ctrl)
-{	
+{
 	#ifdef M9MO_CAPTURE_RAW
 	char E_cmd[5] = {0x05,0x02,0x0B,0x00,0x06};
 	m9mo_debug("%s E\n", __func__);
@@ -682,11 +717,17 @@ static void ZSL_raw_output(struct msm_sensor_ctrl_t *s_ctrl)
 static void stop_burst_output(struct msm_sensor_ctrl_t *s_ctrl)
 {
 	char E_cmd[5] = {0x05,0x02,0x0C,0x05,0x02};
-	msm_camera_i2c_txdata(s_ctrl->sensor_i2c_client,E_cmd,5);
-	//E_cmd[3] = 0x0B;
-	//E_cmd[4] = 0x02;
-	//msm_camera_i2c_txdata(s_ctrl->sensor_i2c_client,E_cmd,5);
-	m9mo_debug("%s E\n", __func__);
+	if(!m9mo_burst_stop)
+   {
+        m9mo_burst_stop = true;
+		monitor_start = true;
+		g_bCapture = false;
+		msm_camera_i2c_txdata(s_ctrl->sensor_i2c_client,E_cmd,5);
+		//E_cmd[3] = 0x0B;
+		//E_cmd[4] = 0x02;
+		//msm_camera_i2c_txdata(s_ctrl->sensor_i2c_client,E_cmd,5);
+		m9mo_debug("%s E\n", __func__);
+   }
 }
 static void stop_raw_output(struct msm_sensor_ctrl_t *s_ctrl)
 {
@@ -704,7 +745,9 @@ static void ZSL_YUV_output(struct msm_sensor_ctrl_t *s_ctrl)
 	char E_cmd[8] = {0x05,0x02,0x00,0x10,0x88,0x00,0x00,0x00};
 	
     if(m9mo_output_send)
-	   return;	   
+	   return;
+
+	m9mo_output_send = true;
 	
 	//Select frame main
 	E_cmd[2] = 0x0C;
@@ -725,7 +768,7 @@ static void ZSL_YUV_output(struct msm_sensor_ctrl_t *s_ctrl)
 	E_cmd[3] = 0x09;
 	E_cmd[4] = 0x01;
 	msm_camera_i2c_txdata(s_ctrl->sensor_i2c_client,E_cmd,5);
-	m9mo_output_send = true;
+	
 	m9mo_debug("%s E\n", __func__);
 }
 
@@ -746,10 +789,12 @@ static void ZSL_HDR_capture(struct msm_sensor_ctrl_t *s_ctrl)
 	g_bCapture = true;
 	m9mo_ready_to_out = false;
 	capture_enable_out = false;
+	capture_notify = false;
 
 	m9mo_para.need_update = true;
+	camera_work = false;
 	//check if at focusing now
-	m9mo_check_if_at_focusing(s_ctrl);
+	m9mo_check_if_at_focusing(s_ctrl, false);
 	
 	//Enable framesync INT
 	msm_camera_i2c_txdata(s_ctrl->sensor_i2c_client,E_cmd,5);
@@ -804,7 +849,9 @@ static void HDR_video_output(struct msm_sensor_ctrl_t *s_ctrl)
 
 	if (monitor_start)
 		return;
-
+	
+	monitor_start = true;
+	
 	m9mo_set_mirror_flip(s_ctrl);
 	
 	/*disable zsl*/
@@ -836,7 +883,6 @@ static void HDR_video_output(struct msm_sensor_ctrl_t *s_ctrl)
 	E_cmd[3] = 0x0b;
 	E_cmd[4] = 0x02;
 	msm_camera_i2c_txdata(s_ctrl->sensor_i2c_client,E_cmd,5);
-	monitor_start = true;
 	m9mo_debug("%s E\n", __func__);
 }
 /*for YUV 422 60fps out put dimension:1920X1080 no blanks*/
@@ -846,6 +892,8 @@ static void video_output(struct msm_sensor_ctrl_t *s_ctrl)
 
 	if (monitor_start)
 		return;
+
+	monitor_start = true;
 	
 	m9mo_set_mirror_flip(s_ctrl);
 	
@@ -878,8 +926,6 @@ static void video_output(struct msm_sensor_ctrl_t *s_ctrl)
 	E_cmd[3] = 0x0b;
 	E_cmd[4] = 0x02;
 	msm_camera_i2c_txdata(s_ctrl->sensor_i2c_client,E_cmd,5);
-
-	monitor_start = true;
 	
 	m9mo_debug("%s E\n", __func__);
 }
@@ -890,6 +936,8 @@ static void WVGA_video_output(struct msm_sensor_ctrl_t *s_ctrl)
 
 	if (monitor_start)
 		return;
+
+	monitor_start = true;
 
 	m9mo_set_mirror_flip(s_ctrl);
 	
@@ -922,14 +970,16 @@ static void WVGA_video_output(struct msm_sensor_ctrl_t *s_ctrl)
 	E_cmd[3] = 0x0b;
 	E_cmd[4] = 0x02;
 	msm_camera_i2c_txdata(s_ctrl->sensor_i2c_client,E_cmd,5);
-	monitor_start = true;
 	m9mo_debug("%s E\n", __func__);
 }
 
 static void m9mo_set_asd_mode(struct msm_sensor_ctrl_t *s_ctrl, int32_t scene_mode)
 {
 	/*OPPO 2013-09-14 guanjindian add for N1 asd start*/
-	if(sport_enable && scene_mode!=2 && 
+	if(g_FrameInfo.has_faces){
+		cur_scene = 3;
+	}
+	else if(sport_enable && scene_mode!=3 && 
 		scene_mode!=5 && scene_mode!=20)
 	{
 		cur_scene = 13;
@@ -981,22 +1031,17 @@ struct oppo_interface oppo_feature[MAX_FEATURE] = {
     {m9mo_do_constant_focus,NULL},
     {m9mo_set_asd_mode,NULL},
 };
-struct m9mo_action_struct{
-	void (*init)(struct msm_sensor_ctrl_t *s_ctrl);
-	void (*start)(struct msm_sensor_ctrl_t *s_ctrl);
-	void (*output)(struct msm_sensor_ctrl_t *s_ctrl);
-	void (*stop)(struct msm_sensor_ctrl_t *s_ctrl);
-};
+
 struct m9mo_action_struct m9mo_action[9] = {
-	{NULL,ZSL_capture,ZSL_YUV_output,ZSL_preview_output},/*SENSOR_MODE_SNAPSHOT*/
-    {NULL,raw_capture,ZSL_raw_output,stop_raw_output},/*SENSOR_MODE_RAW_SNAPSHOT*/
-    {NULL,ZSL_preview_output,NULL,ZSL_preview_stop},/*SENSOR_MODE_PREVIEW*/
-    {m9mo_change_to_param_set_mode,video_output,NULL,m9mo_change_to_param_set_mode},/*SENSOR_MODE_VIDEO*/
-    {m9mo_change_to_param_set_mode,HDR_video_output,NULL,m9mo_change_to_param_set_mode},/*SENSOR_MODE_VIDEO_HDR*/
-    {m9mo_change_to_param_set_mode,WVGA_video_output,NULL,m9mo_change_to_param_set_mode},/*SENSOR_MODE_HFR_150FPS*/
-    {NULL,burst_capture,NULL,stop_burst_output},/*SENSOR_MODE_ZSL*/
-    {NULL,ZSL_HDR_capture,ZSL_HDR_yuv_output,ZSL_preview_output},
-	{NULL,NULL,NULL,NULL},
+	{M9MO_ACTION_INIT,NULL,ZSL_capture,ZSL_YUV_output,ZSL_preview_output},/*SENSOR_MODE_SNAPSHOT*/
+    {M9MO_ACTION_INIT,NULL,raw_capture,ZSL_raw_output,stop_raw_output},/*SENSOR_MODE_RAW_SNAPSHOT*/
+    {M9MO_ACTION_INIT,NULL,ZSL_preview_output,NULL,ZSL_preview_stop},/*SENSOR_MODE_PREVIEW*/
+    {M9MO_ACTION_INIT,m9mo_change_to_param_set_mode,video_output,NULL,m9mo_change_to_param_set_mode},/*SENSOR_MODE_VIDEO*/
+    {M9MO_ACTION_INIT,m9mo_change_to_param_set_mode,HDR_video_output,NULL,m9mo_change_to_param_set_mode},/*SENSOR_MODE_VIDEO_HDR*/
+    {M9MO_ACTION_INIT,m9mo_change_to_param_set_mode,WVGA_video_output,NULL,m9mo_change_to_param_set_mode},/*SENSOR_MODE_HFR_150FPS*/
+    {M9MO_ACTION_INIT,NULL,burst_capture,NULL,stop_burst_output},/*SENSOR_MODE_ZSL*/
+    {M9MO_ACTION_INIT,NULL,ZSL_HDR_capture,ZSL_HDR_yuv_output,ZSL_preview_output},
+	{M9MO_ACTION_INIT,NULL,NULL,NULL,NULL},
 };
 static int16_t m9mo_get_brightness(struct msm_sensor_ctrl_t *s_ctrl)
 {
@@ -1161,15 +1206,18 @@ static void focus_done(struct msm_sensor_ctrl_t *s_ctrl)
 void m9mo_capture_notify(void)
 {
 	struct msm_ctrl_cmd ctrlcmd;
-	
-	ctrlcmd.type = MSM_V4L2_VENDOR_CMD;
-	ctrlcmd.timeout_ms = 2000;
-	ctrlcmd.length = 0;
-	ctrlcmd.value = NULL;
-	ctrlcmd.vnode_id = 0;
-	ctrlcmd.queue_idx = queue_id >= 0 ?queue_id:1;
-	ctrlcmd.config_ident = 0x08;
-	msm_server_send_ctrl(&ctrlcmd, MSM_CAM_RESP_V4L2);
+	if (!capture_notify&&!capture_enable_out)
+	{
+		capture_notify = true;
+		ctrlcmd.type = MSM_V4L2_VENDOR_CMD;
+		ctrlcmd.timeout_ms = 2000;
+		ctrlcmd.length = 0;
+		ctrlcmd.value = NULL;
+		ctrlcmd.vnode_id = 0;
+		ctrlcmd.queue_idx = queue_id >= 0 ?queue_id:1;
+		ctrlcmd.config_ident = 0x08;
+		msm_server_send_ctrl(&ctrlcmd, MSM_CAM_RESP_V4L2);
+	}
 }
 
 void m9mo_status_work_callback(struct work_struct *work)
@@ -1206,7 +1254,7 @@ void m9mo_status_work_callback(struct work_struct *work)
 		return;
 	}
 	
-	if((!triger_irq && !(resp[1]&0x08) && g_bCapture))
+	if((!triger_irq && !(resp[1]&0x88) && g_bCapture))
 	{
 		mod_timer(&m9mo_p_timer,
 			jiffies + msecs_to_jiffies(200));
@@ -1238,11 +1286,7 @@ void m9mo_status_work_callback(struct work_struct *work)
 	} 
 	else if((resp[1]&0x08) && (g_bCapture || g_bCapture_raw))
 	{
-		if (!capture_notify)
-		{
-			m9mo_capture_notify();
-			capture_notify = true;
-		}
+		m9mo_capture_notify();
 		
 		if (capture_enable_out)
 		{
@@ -1270,8 +1314,17 @@ void m9mo_status_work_callback(struct work_struct *work)
 		//if camera start up, and enable slow shutter, need change mode to zsl off
 		if (m9mo_para.slow_shutter && !camera_work)
 		{
-			m9mo_change_to_param_set_mode(s_ctrl);
-			ZSL_preview_output(s_ctrl);
+			resp[0]= 0x05;
+			resp[1]= 0x01;
+			resp[2]= 0x01;
+			resp[3]= 0x6E;
+			resp[4]= 0x01;
+			msm_vendor_i2c_rxdata(s_ctrl->sensor_i2c_client,resp,5,2);
+			if (resp[1] == 0x01)
+			{
+				m9mo_change_to_param_set_mode(s_ctrl);
+				ZSL_preview_output(s_ctrl);
+			}
 		}
 		
 	   	camera_work = true;
@@ -1286,13 +1339,6 @@ void m9mo_status_work_callback(struct work_struct *work)
 	          schedule_work(&rotate_bdata->work); 
 	    }
 		
-		//when burst capture not need to start preview
-		if (s_ctrl->curr_res == 6)
-		{
-			m9mo_debug("Now burst capture back to preview \n");
-			monitor_start = true;
-			g_bCapture = false;
-		}
 	}
 	
 	if(triger_irq)
@@ -1327,42 +1373,11 @@ static void m9mo_get_frame_info(struct msm_sensor_ctrl_t *s_ctrl,
 	frame_info->ae_stable = m9mo_get_ae_stable(s_ctrl);
 }
 
-static bool m9mo_check_if_has_faces(struct msm_sensor_ctrl_t *s_ctrl)
-{
-	bool has_faces = false;
-	
-	static int32_t fd_set_cnt_pre = 0;
-	static int32_t check_times = 0;
-	
-	//now has face info set
-	if (fd_set_cnt != fd_set_cnt_pre)
-	{
-		has_faces = true;
-		check_times = 0;
-		fd_set_cnt_pre = fd_set_cnt;
-	}
-	else
-	{
-		//if check 10 times no faces
-		if (fd_set_cnt == 0)
-			has_faces = false;
-		else if (check_times++ > 10)
-		{
-			has_faces = false;
-			check_times = 0;
-			fd_set_cnt = 0;
-			fd_set_cnt_pre = 0;
-		}
-	}
-	
-	return has_faces;
-}
 void exif_work_callback(struct work_struct *work)
 {
 	struct msm_sensor_ctrl_t* s_ctrl = CTRL;
     if(capture_enable_out)
     {
-		m9mo_debug("%s: update exif info \n", __func__);
 		m9mo_get_exposure_time(s_ctrl, &last_exif.exposure);
 		m9mo_get_auto_iso_value(s_ctrl, &last_exif.ISO);
 		m9mo_get_flash_info(s_ctrl, &last_exif.flash_fired);
@@ -1375,8 +1390,8 @@ void caf_work_callback(struct work_struct *work)
 	struct msm_sensor_ctrl_t* s_ctrl = CTRL;
 	struct frame_info_t frame_info;
 	int32_t rc = 0;
-	bool has_faces = false;
 	char E_cmd[5] = {0x05,0x02,0x02,0x46,0x00};
+	static int delay_frames = 0;
 	
 	resp[0]= 0x05;
 	resp[1]= 0x01;
@@ -1400,22 +1415,21 @@ void caf_work_callback(struct work_struct *work)
 		current_status = FOCUSED_FAILED;
 	
 	focus_done(s_ctrl);
-
-	/*check if has faces, if has faces not do caf*/
-	has_faces = m9mo_check_if_has_faces(s_ctrl);
+	
 	//if no faces ,need change to auto ae mode
-	if (!has_faces && ae_mode == M9MO_AE_MODE_FACE)
+	if (!g_FrameInfo.has_faces && g_FrameInfo.ae_mode == M9MO_AE_MODE_FACE)
 	{
 		E_cmd[2] = 0x02;
 		E_cmd[3] = 0x46;
 		E_cmd[4] = 0x00;
 		msm_camera_i2c_txdata(s_ctrl->sensor_i2c_client,E_cmd,5);
-		ae_mode = M9MO_AE_MODE_AUTO;
+		g_FrameInfo.ae_mode = M9MO_AE_MODE_AUTO;
 	}
 	
 	/*do caf and asd algorithm*/
-	if (2 == s_ctrl->curr_res && camera_work)
+	if (2 == s_ctrl->curr_res && !g_FrameInfo.has_faces)
 	{
+	    //m9mo_debug("[%s] \n", __func__);
 		m9mo_get_frame_info(s_ctrl, &frame_info);
 		
 		g_FrameInfo.brightness = frame_info.brightness;
@@ -1439,6 +1453,18 @@ void caf_work_callback(struct work_struct *work)
 			oppo_feature[OPPO_ASD].process(s_ctrl, &frame_info);
 		}
 		/*oppo 2013-09-14 guanjindian add end*/
+	}
+	else if ((3 == s_ctrl->curr_res || 4 == s_ctrl->curr_res ||
+		5 == s_ctrl->curr_res) && !g_FrameInfo.wd_valid)
+	{
+		if (delay_frames++>50)
+		{
+			delay_frames = 0;
+			g_FrameInfo.wd_valid = true;
+			m9mo_debug("%s: After change to video, do focus \n", __func__);
+			last_status = FOCUSED_SUCCESS;
+			m9mo_set_autofocus(s_ctrl);
+		}
 	}
 }
 
@@ -2405,7 +2431,22 @@ static void gpio_keys_gpio_report_event(struct gpio_button_data *bdata)
 		if (state)
 			input_event(input, type, button->code, button->value);
 	} else {
+		#if 0
 		input_event(input, type, button->code, !!state);
+		#else
+		if (gpio_get_value(button->gpio) == 1)
+		{
+			input_event(input, type, KEY_F2, 1);
+			input_sync(input);
+			input_event(input, type, KEY_F2, 0);
+		}
+		else
+		{
+			input_event(input, type, KEY_F1, 1);
+			input_sync(input);
+			input_event(input, type, KEY_F1, 0);
+		}
+		#endif
 	}
 	input_sync(input);
 }
@@ -2423,6 +2464,9 @@ static void gpio_keys_gpio_work_func(struct work_struct *work)
 	
 	if(Rotate_delay)
 	    msleep(50);
+
+	if (m9mo_para.flip_hint)
+		m9mo_para.flip_hint = 0;
 	    
 	m9mo_debug("[%s]: Camera rotate inturrupt coming \r\n", __func__);
 	gpio_value = gpio_get_value(bdata->button->gpio);
@@ -2442,17 +2486,62 @@ static void gpio_keys_gpio_work_func(struct work_struct *work)
 			Rotate_delay = true;
 			return;
 		}
-		Rotate_delay = false;
 		g_bRotate = true;
+		poll_num = 0;
 		if (s_ctrl->curr_res != MSM_SENSOR_RES_FULL && 
 			s_ctrl->curr_res != MSM_SENSOR_INVALID_RES &&
 			m9mo_action[s_ctrl->curr_res].start)
 		{
-			m9mo_change_to_param_set_mode(s_ctrl);
-			m9mo_action[s_ctrl->curr_res].start(s_ctrl);
-		}else{
-		    m9mo_change_to_param_set_mode(s_ctrl);
-			m9mo_action[2].start(s_ctrl); 
+		    if (m9mo_action[s_ctrl->curr_res].state == M9MO_ACTION_START)
+		    {
+				Rotate_delay = false;
+				m9mo_change_to_param_set_mode(s_ctrl);
+				m9mo_action[s_ctrl->curr_res].start(s_ctrl);
+				while(camera_poweron && !camera_work && ++poll_num < 10)
+					msleep(50);
+		    }
+			else
+			{
+				if (Rotate_delay)
+				{
+					Rotate_delay = false;
+					m9mo_change_to_param_set_mode(s_ctrl);
+					m9mo_action[s_ctrl->curr_res].start(s_ctrl);
+					while(camera_poweron && !camera_work && ++poll_num < 10)
+						msleep(50);
+				}
+				else
+				{
+					Rotate_delay = true;
+					monitor_start = false;
+				}
+			}
+		}else
+		{
+		    if (m9mo_action[2].state == M9MO_ACTION_START)
+		    {
+				Rotate_delay = false;
+		        m9mo_change_to_param_set_mode(s_ctrl);
+				m9mo_action[2].start(s_ctrl);
+				while(camera_poweron && !camera_work && ++poll_num < 10)
+					msleep(50);
+		    }
+			else
+			{
+				if (Rotate_delay)
+				{
+					Rotate_delay = false;
+			        m9mo_change_to_param_set_mode(s_ctrl);
+					m9mo_action[2].start(s_ctrl);
+					while(camera_poweron && !camera_work && ++poll_num < 10)
+						msleep(50);
+				}
+				else
+				{
+					Rotate_delay = true;
+					monitor_start = false;
+				}
+			}
 		}
 	}
 	if(!camera_work && rotate_gpio_num == bdata->button->gpio && camera_poweron)
@@ -2684,7 +2773,7 @@ static int __devinit camera_rotate_keys_probe(struct platform_device *pdev)
 	input_set_drvdata(input, ddata);
 
 	input->name = pdata->name ? : pdev->name;
-	input->phys = "rotate-keys/input0";
+	input->phys = "camera-rotate-keys/input0";
 	input->dev.parent = &pdev->dev;
 	input->open = gpio_keys_open;
 	input->close = gpio_keys_close;
@@ -2698,9 +2787,15 @@ static int __devinit camera_rotate_keys_probe(struct platform_device *pdev)
 	if (pdata->rep)
 		__set_bit(EV_REP, input->evbit);
 
+	/*set key code*/
+	__set_bit(KEY_F2, input->keybit);
+
 	for (i = 0; i < pdata->nbuttons; i++) {
 		const struct gpio_keys_button *button = &pdata->buttons[i];
 		struct gpio_button_data *bdata = &ddata->data[i];
+
+		if (pdata->buttons[i].gpio != rotate_gpio_num)
+			continue;
 
 		error = gpio_keys_setup_key(pdev, input, bdata, button);
 		if (error)
@@ -2719,7 +2814,10 @@ static int __devinit camera_rotate_keys_probe(struct platform_device *pdev)
 
 	/* get current state of buttons that are connected to GPIOs */
 	for (i = 0; i < pdata->nbuttons; i++) {
-		struct gpio_button_data *bdata = &ddata->data[i];
+		struct gpio_button_data *bdata;
+		if (pdata->buttons[i].gpio != rotate_gpio_num)
+			continue;
+		bdata = &ddata->data[i];
 		if (gpio_is_valid(bdata->button->gpio))
 			gpio_keys_gpio_report_event(bdata);
 	}
@@ -2770,6 +2868,44 @@ static int __devexit camera_rotate_keys_remove(struct platform_device *pdev)
 	return 0;
 }
 
+static int gpio_keys_suspend(struct device *dev)
+{
+	const struct gpio_keys_platform_data *pdata = dev->platform_data;
+	struct gpio_keys_drvdata *ddata = dev_get_drvdata(dev);
+	int i;
+
+	if (device_may_wakeup(dev)) {
+		for (i = 0; i < ddata->n_buttons; i++) {
+			struct gpio_button_data *bdata;
+			if (pdata->buttons[i].gpio != rotate_gpio_num)
+				continue;
+			bdata = &ddata->data[i];
+			if (bdata->button->wakeup)
+				enable_irq_wake(bdata->irq);
+		}
+	}
+
+	return 0;
+}
+
+static int gpio_keys_resume(struct device *dev)
+{
+	const struct gpio_keys_platform_data *pdata = dev->platform_data;
+	struct gpio_keys_drvdata *ddata = dev_get_drvdata(dev);
+	int i;
+
+	for (i = 0; i < ddata->n_buttons; i++) {
+		struct gpio_button_data *bdata;
+		if (pdata->buttons[i].gpio != rotate_gpio_num)
+			continue;
+		bdata = &ddata->data[i];
+		if (bdata->button->wakeup && device_may_wakeup(dev))
+			disable_irq_wake(bdata->irq);
+	}
+
+	return 0;
+}
+static SIMPLE_DEV_PM_OPS(camera_rotate_gpio_keys_pm_ops, gpio_keys_suspend, gpio_keys_resume);
 
 static struct platform_driver camera_rotate_keys_device_driver = {
 	.probe		= camera_rotate_keys_probe,
@@ -2777,6 +2913,7 @@ static struct platform_driver camera_rotate_keys_device_driver = {
 	.driver		= {
 		.name	= "camera-rotate-keys",
 		.owner	= THIS_MODULE,
+		.pm		= &camera_rotate_gpio_keys_pm_ops,
 	}
 };
 
@@ -2785,8 +2922,7 @@ static int __init m9mo_sensor_init_module(void)
 	int pcb_version = get_pcb_version();
 
 	m9mo_debug("%s : pcb_version[%d] \n", __func__, pcb_version);
-	if (pcb_version == PCB_VERSION_DVT_N1T ||
-		pcb_version == PCB_VERSION_PVT_N1T ||
+	if (pcb_version >= PCB_VERSION_DVT_N1T ||
 		pcb_version == PCB_VERSION_DVT_N1F ||
 		pcb_version == PCB_VERSION_PVT_N1F)
 	{
@@ -2825,6 +2961,7 @@ static struct v4l2_subdev_ops m9mo_subdev_ops = {
 void m9mo_start_stream(struct msm_sensor_ctrl_t *s_ctrl)
 {
 	m9mo_debug("%s \n", __func__);
+	m9mo_action[s_ctrl->curr_res].state = M9MO_ACTION_START;
 	if(m9mo_action[s_ctrl->curr_res].start)
 	{
 		if (0 == s_ctrl->curr_res && m9mo_para.hdr_enable)
@@ -2839,11 +2976,12 @@ void m9mo_start_stream(struct msm_sensor_ctrl_t *s_ctrl)
 }
 void m9mo_stop_stream(struct msm_sensor_ctrl_t *s_ctrl)
 {
+	m9mo_action[s_ctrl->curr_res].state = M9MO_ACTION_STOP;
 	if(m9mo_action[s_ctrl->curr_res].stop)
 	{
 		m9mo_action[s_ctrl->curr_res].stop(s_ctrl);
 	}
-	m9mo_debug("%s \n", __func__);
+	m9mo_debug("%s End\n", __func__);
 }
 int32_t m9mo_setting(struct msm_sensor_ctrl_t *s_ctrl,
 			int update_type, int res)
@@ -2864,6 +3002,7 @@ int32_t m9mo_setting(struct msm_sensor_ctrl_t *s_ctrl,
 	{
 		m9mo_action[res].init(s_ctrl);
 	}
+	m9mo_action[res].state = M9MO_ACTION_INIT;
 	return rc;
 }
 
@@ -2873,6 +3012,12 @@ static void m9mo_change_to_param_set_mode(struct msm_sensor_ctrl_t *s_ctrl)
 	char resp[5] = {0x05,0x01,0x00,0x0B,0x01};
 	u32 i = 0;
 
+	m9mo_para.need_update = true;
+	monitor_start = false;
+	camera_work = false;
+	
+	m9mo_check_if_at_focusing(s_ctrl, true);
+	
 	//change to parameter setting mode
 	E_cmd[2] = 0x00;
 	E_cmd[3] = 0x0B;
@@ -2897,10 +3042,11 @@ static void m9mo_change_to_param_set_mode(struct msm_sensor_ctrl_t *s_ctrl)
 		msleep(50);
 		i++;
 	}
-	monitor_start = false;
+	
 	g_FrameInfo.wd_valid = false;
 	g_FrameInfo.single_af = false;
 	g_FrameInfo.capture_start = false;
+	g_FrameInfo.has_faces = false;
 }
 
 //----------------------------------------------------------oppo
@@ -2955,11 +3101,6 @@ int32_t m9mo_mode_init(struct msm_sensor_ctrl_t *s_ctrl,
 				MSM_SENSOR_REG_INIT, 0);
 	}
 	
-	if (s_ctrl->sensor_i2c_client->client->irq)
-	{
-		disable_irq(s_ctrl->sensor_i2c_client->client->irq);
-	}
-	enable_irq(s_ctrl->sensor_i2c_client->client->irq);
 	return rc;
 }
 int32_t m9mo_power_up(struct msm_sensor_ctrl_t *s_ctrl)
@@ -3032,6 +3173,8 @@ int32_t m9mo_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 	if (data->sensor_platform_info->i2c_conf &&
 		data->sensor_platform_info->i2c_conf->use_i2c_mux)
 		m9mo_sensor_enable_i2c_mux(data->sensor_platform_info->i2c_conf);
+	
+	enable_irq(s_ctrl->sensor_i2c_client->client->irq);
 
 	need_speed_up = true;
 	g_bCapture = false;
@@ -3040,6 +3183,7 @@ int32_t m9mo_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 	g_FrameInfo.single_af = false;
 	g_FrameInfo.capture_start = false;
 	g_FrameInfo.wd_valid = false;
+	g_FrameInfo.has_faces = false;
 	return rc;
 config_gpio_failed:
 	msm_cam_clk_enable(&s_ctrl->sensor_i2c_client->client->dev,
@@ -3077,6 +3221,7 @@ int32_t m9mo_power_down(struct msm_sensor_ctrl_t *s_ctrl)
 	m9mo_para.need_update = true;
 	camera_poweron = false;
 	ignore_irq = true;
+	m9mo_para.flip_hint = 0;
 	
 	m9mo_debug("%s\n", __func__);
 	disable_irq(s_ctrl->sensor_i2c_client->client->irq);
@@ -3149,8 +3294,6 @@ int32_t m9mo_match_id(struct msm_sensor_ctrl_t *s_ctrl)
 		rc = msm_server_open_client(&queue_id);
 		oppo_caf_init(&oppo_feature[OPPO_CAF]);
 		oppo_scene_detect_init(&oppo_feature[OPPO_ASD]);
-	}else{
-	    enable_irq(s_ctrl->sensor_i2c_client->client->irq);
 	}
 		
 	return 0;
@@ -3385,7 +3528,7 @@ static int32_t m9mo_set_AE_area(struct msm_sensor_ctrl_t *s_ctrl, struct cord *a
 	if (0x01 == resp[1]) 
 	{
 		//m9mo_debug("Touch AE is starting \r\n");
-		ae_mode = M9MO_AE_MODE_TOUCH;
+		g_FrameInfo.ae_mode = M9MO_AE_MODE_TOUCH;
 		return 0;
 	} 
 	else 
@@ -3516,15 +3659,16 @@ static int32_t m9mo_do_face_ae(struct msm_sensor_ctrl_t *s_ctrl, struct cord *fd
 	msm_vendor_i2c_rxdata(s_ctrl->sensor_i2c_client,resp,5,2);
 	if (0x01 == resp[1])
 	{
-		//m9mo_debug("Face AE is starting \r\n");
-		ae_mode = M9MO_AE_MODE_FACE;
-		return 0;
+		m9mo_debug("Face AE is starting \r\n");
+		g_FrameInfo.ae_mode = M9MO_AE_MODE_FACE;
 	}
 	else
 	{
 		m9mo_debug("Face AE is NOT starting, Please check the Face area \r\n");
 		return -1;
 	}
+
+	msleep(50);
 
 	//start Face AF
 	E_cmd[2] = 0x0A;
@@ -3538,49 +3682,41 @@ static int32_t m9mo_do_face_ae(struct msm_sensor_ctrl_t *s_ctrl, struct cord *fd
 //fd area setting
 static int32_t m9mo_set_fd_info(struct msm_sensor_ctrl_t *s_ctrl, struct cord *fd_area, unsigned int dz_step)
 {
-	char resp[5] = {0x05,0x01,0x02,0x46,0x01};
-
 	struct cord fd_zone;
 
 	if (fd_area->x > 1920 || fd_area->y > 1080 ||
 		fd_area->dx == 0 || fd_area->dy == 0)
 	{
-		//m9mo_debug("Invalid touch ae area \r\n");
+		g_FrameInfo.has_faces = false;
 		return 0;
 	}
+	
+	if (g_bCapture)
+		return 0;
 
 	m9mo_map_ap_area_to_isp(s_ctrl, fd_area, &fd_zone, dz_step, true);
-
 	//m9mo_debug("fd_zone[%d, %d, %d, %d] \r\n", fd_zone.x, fd_zone.y, fd_zone.dx, fd_zone.dy);
-
-	fd_set_cnt++;
-	//check now if need to do face ae
-	resp[0] = 0x05;
-	resp[1] = 0x01;
-	resp[2] = 0x02;
-	resp[3] = 0x46;
-	resp[4] = 0x01;
-	msm_vendor_i2c_rxdata(s_ctrl->sensor_i2c_client,resp,5,2);
-	if (resp[1] == 0 && ae_mode == M9MO_AE_MODE_AUTO) 
-	{
-		m9mo_do_face_ae(s_ctrl, &fd_zone);
-	}
+	g_FrameInfo.has_faces = true;
+	m9mo_do_face_ae(s_ctrl, &fd_zone);
 	return 0;
 }
 
 static void m9mo_set_flash_mode(struct msm_sensor_ctrl_t *s_ctrl, int flash_mode)
 {
 	char E_cmd[5] = {0x05,0x02,0x0B,0x1F,0x00};
-	
+
+	//m9mo_debug("%s flash_mode = %d\n", __func__,flash_mode);
+	#if 0
 	if(!camera_work && m9mo_cmd[1] != 0xFE)
 	{
 		m9mo_para.flash_mode = flash_mode;
 	    return;
 	}
-
-	if (flash_mode != m9mo_para.flash_mode)
+	#endif
+	if (need_speed_up)
 	{
-		m9mo_debug("%s flash_mode = %d\n", __func__,flash_mode);
+		m9mo_para.flash_mode = flash_mode;
+	    return;
 	}
 	
 	switch(flash_mode)
@@ -3799,12 +3935,9 @@ static int32_t m9mo_set_slow_shutter(struct msm_sensor_ctrl_t *s_ctrl, u_int32_t
 		return 0;
 	}
 
-	if (slow_shutter != m9mo_para.slow_shutter)
-	{
-		m9mo_debug("%s: slow_shutter[%d] \n", __func__, slow_shutter);
-	}
+	m9mo_debug("%s: slow_shutter[%d] \n", __func__, slow_shutter);
 	
-	if (slow_shutter && m9mo_para.slow_shutter == 0)
+	if (slow_shutter && m9mo_para.slow_shutter == 0 && camera_work)
 	{
 		#ifdef ZSL_ENABLE
 		m9mo_para.slow_shutter = slow_shutter;
@@ -3817,7 +3950,7 @@ static int32_t m9mo_set_slow_shutter(struct msm_sensor_ctrl_t *s_ctrl, u_int32_t
 		msm_camera_i2c_txdata(s_ctrl->sensor_i2c_client,E_cmd,5);
 		#endif
 	}
-	else if (slow_shutter == 0 && m9mo_para.slow_shutter)
+	else if (slow_shutter == 0 && m9mo_para.slow_shutter && camera_work)
 	{
 		#ifdef ZSL_ENABLE
 		m9mo_para.slow_shutter = 0;
@@ -3991,6 +4124,29 @@ static int32_t m9mo_set_awb_lock(struct msm_sensor_ctrl_t *s_ctrl, int32_t value
 	return 0;
 }
 
+static int32_t m9mo_set_flip_hint(struct msm_sensor_ctrl_t *s_ctrl, int32_t value)
+{
+	if (!camera_work || !monitor_start)
+	{
+		return 0;
+	}
+	
+	m9mo_para.flip_hint = value;
+	
+	if (s_ctrl->curr_res != MSM_SENSOR_RES_FULL && 
+		s_ctrl->curr_res != MSM_SENSOR_INVALID_RES &&
+		m9mo_action[s_ctrl->curr_res].start &&
+		value != 0)
+	{
+		m9mo_debug("%s start \r\n", __func__);
+		m9mo_change_to_param_set_mode(s_ctrl);
+		m9mo_action[s_ctrl->curr_res].start(s_ctrl);
+	}
+	
+	return 0;
+}
+
+
 static int32_t m9mo_set_scene_mode(struct msm_sensor_ctrl_t *s_ctrl, int32_t scene_mode)
 {
 	char E_cmd[5] = {0x05,0x02,0x01,0x01,0x3B};
@@ -4117,6 +4273,7 @@ int32_t m9mo_config(struct msm_sensor_ctrl_t *s_ctrl, void __user *argp)
 {
 	struct sensor_cfg_data cdata;
 	long   rc = 0;
+	static int frame_cnt = 0;
 	
 	if (copy_from_user(&cdata,
 		(void *)argp,
@@ -4128,7 +4285,15 @@ int32_t m9mo_config(struct msm_sensor_ctrl_t *s_ctrl, void __user *argp)
 		  	   case CFG_FRAME_NOTIFICATION:
 			   	{
 					if((caf_workqueue) && (!g_bCapture))
-					   queue_work(caf_workqueue, &caf_work);
+					{
+						queue_work(caf_workqueue, &caf_work);
+						if (!camera_work && frame_cnt++>5)
+						{
+							queue_work(m9mo_status_workqueue, &m9mo_status_work);
+							camera_work = true;
+							frame_cnt = 0;
+						}
+					}
 					else
 					{
 						m9mo_debug("notify capture frame \r\n");
@@ -4140,12 +4305,15 @@ int32_t m9mo_config(struct msm_sensor_ctrl_t *s_ctrl, void __user *argp)
 			   case CFG_STOP_STREAM:
 			   {
 			   		m9mo_debug("%s : stop stream \n", __func__);
+                         //we should lock all stop opration
+					mutex_lock(s_ctrl->msm_sensor_mutex);
 					if (s_ctrl->func_tbl->sensor_stop_stream == NULL) {
 						rc = -EFAULT;
 						break;
 					}
 					s_ctrl->func_tbl->sensor_stop_stream(s_ctrl);
 					rc = 0;
+					mutex_unlock(s_ctrl->msm_sensor_mutex);
 				}
 			   break;
 			   default:
@@ -4161,7 +4329,15 @@ int32_t m9mo_config(struct msm_sensor_ctrl_t *s_ctrl, void __user *argp)
 		case CFG_FRAME_NOTIFICATION:
 		{
 			if((caf_workqueue) && (!g_bCapture))
+			{
 				queue_work(caf_workqueue, &caf_work);
+				if (!camera_work && frame_cnt++>5)
+			   	{
+			   	 	queue_work(m9mo_status_workqueue, &m9mo_status_work);
+				 	camera_work = true;
+				 	frame_cnt = 0;
+			   	}
+			}
 			else
 			{
 				m9mo_debug("notify capture frame \r\n");
@@ -4197,7 +4373,8 @@ int32_t m9mo_config(struct msm_sensor_ctrl_t *s_ctrl, void __user *argp)
 			{
 			   m9mo_action[7].start(s_ctrl);
 			   cdata.cfg.flash_mode = 1;
-			}else if (!m9mo_para.slow_shutter)
+			}
+			else
 			{
 				if(g_bCapture_raw)
 				{	
@@ -4303,9 +4480,18 @@ int32_t m9mo_config(struct msm_sensor_ctrl_t *s_ctrl, void __user *argp)
 		case CFG_SET_AWB_LOCK:
 			rc = m9mo_set_awb_lock(s_ctrl, cdata.cfg.awb_lock);
 			break;
+		case CFG_SET_FLIP_HINT:
+			rc = m9mo_set_flip_hint(s_ctrl, cdata.cfg.flip_hint);
+			break;
 		/*OPPO 2013-09-14 guanjindian add for N1 asd start*/
 		case CFG_GET_SCENE_MODE:
-			cdata.cfg.scene_mode = cur_scene;
+			if(g_FrameInfo.has_faces){
+				cur_scene = 3;
+				cdata.cfg.scene_mode = cur_scene;
+			}else{
+				cdata.cfg.scene_mode = cur_scene;
+			}
+	
 			if (copy_to_user((void *)argp,&cdata,sizeof(struct sensor_cfg_data)))
 			{
 				rc = -EFAULT;
