@@ -37,5 +37,7 @@ enum {
 
 //extern int get_pcb_version(void);
 int get_pcb_version(void);
+char *get_hw_pcb_version(void);
+char *get_hw_rf_version(void);
 
 #endif /* _PCB_VERSION_H */
