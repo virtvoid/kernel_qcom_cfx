@@ -2333,7 +2333,6 @@ static void nonstandard_detect_work(struct work_struct *w)
 
 	pr_info("%s,%d\n", __func__,cancel_nonstandard_worker);
 
-<<<<<<< HEAD
 #ifdef CONFIG_MACH_APQ8064_FIND5
 	if(false == is_nonstandard_worker_canceled()) 
 	{
