@@ -17,11 +17,6 @@
 #include <linux/seq_file.h>
 #include <linux/hrtimer.h>
 
-#ifdef CONFIG_MACH_OPPO
-#include <linux/boot_mode.h>
-#include <linux/pcb_version.h>
-#endif
-
 #include "power.h"
 
 #define MAX_BUF 100
@@ -506,7 +501,7 @@ power_attr(wake_lock);
 power_attr(wake_unlock);
 #endif
 
-#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
+#ifdef CONFIG_MACH_APQ8064_FIND5
 extern char pwron_event[];
 
 static ssize_t startup_mode_show(struct kobject *kobj, struct kobj_attribute *attr,
@@ -596,7 +591,7 @@ static struct attribute *g[] = {
 	&wake_unlock_attr.attr,
 #endif
 #endif
-#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	&app_boot_attr.attr,
 	&startup_mode_attr.attr,
 	&all_active_wakelock_attr.attr,
