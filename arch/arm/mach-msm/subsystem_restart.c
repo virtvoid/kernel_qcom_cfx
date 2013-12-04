@@ -37,7 +37,6 @@
 
 #ifdef CONFIG_MACH_OPPO
 #include <linux/oppo_attributes.h>
-#include <linux/pcb_version.h>
 #endif
 
 #include "smd_private.h"
@@ -488,7 +487,7 @@ static void __subsystem_restart_dev(struct subsys_device *dev)
 	spin_unlock_irqrestore(&dev->restart_lock, flags);
 }
 
-#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
+#ifdef CONFIG_MACH_APQ8064_FIND5
 extern void set_need_pin_process_flag(int flag);
 extern int get_sim_status(void);
 int modem_reset_num = 0;
@@ -516,29 +515,25 @@ int subsystem_restart_dev(struct subsys_device *dev)
 	pr_info("Restart sequence requested for %s, restart_level = %d.\n",
 		name, restart_level);
 
-	if(!strncmp("external_modem", name,SUBSYS_NAME_MAX_LENGTH))
-	{
-		modem_reset_num++;
-#ifdef CONFIG_MACH_N1
-		if((get_pcb_version() >=PCB_VERSION_EVT_N1)&&(get_pcb_version() <= PCB_VERSION_PVT_N1T)){
-			if(get_sim_status() == 0)
-			{
-				set_need_pin_process_flag(1);
-			}
-		}else{
-			if(get_sim_status() == 1)
-			{
-				set_need_pin_process_flag(1);
-			}
-		}
-#else
+#ifdef CONFIG_MACH_APQ8064_FIND5
+    if(!strncmp("external_modem", name,SUBSYS_NAME_MAX_LENGTH))
+    {
+        modem_reset_num++;
         if(get_sim_status() == 1)
         {
             set_need_pin_process_flag(1);
         }
+    }
 #endif
+    
+#ifdef CONFIG_MACH_N1
+	if (!strncmp("external_modem", name,SUBSYS_NAME_MAX_LENGTH)) {
+		set_modem_reset_count(get_modem_reset_count() + 1);
+		if (get_sim_status() == 0)
+			set_need_pin_process_flag(1);
 	}
-
+#endif
+    
 	switch (restart_level) {
 
 	case RESET_SUBSYS_COUPLED:
