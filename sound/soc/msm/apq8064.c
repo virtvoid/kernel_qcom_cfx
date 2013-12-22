@@ -67,11 +67,9 @@
 
 #define JACK_DETECT_GPIO 38
 
-/*OPPO 2012-12-14 zhzhyon Add for DVT headset detect*/
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 #define TS3A_SELECT__GPIO 58
 #endif
-/*OPPO 2012-12-14 zhzhyon Add end*/
 
 /* Shared channel numbers for Slimbus ports that connect APQ to MDM. */
 enum {
@@ -143,13 +141,11 @@ static struct tabla_mbhc_config mbhc_cfg = {
 	.mclk_rate = TABLA_EXT_CLK_RATE,
 	.gpio = 0,
 	.gpio_irq = 0,
-	/*OPPO 2012-07-27 zhzhyon Modify for reason*/
-	#ifndef CONFIG_VENDOR_EDIT
+#ifndef CONFIG_MACH_APQ8064_FIND5
 	.gpio_level_insert = 1,
-	#else
+#else
 	.gpio_level_insert = 0,
-	#endif
-	/*OPPO 2012-07-27 zhzhyon Modify end*/
+#endif
 	.detect_extn_cable = false,
 };
 
@@ -522,17 +518,11 @@ static const struct snd_soc_dapm_widget apq8064_dapm_widgets[] = {
 
 	SND_SOC_DAPM_MIC("Headset Mic", NULL),
 
-	/*OPPO 2012-07-29 zhzhyon Add begin for main mic and sec mic*/
-	#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	SND_SOC_DAPM_MIC("Main Mic", NULL),
 	SND_SOC_DAPM_MIC("Second Mic", NULL),
-	/*OPPO 2012-12-17 zhzhyon Add for ANC MIC*/
 	SND_SOC_DAPM_MIC("ANC Mic", NULL),
-	/*OPPO 2012-12-17 zhzhyon Add end*/
-	#endif
-	/*OPPO 2012-07-29 zhzhyon Add end*/
-
-
+#endif
 	SND_SOC_DAPM_MIC("ANCRight Headset Mic", NULL),
 	SND_SOC_DAPM_MIC("ANCLeft Headset Mic", NULL),
 
@@ -583,29 +573,20 @@ static const struct snd_soc_dapm_route apq8064_common_audio_map[] = {
 
 #ifndef CONFIG_SND_SOC_DUAL_AMIC
 	/* Headset ANC microphones */
-	/*OPPO 2012-07-27 zhzhyon Modify for main mic config*/
-	#ifndef CONFIG_VENDOR_EDIT
+#ifndef CONFIG_MACH_APQ8064_FIND5
 	{"AMIC3", NULL, "MIC BIAS3 Internal1"},
 	{"MIC BIAS3 Internal1", NULL, "ANCRight Headset Mic"},
-	#else
-	{"AMIC3", NULL, "MIC BIAS1 Internal1"},
-	{"MIC BIAS1 Internal1", NULL, "Main Mic"},
-	#endif
-	/*OPPO 2012-07-27 zhzhyon Modify end*/
-	/*OPPO 2012-07-27 zhzhyon Modify for sec mic config*/
-	#ifndef CONFIG_VENDOR_EDIT
-	{"AMIC4", NULL, "MIC BIAS1 Internal2"},
-	{"MIC BIAS1 Internal2", NULL, "ANCLeft Headset Mic"},
-	#else
 	{"AMIC4", NULL, "MIC BIAS1 Internal1"},
 	{"MIC BIAS1 Internal1", NULL, "Second Mic"},
-	#endif
-	/*OPPO 2012-07-27 zhzhyon Modify end*/
-#endif
-	/*OPPO 2012-12-17 zhzhyon Add for ANC MIC*/
 	{"AMIC5", NULL, "MIC BIAS1 Internal1"},
 	{"MIC BIAS1 Internal1", NULL, "ANC Mic"},
-	/*OPPO 2012-12-17 zhzhyon Add end*/
+#else
+	{"AMIC3", NULL, "MIC BIAS1 Internal1"},
+	{"MIC BIAS1 Internal1", NULL, "Main Mic"},
+	{"AMIC4", NULL, "MIC BIAS1 Internal2"},
+	{"MIC BIAS1 Internal2", NULL, "ANCLeft Headset Mic"},
+#endif
+#endif
 };
 
 static const struct snd_soc_dapm_route apq8064_mtp_audio_map[] = {
@@ -953,12 +934,21 @@ static void *def_tabla_mbhc_cal(void)
 	S(mic_current, TABLA_PID_MIC_5_UA);
 	S(hph_current, TABLA_PID_MIC_5_UA);
 	S(t_mic_pid, 100);
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	S(t_ins_complete, 200);
+#else
+	S(t_ins_complete, 250);
+#endif
 	S(t_ins_retry, 200);
 #undef S
 #define S(X, Y) ((TABLA_MBHC_CAL_PLUG_TYPE_PTR(tabla_cal)->X) = (Y))
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	S(v_no_mic, 100);
 	S(v_hs_max, 2000);
+#else
+	S(v_no_mic, 30);
+	S(v_hs_max, 2400);
+#endif
 #undef S
 #define S(X, Y) ((TABLA_MBHC_CAL_BTN_DET_PTR(tabla_cal)->X) = (Y))
 	S(c[0], 62);
@@ -1374,11 +1364,9 @@ static int msm_audrx_init(struct snd_soc_pcm_runtime *rtd)
 		apq8064_hs_detect_use_gpio = 1;
 	}
 
-	/*OPPO 2012-07-27 zhzhyon Add for use gpio detect*/
-	#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	apq8064_hs_detect_use_gpio = 1;
-	#endif
-	/*OPPO 2012-07-27 zhzhyon Add end*/
+#endif
 	if (apq8064_hs_detect_use_gpio == 1) 
 	{
 		pr_debug("%s: Using MBHC mechanical switch\n", __func__);
@@ -2287,10 +2275,8 @@ static struct snd_soc_card snd_soc_card_msm = {
 
 static struct platform_device *msm_snd_device;
 
-/*OPPO 2012-12-14 zhzhyon Add for DVT headset detect*/
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 /**
-* OPPO 2012-12-14 zhzhyon Add 
 * This function is for config gpio58 of APQ
 * @param void
 * @return int
@@ -2311,7 +2297,7 @@ static int msm_config_ts3a_gpio(void)
 	return 0;
 }
 #endif
-/*OPPO 2012-12-14 zhzhyon Add end*/
+
 static int __init msm_audio_init(void)
 {
 	int ret;
@@ -2348,11 +2334,9 @@ static int __init msm_audio_init(void)
 		return ret;
 	}
 
-	/*OPPO 2012-12-14 zhzhyon Add for DVT headset detect*/
-	#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	msm_config_ts3a_gpio();
-	#endif
-	/*OPPO 2012-12-14 zhzhyon Add end*/
+#endif
 	mutex_init(&cdc_mclk_mutex);
 	atomic_set(&auxpcm_rsc_ref, 0);
 	return ret;
