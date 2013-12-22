@@ -62,7 +62,6 @@ static struct resource msm_fb_resources[] = {
 #define MIPI_VIDEO_TOSHIBA_WSVGA_PANEL_NAME "mipi_video_toshiba_wsvga"
 #ifdef CONFIG_MACH_APQ8064_FIND5
 #define MIPI_VIDEO_ORISE_720P_PANEL_NAME	"mipi_video_orise_720p"
-#define MDP_SPEEDUP_FOR_MIPI
 #endif
 #define MIPI_VIDEO_CHIMEI_WXGA_PANEL_NAME "mipi_video_chimei_wxga"
 #define HDMI_PANEL_NAME "hdmi_msm"
@@ -187,12 +186,12 @@ static struct msm_bus_vectors mdp_ui_vectors[] = {
 	{
 		.src = MSM_BUS_MASTER_MDP_PORT0,
 		.dst = MSM_BUS_SLAVE_EBI_CH0,
-#ifdef MDP_SPEEDUP_FOR_MIPI
+#ifdef CONFIG_MACH_APQ8064_FIND5
+		.ab = 577474560 * 2,
+		.ib = 866211840 * 2,
+#else
 		.ab = 2000000000,
 		.ib = 2000000000,
-#else
-		.ab = 216000000 * 2,
-		.ib = 270000000 * 2,
 #endif
 	},
 };
@@ -202,12 +201,12 @@ static struct msm_bus_vectors mdp_vga_vectors[] = {
 	{
 		.src = MSM_BUS_MASTER_MDP_PORT0,
 		.dst = MSM_BUS_SLAVE_EBI_CH0,
-#ifdef MDP_SPEEDUP_FOR_MIPI
+#ifdef CONFIG_MACH_APQ8064_FIND5
+		.ab = 605122560 * 2,
+		.ib = 756403200 * 2,
+#else
 		.ab = 2000000000,
 		.ib = 2000000000,
-#else
-		.ab = 216000000 * 2,
-		.ib = 270000000 * 2,
 #endif
 	},
 };
@@ -217,12 +216,12 @@ static struct msm_bus_vectors mdp_720p_vectors[] = {
 	{
 		.src = MSM_BUS_MASTER_MDP_PORT0,
 		.dst = MSM_BUS_SLAVE_EBI_CH0,
-#ifdef MDP_SPEEDUP_FOR_MIPI
+#ifdef CONFIG_MACH_APQ8064_FIND5
+		.ab = 660418560 * 2,
+		.ib = 825523200 * 2,
+#else
 		.ab = 2000000000,
 		.ib = 2000000000,
-#else
-		.ab = 230400000 * 2,
-		.ib = 288000000 * 2,
 #endif
 	},
 };
@@ -232,12 +231,12 @@ static struct msm_bus_vectors mdp_1080p_vectors[] = {
 	{
 		.src = MSM_BUS_MASTER_MDP_PORT0,
 		.dst = MSM_BUS_SLAVE_EBI_CH0,
-#ifdef MDP_SPEEDUP_FOR_MIPI
+#ifdef CONFIG_MACH_APQ8064_FIND5
+		.ab = 764098560 * 2,
+		.ib = 955123200 * 2,
+#else
 		.ab = 2000000000,
 		.ib = 2000000000,
-#else
-		.ab = 334080000 * 2,
-		.ib = 417600000 * 2,
 #endif
 	},
 };
