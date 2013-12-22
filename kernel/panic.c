@@ -64,9 +64,9 @@ void __weak panic_smp_self_stop(void)
 	while (1)
 		cpu_relax();
 }
-/* OPPO 2012-10-11 chendx Add begin for debug tools */
+#ifdef CONFIG_MACH_APQ8064_FIND5
 extern bool is_otrace_on(void);
-/* OPPO 2012-10-11 chendx Add end */
+#endif
 
 
 /**
@@ -94,7 +94,7 @@ void panic(const char *fmt, ...)
 	 */
 	local_irq_disable();
 
-/* OPPO 2012-10-11 chendx Add begin for debug tools */
+#ifdef CONFIG_MACH_APQ8064_FIND5
     pr_info("kernel panic because of %s\n", fmt);
 
 	if(!is_otrace_on()) {
@@ -105,9 +105,7 @@ void panic(const char *fmt, ...)
     	else
         	kernel_restart("kernel");
 	}
-/* OPPO 2012-10-11 chendx Add end */
-
-
+#endif
 
 	/*
 	 * It's possible to come here directly from a panic-assertion and
@@ -447,10 +445,10 @@ static void warn_slowpath_common(const char *file, int line, void *caller,
 				 unsigned taint, struct slowpath_args *args)
 {
 	const char *board;
-/* OPPO 2013-07-01 huanggd Add for reduce printk rate*/	
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	if (!printk_ratelimit()) 
 		return;
-/* OPPO 2013-07-01 huanggd end*/	
+#endif	
 
 	printk(KERN_WARNING "------------[ cut here ]------------\n");
 	printk(KERN_WARNING "WARNING: at %s:%d %pS()\n", file, line, caller);

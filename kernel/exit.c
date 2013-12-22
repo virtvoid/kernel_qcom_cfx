@@ -279,6 +279,7 @@ static bool has_stopped_jobs(struct pid *pgrp)
 	return false;
 }
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
 static bool oppo_is_android_core_group(struct pid *pgrp)
 {
 	struct task_struct *p;
@@ -293,6 +294,8 @@ static bool oppo_is_android_core_group(struct pid *pgrp)
 
 	return false;
 }
+#endif
+
 /*
  * Check to see if any process groups have become orphaned as
  * a result of our exiting, and if they have any stopped jobs,
@@ -319,11 +322,13 @@ kill_orphaned_pgrp(struct task_struct *tsk, struct task_struct *parent)
 	    task_session(parent) == task_session(tsk) &&
 	    will_become_orphaned_pgrp(pgrp, ignored_task) &&
 	    has_stopped_jobs(pgrp)) {
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	    if(oppo_is_android_core_group(pgrp))
 	    {
 	      		printk("kill_orphaned_pgrp: find android core process will be hungup, ignored it, only hungup itself:%s:%d , current=%d \n",tsk->comm,tsk->pid,current->pid);
 	      		return;
 	    }
+#endif
 		__kill_pgrp_info(SIGHUP, SEND_SIG_PRIV, pgrp);
 		__kill_pgrp_info(SIGCONT, SEND_SIG_PRIV, pgrp);
 	}

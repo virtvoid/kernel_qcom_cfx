@@ -889,7 +889,6 @@ static inline void printk_delay(void)
 	}
 }
 
-/* OPPO 2012-10-11 chendx Add begin for debug tools */
 
 #ifdef CONFIG_OPPO_DEBUG_ASSERT
 extern bool is_otrace_on(void);
@@ -897,7 +896,6 @@ extern bool is_otrace_on(void);
 extern int oppo_printk_to_lcd(const unsigned char *buf, int count);
 #endif
 #endif
-/* OPPO 2011-03-22 huangyh Add end */
 
 asmlinkage int vprintk(const char *fmt, va_list args)
 {
@@ -950,15 +948,12 @@ asmlinkage int vprintk(const char *fmt, va_list args)
 
 	p = printk_buf;
 
-
-/* OPPO 2012-10-11 chendx Add begin for debug tools */
 #ifdef CONFIG_OPPO_DEBUG_ASSERT
 #ifdef CONFIG_VT
 	if(is_otrace_on())
 		oppo_printk_to_lcd(p,printed_len);
 #endif
 #endif
-/* OPPO 2012-10-11 chendx Add end */
 #ifdef CONFIG_LGE_CRASH_HANDLER
 	store_crash_log(p);
 #endif
@@ -1411,12 +1406,12 @@ again:
 	raw_spin_unlock_irqrestore(&logbuf_lock, flags);
 
 	if (retry && console_trylock())
-/* OPPO 2013-4-18 Gousj modify for black screen */
+#ifdef CONFIG_MACH_APQ8064_FIND5
 		{
 			retry = 0;
 			goto again;
 		}
-/* OPPO 2013-4-18 Gousj modify end */
+#endif
 	if (wake_klogd)
 		wake_up_klogd();
 }
