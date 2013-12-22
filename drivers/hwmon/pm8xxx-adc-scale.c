@@ -870,6 +870,7 @@ int32_t pm8xxx_adc_scale_batt_therm(int32_t adc_code,
 			bat_voltage,
 			&adc_chan_result->physical);
 	}
+}
 #else
 	return pm8xxx_adc_map_batt_therm(
 			adcmap_btm_threshold,

@@ -341,7 +341,6 @@ static struct pm8xxx_led_config pm8921_led_configs[] = {
 		.pwm_period_us = PM8XXX_LED_PWM_PERIOD,
 #ifndef CONFIG_MACH_APQ8064_FIND5
 		.pwm_duty_cycles = &pm8921_led0_pwm_duty_cycles,
-#endif
 	},
 	[1] = {
 		.id = PM8XXX_ID_LED_1,
@@ -351,6 +350,9 @@ static struct pm8xxx_led_config pm8921_led_configs[] = {
 		.pwm_period_us = PM8XXX_LED_PWM_PERIOD,
 		.pwm_duty_cycles = &pm8921_led0_pwm_duty_cycles,
 	},
+#else
+	}
+#endif
 };
 
 static struct pm8xxx_led_platform_data apq8064_pm8921_leds_pdata = {
@@ -440,7 +442,6 @@ static int apq8064_pm8921_therm_mitigation[] = {
 
 #ifdef CONFIG_MACH_APQ8064_FIND5
 #define RSENSE_MOHM		20
-#ifdef CONFIG_MACH_APQ8064_FIND5
 #define MAX_VOLTAGE_MV          4350
 #else
 #define MAX_VOLTAGE_MV          4200	

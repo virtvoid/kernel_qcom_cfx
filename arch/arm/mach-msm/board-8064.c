@@ -1941,6 +1941,7 @@ static struct i2c_board_info cyttsp_info[] __initdata = {
 	},
 };
 #endif
+#endif
 
 #define MSM_WCNSS_PHYS	0x03000000
 #define MSM_WCNSS_SIZE	0x280000
@@ -3109,6 +3110,7 @@ static int rf4ce_gpio_init(void)
 }
 late_initcall(rf4ce_gpio_init);
 
+#ifndef CONFIG_MACH_APQ8064_FIND5
 #ifdef CONFIG_SERIAL_MSM_HS
 static struct msm_serial_hs_platform_data mpq8064_gsbi6_uartdm_pdata = {
 	.config_gpio		= 4,
@@ -3121,6 +3123,7 @@ static struct msm_serial_hs_platform_data mpq8064_gsbi6_uartdm_pdata = {
 };
 #else
 static struct msm_serial_hs_platform_data msm_uart_dm9_pdata;
+#endif
 #endif
 
 static struct platform_device *mpq_devices[] __initdata = {
@@ -3888,6 +3891,7 @@ static void __init register_i2c_devices(void)
 		apq8064_subcamera_board_info.num_i2c_board_info,
 	};
 #endif
+#endif
 	/* Build the matching 'supported_machs' bitmask */
 	if (machine_is_apq8064_cdp())
 		mach_mask = I2C_SURF;
@@ -4201,6 +4205,7 @@ static void __init apq8064_cdp_init(void)
 #ifdef CONFIG_MSM_CAMERA
 	apq8064_init_cam();
 #endif
+#ifndef CONFIG_MACH_APQ8064_FIND5
 
 	if (machine_is_mpq8064_hrd() || machine_is_mpq8064_dtv()) {
 #ifdef CONFIG_SERIAL_MSM_HS
@@ -4211,6 +4216,19 @@ static void __init apq8064_cdp_init(void)
 #endif
 		platform_device_register(&mpq8064_device_uartdm_gsbi6);
 	}
+
+	if (machine_is_apq8064_cdp() || machine_is_apq8064_liquid())
+		platform_device_register(&cdp_kp_pdev);
+
+	if (machine_is_apq8064_mtp())
+		platform_device_register(&mtp_kp_pdev);
+
+	if (machine_is_mpq8064_cdp()) {
+		platform_device_register(&mpq_gpio_keys_pdev);
+		platform_device_register(&mpq_keypad_device);
+	}
+#endif
+}
 
 #ifdef CONFIG_MACH_APQ8064_FIND5
 char pwron_event[16];
@@ -4233,21 +4251,7 @@ static int __init boot_mode_setup(char *str)
     return 1;
 }
 __setup("androidboot.mode=", boot_mode_setup);
-
-#else
-
-	if (machine_is_apq8064_cdp() || machine_is_apq8064_liquid())
-		platform_device_register(&cdp_kp_pdev);
-
-	if (machine_is_apq8064_mtp())
-		platform_device_register(&mtp_kp_pdev);
-
-	if (machine_is_mpq8064_cdp()) {
-		platform_device_register(&mpq_gpio_keys_pdev);
-		platform_device_register(&mpq_keypad_device);
-	}
 #endif
-}
 
 MACHINE_START(APQ8064_CDP, "QCT APQ8064 CDP")
 	.map_io = apq8064_map_io,

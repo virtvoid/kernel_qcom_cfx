@@ -66,12 +66,16 @@ static void *dload_mode_addr;
 
 /* Download mode master kill-switch */
 static int dload_set(const char *val, struct kernel_param *kp);
+
 #ifdef CONFIG_MACH_APQ8064_FIND5
 #ifdef CONFIG_MODEM_ERR_ENTER_RAMDUMP
 	int download_mode = 0;
 #else
 static int download_mode = 0;
-#else
+#endif
+#endif
+
+#ifndef CONFIG_MACH_APQ8064_FIND5
 static int download_mode = 1;
 #endif
 

@@ -2693,6 +2693,7 @@ static int calculate_state_of_charge(struct pm8921_bms_chip *chip,
 		 * the real soc
 		 */
 		pr_debug("soc = %d before forcing shutdown_soc = %d\n",
+							soc, shutdown_soc);
 
 #ifdef CONFIG_MACH_APQ8064_FIND5		
 		{
@@ -2703,8 +2704,6 @@ static int calculate_state_of_charge(struct pm8921_bms_chip *chip,
 				
 			boot_time_soc = shutdown_soc;
 		}
-#else
-							soc, shutdown_soc);
 #endif   
 		   
 		adjust_rc_and_uuc_for_specific_soc(
@@ -3486,7 +3485,6 @@ static int __devinit pm8921_bms_hw_init(struct pm8921_bms_chip *chip)
 static void check_initial_ocv(struct pm8921_bms_chip *chip)
 {
 	int ocv_uv, rc;
-	int rc1,adc_ocv_uv;
 	int16_t ocv_raw;
 	int usb_chg;
 #ifdef CONFIG_MACH_APQ8064_FIND5

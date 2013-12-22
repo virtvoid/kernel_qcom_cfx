@@ -310,8 +310,9 @@ static char mipi_dsi_splash_is_enabled(void)
 {   
 	return mdp_pdata.cont_splash_enabled;
 }
-#endif
+#else
 };
+#endif
 
 void __init apq8064_mdp_writeback(struct memtype_reserve* reserve_table)
 {

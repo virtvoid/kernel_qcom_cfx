@@ -401,7 +401,6 @@ config IMX091
 	  Sony 13MP sensor back camera that uses 4 mipi lanes,
 	  runs at 30 fps preview and 14 fps snapshot
 
-ifdef CONFIG_MACH_APQ8064_FIND5
 config IMX135
         bool "Sensor imx135 (Sony 13MP)"
         depends on MSM_CAMERA
@@ -425,7 +424,6 @@ config S5K6A3YX
         default y
         ---help---
         SAMSUNG 1.9 MP bayer Sensor
-endif
 
 config MSM_V4L2_VIDEO_OVERLAY_DEVICE
 	tristate "Qualcomm MSM V4l2 video overlay device"

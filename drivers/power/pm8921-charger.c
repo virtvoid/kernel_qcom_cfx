@@ -2763,7 +2763,9 @@ static int get_prop_batt_capacity(struct pm8921_chg_chip *chip)
 
 	if (percent_soc < 0) {
 		pr_err("Unable to read battery voltage\n");
+#ifndef CONFIG_MACH_APQ8064_FIND5
 		goto fail_voltage;
+#endif
 	}
 	
 #ifdef CONFIG_MACH_APQ8064_FIND5
@@ -2896,7 +2898,6 @@ static int get_prop_batt_health(struct pm8921_chg_chip *chip)
 	#endif
 	print_pm8921(DEBUG_TRACE, "%s batt_health = %d\n", __func__,chip->batt_health);
 	return chip->batt_health;
-	#endif
 #else
 	int temp;
 
@@ -5080,7 +5081,6 @@ static void recharging_monitor_worker(struct work_struct *work)
 
 	 return;
 }
-#endif
 
 /* Add begin for mhl charge*/
 int mhl_stanard_charge(void)
@@ -5511,10 +5511,7 @@ static void usbin_charger_valid(struct work_struct *work)
 
 
 }
-#endif
-/* OPPO 2012-08-07 chendx Add end */
 
-/* OPPO 2013-01-18 chendx Add begin for charge eoc with not begin with fastchged */
 #define VDDMAX_NORMAL__TEMP 4350 
 #define VDDMAX_COOL__TEMP 4200 
 #define VDDMAX_WARM__TEMP 4100 

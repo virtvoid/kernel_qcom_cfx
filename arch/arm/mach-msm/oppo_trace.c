@@ -172,7 +172,6 @@ void meminfo_test_saved(void)
 #define K(x) ((x) << (PAGE_SHIFT - 10))
 	si_meminfo(&i);
 	si_swapinfo(&i);
-	committed = atomic_long_read(&vm_committed_space);
 	committed = percpu_counter_read_positive(&vm_committed_as);
 	allowed = ((totalram_pages - hugetlb_total_pages())
 		* sysctl_overcommit_ratio / 100) + total_swap_pages;
@@ -292,6 +291,17 @@ void meminfo_test_saved(void)
 		);
 
 #undef K
+}
+
+
+int oppo_con_write(const unsigned char *buf, int count)
+{
+	return 0;
+}
+
+void console_activate(void)
+{
+	return;
 }
 
 static ssize_t otracer_read(struct file *filp, char __user *buf,
