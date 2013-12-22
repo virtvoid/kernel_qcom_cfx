@@ -920,8 +920,8 @@ static struct msm_gpiomux_config apq8064_ext_regulator_configs[] __initdata = {
 		},
 	},
 };
-//OPPO 2012-11-2 huyu add for lcd backlight enabl
-#ifdef CONFIG_VENDOR_EDIT
+
+#ifdef CONFIG_MACH_APQ8064_FIND5
 static struct gpiomux_setting gpio_backlight_enable = {
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_2MA,
@@ -940,7 +940,6 @@ static struct msm_gpiomux_config apq8064_backlight_enable[] __initdata = {
 
 };
 #endif
-//OPPO 2012-11-2 huyu add for lcd backlight enable
 
 static struct gpiomux_setting ap2mdm_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
@@ -1345,8 +1344,8 @@ static struct msm_gpiomux_config mpq8064_ir_configs[] __initdata = {
 		},
 	},
 };
-//OPPO 2012-12-18 huyu del for lcd 5V_enable for dvt
-#ifndef CONFIG_VENDOR_EDIT
+
+#ifndef CONFIG_MACH_APQ8064_FIND5
 static struct msm_gpiomux_config sx150x_int_configs[] __initdata = {
 	{
 		.gpio      = 81,
@@ -1357,7 +1356,7 @@ static struct msm_gpiomux_config sx150x_int_configs[] __initdata = {
 	},
 };
 #endif
-//OPPO 2012-12-18 huyu del for lcd 5V_enable for dvt
+
 #ifdef CONFIG_MMC_MSM_SDC2_SUPPORT
 static struct gpiomux_setting sdc2_clk_active_cfg = {
 	.func = GPIOMUX_FUNC_2,
@@ -1642,22 +1641,20 @@ void __init apq8064_init_gpiomux(void)
 
 	if (machine_is_mpq8064_cdp() || machine_is_mpq8064_hrd() ||
 		 machine_is_mpq8064_dtv()) {
-/* OPPO 2013-03-18 zhenwx  Delete begin for del unused code */
-#if 0
+#ifndef CONFIG_MACH_APQ8064_FIND5
 		msm_gpiomux_install(mpq8064_gsbi5_i2c_configs,
 				ARRAY_SIZE(mpq8064_gsbi5_i2c_configs));
 #endif
-/* OPPO 2013-03-18 zhenwx  Delete end */
+
 #ifdef CONFIG_MSM_VCAP
 		msm_gpiomux_install(vcap_configs,
 				ARRAY_SIZE(vcap_configs));
 #endif
-//OPPO 2012-12-18 huyu del for lcd 5V_enable for dvt
-#ifndef CONFIG_VENDOR_EDIT
+
+#ifndef CONFIG_MACH_APQ8064_FIND5
 		msm_gpiomux_install(sx150x_int_configs,
 				ARRAY_SIZE(sx150x_int_configs));
 #endif
-//OPPO 2012-12-18 huyu del for lcd 5V_enable for dvt
 	} else {
 		#if defined(CONFIG_KS8851) || defined(CONFIG_KS8851_MODULE)
 		msm_gpiomux_install(apq8064_ethernet_configs,
@@ -1666,11 +1663,11 @@ void __init apq8064_init_gpiomux(void)
 
 		msm_gpiomux_install(apq8064_gsbi_configs,
 				ARRAY_SIZE(apq8064_gsbi_configs));
-/* OPPO 2013-02-04 kangjian added begin for s5k6a3yx's I2C */
+#ifdef CONFIG_MACH_APQ8064_FIND5
 		if (get_pcb_version() >= PCB_VERSION_DVT) {
 			msm_gpiomux_install(apq8064_gsbi7_i2c_config, ARRAY_SIZE(apq8064_gsbi7_i2c_config));
 		}
-/* OPPO 2013-02-04 kangjian added end */
+#endif
 	}
 
 	msm_gpiomux_install(apq8064_slimbus_config,
@@ -1697,12 +1694,10 @@ void __init apq8064_init_gpiomux(void)
 	msm_gpiomux_install(apq8064_ext_regulator_configs,
 			ARRAY_SIZE(apq8064_ext_regulator_configs));
 
-//OPPO 2012-11-2 huyu add for lcd backlight enabl
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	msm_gpiomux_install(apq8064_backlight_enable,
 			ARRAY_SIZE(apq8064_backlight_enable));
 #endif
-//OPPO 2012-11-2 huyu add for lcd backlight enabl
 
 	if (machine_is_apq8064_mtp()) {
 		if (socinfo_get_platform_subtype() == PLATFORM_SUBTYPE_DSDA2) {

@@ -8089,9 +8089,7 @@ static void tabla_hs_gpio_handler(struct snd_soc_codec *codec)
 		printk(KERN_INFO"headset detect handle don't response:%d\n",tabla->hs_on);
 		if((tabla->hs_on == 0)/* && l15_users*/)
 		{
-			#ifdef CONFIG_VENDOR_EDIT
 			snd_soc_update_bits(codec, TABLA_A_RX_HPH_L_DAC_CTL, 0xc0, 0x00);
-			#endif
 		}
 		tabla->in_gpio_handler = false;
 		TABLA_RELEASE_LOCK(tabla->codec_resource_lock);
@@ -9580,7 +9578,7 @@ static int tabla_codec_remove(struct snd_soc_codec *codec)
 {
 	int i;
 	struct tabla_priv *tabla = snd_soc_codec_get_drvdata(codec);
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	switch_dev_unregister(&tabla->sdev);
 #else
 	wake_lock_destroy(&tabla->irq_resend_wlock);

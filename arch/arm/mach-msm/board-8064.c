@@ -1304,7 +1304,7 @@ static struct wcd9xxx_pdata apq8064_tabla_platform_data = {
 		.cfilt2_mv = 2700,
 #endif
 		.cfilt3_mv = 1800,
-#ifndef CONFIG_VENDOR_EDIT
+#ifndef CONFIG_MACH_APQ8064_FIND5
 		.bias1_cfilt_sel = TABLA_CFILT2_SEL,
 		.bias2_cfilt_sel = TABLA_CFILT2_SEL,
 		.bias3_cfilt_sel = TABLA_CFILT2_SEL,
