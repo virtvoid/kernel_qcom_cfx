@@ -501,7 +501,7 @@ power_attr(wake_lock);
 power_attr(wake_unlock);
 #endif
 
-/* OPPO 2012-11-05 Van Modify begin for add interface start reason and boot_mode begin */
+#ifdef CONFIG_MACH_APQ8064_FIND5
 extern char pwron_event[];
 
 static ssize_t startup_mode_show(struct kobject *kobj, struct kobj_attribute *attr,
@@ -543,9 +543,7 @@ static ssize_t app_boot_store(struct kobject *kobj, struct kobj_attribute *attr,
 	return 0;
 }
 power_attr(app_boot);
-/* OPPO 2012-11-05 Van Modify begin for add interface start reason and boot_mode end */
 
-/* OPPO 2013-03-25 huanggd Add begin for debufinfo */
 extern int sysfs_get_active_wakelock(char *buf);
 static ssize_t all_active_wakelock_show(struct kobject *kobj, struct kobj_attribute *attr,
 			     char *buf)
@@ -573,7 +571,7 @@ static ssize_t all_inactive_wakelock_store(struct kobject *kobj, struct kobj_att
 	return n;
 }
 power_attr(all_inactive_wakelock);
-/* OPPO 2013-03-25 huanggd Add end */
+#endif
 
 static struct attribute *g[] = {
 	&state_attr.attr,
@@ -594,14 +592,12 @@ static struct attribute *g[] = {
 	&wake_unlock_attr.attr,
 #endif
 #endif
-/* OPPO 2012-11-05 Van Modify begin for add interface start reason and boot_mode begin */
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	&app_boot_attr.attr,
 	&startup_mode_attr.attr,
-/* OPPO 2012-11-05 Van Modify begin for add interface start reason and boot_mode end */
-/* OPPO 2013-03-25 huanggd Add begin for debufinfo */
 	&all_active_wakelock_attr.attr,
 	&all_inactive_wakelock_attr.attr,		
-/* OPPO 2013-03-25 huanggd Add end */	
+#endif
 	NULL,
 };
 

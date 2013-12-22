@@ -234,7 +234,7 @@ static void print_active_locks(int type)
 	}
 }
 
-/* OPPO 2013-03-25 huanggd Add begin for debufinfo */
+#ifdef CONFIG_MACH_APQ8064_FIND5
 static int printk_active_wakelock(void)
 {
 	struct wake_lock *lock;
@@ -328,7 +328,7 @@ int sysfs_get_inactive_wakelock(char *buf)
 
 	return len;
 }
-/* OPPO 2013-03-25 huanggd Add end */
+#endif
 
 static long has_wake_lock_locked(int type)
 {
@@ -444,9 +444,9 @@ static void suspend(struct work_struct *work)
 		return;
 	}
 
-/* OPPO 2013-03-25 huanggd Add begin for debufinfo */
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	wakelock_printk_control(0); 
-/* OPPO 2013-03-25 huanggd Add end */
+#endif
 		
 	entry_event_num = current_event_num;
 	suspend_sys_sync_queue();
@@ -481,9 +481,9 @@ static void suspend(struct work_struct *work)
 			pr_info("suspend: pm_suspend returned with no event\n");
 		wake_lock_timeout(&unknown_wakeup, HZ / 2);
 	}
-/* OPPO 2013-03-25 huanggd Add begin for debufinfo */
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	wakelock_printk_control(1); 
-/* OPPO 2013-03-25 huanggd Add end */
+#endif
 }
 static DECLARE_WORK(suspend_work, suspend);
 
@@ -777,9 +777,9 @@ static int __init wakelocks_init(void)
 	proc_create("wakelocks", S_IRUGO, NULL, &wakelock_stats_fops);
 #endif
 
-/* OPPO 2013-03-25 huanggd Add begin for debufinfo */
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	wakelock_printk_work_queue = create_singlethread_workqueue("wakelock_printk");
-/* OPPO 2013-03-25 huanggd Add end */
+#endif
 
 	return 0;
 
