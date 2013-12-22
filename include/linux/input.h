@@ -469,9 +469,9 @@ struct input_keymap_entry {
 #define KEY_RFKILL		247	/* Key that controls all radios */
 
 #define KEY_MICMUTE		248	/* Mute / unmute the microphone */
-/* OPPO 2013-06-06 shijianchao Add begin for double tap wakeup detect with proxy*/	
+#ifdef CONFIG_MACH_APQ8064_FIND5
 #define KEY_DOUBLE_TAP  250
-/* OPPO 2013-06-06 shijianchao Add end*/	
+#endif
 /* Code 255 is reserved for special needs of AT keyboard driver */
 
 #define BTN_MISC		0x100

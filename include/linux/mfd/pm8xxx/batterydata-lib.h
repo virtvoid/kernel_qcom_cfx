@@ -106,14 +106,11 @@ struct bms_battery_data {
 
 #if defined(CONFIG_PM8921_BMS) || \
 	defined(CONFIG_PM8921_BMS_MODULE)
-/* OPPO 2012-10-10 chendx Modify begin for OPPO 2500mAh batterydata */
-#if 0
-extern struct bms_battery_data  palladium_1500_data;
-#else
+#ifdef CONFIG_MACH_APQ8064_FIND5
 extern struct bms_battery_data  OPPO_palladium_2500mAh_data;	
+#else
+extern struct bms_battery_data  palladium_1500_data;
 #endif
-/* OPPO 2012-10-10 chendx Modify end */
-extern struct bms_battery_data  desay_5200_data;
 extern struct bms_battery_data  desay_5200_data;
 
 int interpolate_fcc(struct single_row_lut *fcc_temp_lut, int batt_temp);
