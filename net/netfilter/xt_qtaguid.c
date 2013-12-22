@@ -1411,6 +1411,7 @@ static void if_tag_stat_update(const char *ifname, uid_t uid,
 	struct sock_tag *sock_tag_entry;
 	struct iface_stat *iface_entry;
 	struct tag_stat *new_tag_stat = NULL;
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	/*MT_DEBUG("qtaguid: if_tag_stat_update(ifname=%s "
 		"uid=%u sk=%p dir=%d proto=%d bytes=%d)\n",
 		 ifname, uid, sk, direction, proto, bytes);*/
@@ -1420,6 +1421,17 @@ static void if_tag_stat_update(const char *ifname, uid_t uid,
 	if (!iface_entry) {
 	//	pr_err("qtaguid: iface_stat: stat_update() %s not found\n",
 	//	       ifname);
+#else
+	MT_DEBUG("qtaguid: if_tag_stat_update(ifname=%s "
+		"uid=%u sk=%p dir=%d proto=%d bytes=%d)\n",
+		 ifname, uid, sk, direction, proto, bytes);
+
+
+	iface_entry = get_iface_entry(ifname);
+	if (!iface_entry) {
+		pr_err_ratelimited("qtaguid: iface_stat: stat_update() %s not found\n",
+		       ifname);
+#endif
 		return;
 	}
 	/* It is ok to process data when an iface_entry is inactive */
