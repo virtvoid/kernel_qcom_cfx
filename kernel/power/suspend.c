@@ -27,10 +27,6 @@
 #include <linux/rtc.h>
 #include <trace/events/power.h>
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
-#include <linux/wakelock.h>
-#endif
-
 #include "power.h"
 
 const char *const pm_states[PM_SUSPEND_MAX] = {
@@ -176,19 +172,9 @@ static int suspend_enter(suspend_state_t state, bool *wakeup)
 	if (!error) {
 		*wakeup = pm_wakeup_pending();
 		if (!(suspend_test(TEST_CORE) || *wakeup)) {
-#ifdef CONFIG_MACH_APQ8064_FIND5
-		if(has_wake_lock(WAKE_LOCK_SUSPEND))
-		{
-			goto Resume_devices;
-		}
-#endif
-		
 			error = suspend_ops->enter(state);
 			events_check_enabled = false;
 		}
-#ifdef CONFIG_MACH_APQ8064_FIND5
-Resume_devices:
-#endif
 		syscore_resume();
 	}
 
@@ -232,12 +218,6 @@ int suspend_devices_and_enter(suspend_state_t state)
 	suspend_console();
 	suspend_test_start();
 	error = dpm_suspend_start(PMSG_SUSPEND);
-#ifdef CONFIG_MACH_APQ8064_FIND5
-	if(has_wake_lock(WAKE_LOCK_SUSPEND))
-	{
-		goto Resume_devices;
-	}
-#endif
 	if (error) {
 		printk(KERN_ERR "PM: Some devices failed to suspend\n");
 		goto Recover_platform;
