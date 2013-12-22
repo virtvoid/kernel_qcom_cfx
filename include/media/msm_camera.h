@@ -1228,8 +1228,8 @@ struct sensor_pict_fps {
 struct exp_gain_cfg {
 	uint16_t gain;
 	uint32_t line;
-	int32_t luma_avg;/*OPPO HDR*/
-	uint16_t fgain;/*OPPO HDR*/
+	int32_t luma_avg;	/*Used for OPPO HDR but default defined*/
+	uint16_t fgain; 	/*Used for OPPO HDR but default defined*/
 };
 
 struct focus_cfg {
@@ -1667,7 +1667,8 @@ struct sensor_cfg_data {
 		struct sensor_output_info_t output_info;
 		struct msm_eeprom_data_t eeprom_data;
 		struct csi_lane_params_t csi_lane_params;
-		struct sensor_hdr_update_parm_t hdr_update_parm;/*OPPO HDR*/
+		/*Used for OPPO HDR but default defined*/
+		struct sensor_hdr_update_parm_t hdr_update_parm;
 		/* QRD */
 		uint16_t antibanding;
 		uint8_t contrast;
