@@ -588,9 +588,6 @@ static const struct snd_soc_dapm_route apq8064_common_audio_map[] = {
 	{"MIC BIAS1 Internal1", NULL, "Second Mic"},
 #endif
 #endif
-	{"AMIC5", NULL, "MIC BIAS1 Internal1"},
-	{"MIC BIAS1 Internal1", NULL, "ANC Mic"},
-#endif
 };
 
 static const struct snd_soc_dapm_route apq8064_mtp_audio_map[] = {
