@@ -171,7 +171,7 @@ static int syna_log_level = TS_DEBUG;
 #define TP_CMD_UPDATE_FROM_FILE	91
 /*****************************************************************/
 /* OPPO 2013-09-22 ranfei Add begin for 增加对启动模式的识别 */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
 extern int get_boot_mode(void);
 enum{
 	MSM_BOOT_MODE__NORMAL,
@@ -1348,10 +1348,8 @@ static void synaptics_ts_work_func(struct work_struct *work)
 		print_ts(TS_ERROR, "%s: read device status failed. rc=%d\n", __func__, ret);
 		ts->need_hardware_reset++;
 		if(ts->need_hardware_reset > 3) {
-			 /*检测到I2C错误，硬复位I2C总线以及总线上的所有设备*/
 			print_ts(TS_WARNING, "synaptics tp do hardware reset forced\n");
 			synaptics_hardware_reset(ts);
-/* OPPO 2013-05-02 huanggd Add begin for double tap*/			
 #if SUPPORT_DOUBLE_TAP
 			if (ts->is_tp_suspended
 				&&((atomic_read(&ts->double_tap_enable)) || (atomic_read(&ts->flashlight_enable)) ||
@@ -1364,9 +1362,7 @@ static void synaptics_ts_work_func(struct work_struct *work)
 				synaptics_i2c_byte_write(ts, F01_CTRL_DEVICE_CONTROL, 0x80);
 			}
 #endif
-/* OPPO 2013-05-02 huanggd Add end*/			
 		}
-		/*必须在此处退出work，否则有可能进入下面的synaptics_software_reset()，并清need_hardware_reset，无法硬复位*/
 		goto work_func_end;
 	}
 
@@ -1374,22 +1370,22 @@ static void synaptics_ts_work_func(struct work_struct *work)
 	{
 		if(buf_status[0] != 0)
 		{
-/* OPPO 2013-08-16 huanggd Modify begin for softreset is no use when sometimes tp error*/		
-#if 0
+#ifndef CONFIG_MACH_APQ8064_FIND5
 			print_ts(TS_WARNING, "TP interrupt register status unnormal , software reset !\n");
 			synaptics_software_reset(ts);
 #else
 			print_ts(TS_WARNING, "TP interrupt register status unnormal , hardware reset !\n");
 			synaptics_hardware_reset(ts);			
 #endif
-/* OPPO 2013-08-16 huanggd Modify end*/				
 /* OPPO 2013-05-02 huanggd Add begin for double tap*/			
 #if SUPPORT_DOUBLE_TAP
 			if (ts->is_tp_suspended
 				&&((atomic_read(&ts->double_tap_enable)) || (atomic_read(&ts->flashlight_enable)) ||
 				   (atomic_read(&ts->camera_enable)) || (atomic_read(&ts->music_enable)))) {
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
 				print_ts(TS_WARNING, "reinit double tp after hardware reset !\n");
+#endif
 				synaptics_set_int_mask(ts, 0);
 				synaptics_set_report_mode(ts, 0x04);
 				enable_irq_wake(ts->client->irq);
@@ -1397,7 +1393,6 @@ static void synaptics_ts_work_func(struct work_struct *work)
 				synaptics_i2c_byte_write(ts, F01_CTRL_DEVICE_CONTROL, 0x80);
 			}
 #endif
-/* OPPO 2013-05-02 huanggd Add end*/
 		} 
 	}
 	else if (buf_status[1] & 0x04) /*0x04: Abs0 bit*/
@@ -2461,7 +2456,7 @@ static int synaptics_ts_probe(
 	}*/
 	
 /* OPPO 2013-09-22 ranfei Add begin for 在AT，WLAN和RF模式不注册触摸屏 */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_APQ8064_FIND5
     if(get_boot_mode() == MSM_BOOT_MODE__FACTORY ||
        get_boot_mode() == MSM_BOOT_MODE__RF ||
        get_boot_mode() == MSM_BOOT_MODE__WLAN )

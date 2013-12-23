@@ -576,16 +576,20 @@ static const struct snd_soc_dapm_route apq8064_common_audio_map[] = {
 #ifndef CONFIG_MACH_APQ8064_FIND5
 	{"AMIC3", NULL, "MIC BIAS3 Internal1"},
 	{"MIC BIAS3 Internal1", NULL, "ANCRight Headset Mic"},
-	{"AMIC4", NULL, "MIC BIAS1 Internal1"},
-	{"MIC BIAS1 Internal1", NULL, "Second Mic"},
-	{"AMIC5", NULL, "MIC BIAS1 Internal1"},
-	{"MIC BIAS1 Internal1", NULL, "ANC Mic"},
 #else
 	{"AMIC3", NULL, "MIC BIAS1 Internal1"},
 	{"MIC BIAS1 Internal1", NULL, "Main Mic"},
+#endif
+#ifndef CONFIG_MACH_APQ8064_FIND5
 	{"AMIC4", NULL, "MIC BIAS1 Internal2"},
 	{"MIC BIAS1 Internal2", NULL, "ANCLeft Headset Mic"},
+#else
+	{"AMIC4", NULL, "MIC BIAS1 Internal1"},
+	{"MIC BIAS1 Internal1", NULL, "Second Mic"},
 #endif
+#endif
+	{"AMIC5", NULL, "MIC BIAS1 Internal1"},
+	{"MIC BIAS1 Internal1", NULL, "ANC Mic"},
 #endif
 };
 

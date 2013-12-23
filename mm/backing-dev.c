@@ -834,8 +834,7 @@ long congestion_wait(int sync, long timeout)
 }
 EXPORT_SYMBOL(congestion_wait);
 
-#ifdef CONFIG_VENDOR_EDIT
-/* OPPO 2013-10-22 huanggd Add begin for IOWAIT high */
+#ifdef CONFIG_MACH_APQ8064_FIND5
 long congestion_wait_kswapd(int sync, long timeout)
 {
 	long ret;
@@ -848,8 +847,7 @@ long congestion_wait_kswapd(int sync, long timeout)
 
 	return ret;
 }
-/* OPPO 2013-10-22 huanggd Add end */
-#endif //CONFIG_VENDOR_EDIT
+#endif
 /**
  * wait_iff_congested - Conditionally wait for a backing_dev to become uncongested or a zone to complete writes
  * @zone: A zone to check if it is heavily congested
