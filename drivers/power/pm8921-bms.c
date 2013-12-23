@@ -2833,7 +2833,6 @@ static int calculate_state_of_charge(struct pm8921_bms_chip *chip,
 		pr_debug("SOC before adjustment = %d%%,calculated SOC = %d%%,calculated_soc=%d%%\n", 
 					soc,new_calculated_soc,calculated_soc);
 	}
-	#endif
 
 	if (new_calculated_soc != calculated_soc)
 		update_power_supply(chip);

@@ -48,7 +48,8 @@
 #include <asm/uaccess.h>
 #include <linux/syscalls.h>
 #include <linux/wakelock.h>
-#include <linux/pcb_version.h>   //add by yubin,oppo
+#include <linux/pcb_version.h>
+#include <mach/board.h>
 
 
 /******************* tp function switch **************************/
@@ -2443,9 +2444,7 @@ static int synaptics_ts_probe(
 	
 /* OPPO 2013-09-22 ranfei Add begin for 在AT，WLAN和RF模式不注册触摸屏 */
 #ifdef CONFIG_MACH_APQ8064_FIND5
-    if(get_boot_mode() == MSM_BOOT_MODE__FACTORY ||
-       get_boot_mode() == MSM_BOOT_MODE__RF ||
-       get_boot_mode() == MSM_BOOT_MODE__WLAN )
+    if(get_boot_mode() == MSM_BOOT_MODE__FACTORY)
         goto err_detect_failed;;
 #endif
 /* OPPO 2013-09-22 ranfei Add end */

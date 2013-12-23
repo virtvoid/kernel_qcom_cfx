@@ -2782,8 +2782,8 @@ static int get_prop_batt_capacity(struct pm8921_chg_chip *chip)
 	if (percent_soc < 0) {
 		pr_err("Unable to read battery voltage\n");
 		goto fail_voltage;
-#endif
 	}
+#endif
 	
 #ifdef CONFIG_MACH_APQ8064_FIND5
 	if(chip->battery_temp <= BATT_REMOVE_TEMP_C &&
@@ -6559,12 +6559,17 @@ static void __devinit determine_initial_state(struct pm8921_chg_chip *chip)
 			fsm_state);
 
 	/* Determine which USB trim column to use */
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	if (pm8xxx_get_version(chip->dev->parent) == PM8XXX_VERSION_8917)
+		chip->usb_trim_table = usb_trim_8917_table;
+	else if (pm8xxx_get_version(chip->dev->parent) == PM8XXX_VERSION_8038)
+		chip->usb_trim_table = usb_trim_8038_table;
+#else
 	if (pm8xxx_get_version(chip->dev->parent) == PM8XXX_VERSION_8917) {
 		chip->usb_trim_table = usb_trim_8917_table;
 	} else if (pm8xxx_get_version(chip->dev->parent) ==
 						PM8XXX_VERSION_8038) {
 		chip->usb_trim_table = usb_trim_8038_table;
-#ifndef CONFIG_MACH_APQ8064_FIND5
 	} else if (pm8xxx_get_version(chip->dev->parent) ==
 						PM8XXX_VERSION_8921) {
 		rc = pm8xxx_readb(chip->dev->parent, REG_SBI_CONFIG, &regsbi);
