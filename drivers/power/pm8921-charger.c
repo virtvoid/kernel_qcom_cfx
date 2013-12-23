@@ -34,6 +34,7 @@
 #include <mach/msm_xo.h>
 
 #ifdef CONFIG_MACH_APQ8064_FIND5
+#include <mach/board.h>
 #include <linux/usb/msm_hsusb.h>	
 #include <linux/mfd/pm8xxx/batt-alarm.h>
 #include <linux/input.h>
@@ -91,7 +92,9 @@
 #define CHG_COMP_OVR		0x20A
 #define IUSB_FINE_RES		0x2B6
 #define OVP_USB_UVD		0x2B7
+#ifndef CONFIG_MACH_APQ8064_FIND5
 #define PM8921_USB_TRIM_SEL	0x339
+#endif
 
 /* check EOC every 10 seconds */
 #define EOC_CHECK_PERIOD_MS	10000
@@ -193,6 +196,13 @@ static int logo_level  = 1;
 		if (logo_level  >= (level)) \
 			printk(__VA_ARGS__); \
    } while (0) 
+
+#ifdef CONFIG_MACH_APQ8064_FIND5
+/* offmode charging led */
+extern void sled_turn_off(void);
+extern void sled_charging_internal(int value);
+static bool led_started = false;
+#endif
 #endif 
 
 enum chg_fsm_state {
@@ -344,7 +354,9 @@ struct pm8921_chg_chip {
 	unsigned int			alarm_high_mv;
 	int				cool_temp_dc;
 	int				warm_temp_dc;
+#ifndef CONFIG_MACH_APQ8064_FIND5
 	int				hysteresis_temp_dc;
+#endif
 	unsigned int			temp_check_period;
 
 #ifdef CONFIG_MACH_APQ8064_FIND5
@@ -512,7 +524,9 @@ static int charging_disabled;
 static int thermal_mitigation;
 
 static struct pm8921_chg_chip *the_chip;
+#ifndef CONFIG_MACH_APQ8064_FIND5
 static void check_temp_thresholds(struct pm8921_chg_chip *chip);
+#endif
 
 #define LPM_ENABLE_BIT	BIT(2)
 static int pm8921_chg_set_lpm(struct pm8921_chg_chip *chip, int enable)
@@ -1766,6 +1780,7 @@ struct usb_ma_limit_entry {
 };
 
 /* USB Trim tables */
+#ifndef CONFIG_MACH_APQ8064_FIND5
 static int usb_trim_pm8921_table_1[USB_TRIM_ENTRIES] = {
 	0x0,
 	0x0,
@@ -1803,6 +1818,7 @@ static int usb_trim_pm8921_table_2[USB_TRIM_ENTRIES] = {
 	-0x6,
 	0x0
 };
+#endif
 
 static int usb_trim_8038_table[USB_TRIM_ENTRIES] = {
 	0x0,
@@ -1871,8 +1887,10 @@ static struct usb_ma_limit_entry usb_ma_table[] = {
 #define REG_USB_OVP_TRIM_ORIG_MSB	0x09C
 #define REG_USB_OVP_TRIM_PM8917		0x2B5
 #define REG_USB_OVP_TRIM_PM8917_BIT	BIT(0)
+#ifndef CONFIG_MACH_APQ8064_FIND5
 #define USB_TRIM_MAX_DATA_PM8917	0x3F
 #define USB_TRIM_POLARITY_PM8917_BIT	BIT(6)
+#endif
 static int pm_chg_usb_trim(struct pm8921_chg_chip *chip, int index)
 {
 	u8 temp, sbi_config, msb, lsb, mask;
@@ -2594,7 +2612,6 @@ static int pm_power_get_property_usb(struct power_supply *psy,
 			val->intval = 0;
 #else
 		val->intval = 0;
-
 		if (the_chip->usb_type == POWER_SUPPLY_TYPE_USB)
 			val->intval = is_usb_chg_plugged_in(the_chip);
 #endif
@@ -2761,9 +2778,9 @@ static int get_prop_batt_capacity(struct pm8921_chg_chip *chip)
 	if (percent_soc == -ENXIO)
 		percent_soc = voltage_based_capacity(chip);
 
+#ifndef CONFIG_MACH_APQ8064_FIND5
 	if (percent_soc < 0) {
 		pr_err("Unable to read battery voltage\n");
-#ifndef CONFIG_MACH_APQ8064_FIND5
 		goto fail_voltage;
 #endif
 	}
@@ -3536,6 +3553,15 @@ static void handle_usb_insertion_removal(struct pm8921_chg_chip *chip)
 		/* USB unplugged reset target current */
 		usb_target_ma = 0;
 		pm8921_chg_disable_irq(chip, CHG_GONE_IRQ);
+#ifdef CONFIG_MACH_APQ8064_FIND5
+		/* offmode charging led */
+		if (MSM_BOOT_MODE__CHARGE == get_boot_mode()){
+			sled_turn_off();
+			led_started = false;
+		}
+	
+		bms_notify_is_charging_check(0,chip);
+#endif
 	}
 #ifndef CONFIG_MACH_APQ8064_FIND5
 	bms_notify_check(chip);
@@ -5662,7 +5688,9 @@ static void update_heartbeat(struct work_struct *work)
 	struct delayed_work *dwork = to_delayed_work(work);
 	struct pm8921_chg_chip *chip = container_of(dwork,
 				struct pm8921_chg_chip, update_heartbeat_work);
+#ifndef CONFIG_MACH_APQ8064_FIND5
 	bool chg_present = chip->usb_present || chip->dc_present;
+#endif
 
 #ifdef CONFIG_MACH_APQ8064_FIND5
     static int soc_backup = 0;
@@ -5675,7 +5703,9 @@ static void update_heartbeat(struct work_struct *work)
 			"HEALTH_UNSPEC_FAILURE",
 		    "HEALTH_COLD"};
 #endif
-
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	pm_chg_failed_clear(chip, 1);
+#else
 	/* for battery health when charger is not connected */
 	if (chip->btc_override && !chg_present)
 		schedule_delayed_work(&chip->btc_override_work,
@@ -5690,7 +5720,7 @@ static void update_heartbeat(struct work_struct *work)
 	if (chip->btc_override && chg_present &&
 				!wake_lock_active(&chip->eoc_wake_lock))
 		check_temp_thresholds(chip);
-
+#endif
 	if(boot_time)
 		boot_time--;
 
@@ -5717,6 +5747,15 @@ static void update_heartbeat(struct work_struct *work)
 	pm8921_check_battery_connect(chip);
 	
 	if (is_usb_chg_plugged_in(chip)){
+#ifdef CONFIG_MACH_APQ8064_FIND5
+		/* offmode charging led */
+		if (MSM_BOOT_MODE__CHARGE == get_boot_mode()){
+			if (!led_started){
+				sled_charging_internal(chip->report_calib_soc);
+				led_started = true;
+			}
+		}
+#endif
 		/*charge eoc with not begin with fastchged*/
 		if(boot_time == 0 && (!chip->charge_is_finished || chip->bms_notify.is_charging))
 			eoc_check_with_vbatt(chip);
@@ -5760,7 +5799,9 @@ module_param(vdd_max_increase_mv, int, 0644);
 static int ichg_threshold_ua = -400000;
 module_param(ichg_threshold_ua, int, 0644);
 
+#ifndef CONFIG_MACH_APQ8064_FIND5
 #define MIN_DELTA_MV_TO_INCREASE_VDD_MAX	13
+#endif
 #define PM8921_CHG_VDDMAX_RES_MV	10
 static void adjust_vdd_max_for_fastchg(struct pm8921_chg_chip *chip,
 						int vbat_batt_terminal_uv)
@@ -5785,6 +5826,8 @@ static void adjust_vdd_max_for_fastchg(struct pm8921_chg_chip *chip,
 	/* adjust vdd_max only in normal temperature zone */
 	if (Pm8921_battery_temp_region_get(chip) == CV_BATTERY_TEMP_REGION_LITTLE__COLD ||
 		Pm8921_battery_temp_region_get(chip) == CV_BATTERY_TEMP_REGION__WARM){
+		pr_debug("Exiting is_bat_cool = %d is_batt_warm = %d\n",
+				chip->is_bat_cool, chip->is_bat_warm);
 		return;
 	}
 #endif
@@ -5798,7 +5841,7 @@ static void adjust_vdd_max_for_fastchg(struct pm8921_chg_chip *chip,
 	pm_chg_vddmax_get(the_chip, &programmed_vdd_max);
 
 	delta_mv =  chip->max_voltage_mv - vbat_batt_terminal_mv;
-
+#ifndef CONFIG_MACH_APQ8064_FIND5
 	if (delta_mv > 0) /* meaning we want to increase the vddmax */ {
 		if (delta_mv < MIN_DELTA_MV_TO_INCREASE_VDD_MAX) {
 			pr_debug("vterm = %d is not low enough to inc vdd\n",
@@ -5806,7 +5849,7 @@ static void adjust_vdd_max_for_fastchg(struct pm8921_chg_chip *chip,
 			return;
 		}
 	}
-
+#endif
 	adj_vdd_max_mv = programmed_vdd_max + delta_mv;
 	pr_debug("vdd_max needs to be changed by %d mv from %d to %d\n",
 			delta_mv,
@@ -5817,10 +5860,13 @@ static void adjust_vdd_max_for_fastchg(struct pm8921_chg_chip *chip,
 		pr_debug("adj vdd_max lower than default max voltage\n");
 		return;
 	}
-
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	adj_vdd_max_mv = DIV_ROUND_UP(adj_vdd_max_mv, PM8921_CHG_VDDMAX_RES_MV)
+					* PM8921_CHG_VDDMAX_RES_MV;
+#else
 	adj_vdd_max_mv = (adj_vdd_max_mv / PM8921_CHG_VDDMAX_RES_MV)
 						* PM8921_CHG_VDDMAX_RES_MV;
-
+#endif
 	if (adj_vdd_max_mv > (chip->max_voltage_mv + vdd_max_increase_mv))
 		adj_vdd_max_mv = chip->max_voltage_mv + vdd_max_increase_mv;
 	pr_debug("adjusting vdd_max_mv to %d to make "
@@ -5906,7 +5952,11 @@ static void check_temp_thresholds(struct pm8921_chg_chip *chip)
 
 	if (chip->warm_temp_dc != INT_MIN) {
 		if (chip->is_bat_warm
+#ifdef CONFIG_MACH_APQ8064_FIND5
+			&& temp < chip->warm_temp_dc - TEMP_HYSTERISIS_DECIDEGC)
+#else
 			&& temp < chip->warm_temp_dc - chip->hysteresis_temp_dc)
+#endif
 			battery_warm(false);
 		else if (!chip->is_bat_warm && temp >= chip->warm_temp_dc)
 			battery_warm(true);
@@ -5914,7 +5964,11 @@ static void check_temp_thresholds(struct pm8921_chg_chip *chip)
 
 	if (chip->cool_temp_dc != INT_MIN) {
 		if (chip->is_bat_cool
+#ifdef CONFIG_MACH_APQ8064_FIND5
+			&& temp > chip->cool_temp_dc + TEMP_HYSTERISIS_DECIDEGC)
+#else
 			&& temp > chip->cool_temp_dc + chip->hysteresis_temp_dc)
+#endif
 			battery_cool(false);
 		else if (!chip->is_bat_cool && temp <= chip->cool_temp_dc)
 			battery_cool(true);
@@ -5980,12 +6034,19 @@ static int is_charging_finished(struct pm8921_chg_chip *chip,
 		else
 			vbat_intended = chip->max_voltage_mv;
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
+		if (vbat_batt_terminal_uv / 1000 < vbat_intended) {
+			pr_debug("terminal_uv:%d < vbat_intended:%d.\n",
+							vbat_batt_terminal_uv,
+							vbat_intended);
+#else
 		if (vbat_batt_terminal_uv / 1000
 			< vbat_intended - MIN_DELTA_MV_TO_INCREASE_VDD_MAX) {
 			pr_debug("terminal_uv:%d < vbat_intended:%d-hyst:%d\n",
 							vbat_batt_terminal_uv,
 							vbat_intended,
 							vbat_intended);
+#endif
 			return CHG_IN_PROGRESS;
 		}
 
@@ -6132,8 +6193,12 @@ static void btc_override_worker(struct work_struct *work)
 
 	temp = pm_chg_get_rt_status(chip, BATTTEMP_HOT_IRQ);
 	if (temp) {
+#ifdef CONFIG_MACH_APQ8064_FIND5
+		if (decidegc < chip->btc_override_hot_decidegc)
+#else
 		if (decidegc < chip->btc_override_hot_decidegc -
 				chip->hysteresis_temp_dc)
+#endif
 			/* stop forcing batt hot */
 			rc = pm_chg_override_hot(chip, 0);
 			if (rc)
@@ -6148,8 +6213,12 @@ static void btc_override_worker(struct work_struct *work)
 
 	temp = pm_chg_get_rt_status(chip, BATTTEMP_COLD_IRQ);
 	if (temp) {
+#ifdef CONFIG_MACH_APQ8064_FIND5
+		if (decidegc > chip->btc_override_cold_decidegc)
+#else
 		if (decidegc > chip->btc_override_cold_decidegc +
 				chip->hysteresis_temp_dc)
+#endif
 			/* stop forcing batt cold */
 			rc = pm_chg_override_cold(chip, 0);
 			if (rc)
@@ -6213,8 +6282,12 @@ static void eoc_worker(struct work_struct *work)
 
 	end = is_charging_finished(chip, vbat_batt_terminal_uv, ichg_meas_ma);
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	if (end == CHG_NOT_IN_PROGRESS) {
+#else
 	if (end == CHG_NOT_IN_PROGRESS && (!chip->btc_override ||
 		!(chip->usb_present || chip->dc_present))) {
+#endif
 		count = 0;
 		goto eoc_worker_stop;
 	}
@@ -6290,9 +6363,9 @@ static void eoc_worker(struct work_struct *work)
 	}
 
 eoc_worker_stop:
+	wake_unlock(&chip->eoc_wake_lock);
 	/* set the vbatdet back, in case it was changed to trigger charging */
 	set_appropriate_vbatdet(chip);
-	wake_unlock(&chip->eoc_wake_lock);
 }
 
 /**
@@ -6411,15 +6484,18 @@ static void free_irqs(struct pm8921_chg_chip *chip)
 			chip->pmic_chg_irq[i] = 0;
 		}
 }
-
+#ifndef CONFIG_MACH_APQ8064_FIND5
 #define PM8921_USB_TRIM_SEL_BIT		BIT(6)
+#endif
 /* determines the initial present states */
 static void __devinit determine_initial_state(struct pm8921_chg_chip *chip)
 {
 	int fsm_state;
 	int is_fast_chg;
+#ifndef CONFIG_MACH_APQ8064_FIND5
 	int rc = 0;
 	u8 trim_sel_reg = 0, regsbi;
+#endif
 
 	chip->dc_present = !!is_dc_chg_plugged_in(chip);
 	chip->usb_present = !!is_usb_chg_plugged_in(chip);
@@ -6429,11 +6505,12 @@ static void __devinit determine_initial_state(struct pm8921_chg_chip *chip)
 		schedule_delayed_work(&chip->unplug_check_work,
 			msecs_to_jiffies(UNPLUG_CHECK_WAIT_PERIOD_MS));
 		pm8921_chg_enable_irq(chip, CHG_GONE_IRQ);
-
+#ifndef CONFIG_MACH_APQ8064_FIND5
 		if (chip->btc_override)
 			schedule_delayed_work(&chip->btc_override_work,
 					round_jiffies_relative(msecs_to_jiffies
 						(chip->btc_delay_ms)));
+#endif
 	}
 
 	pm8921_chg_enable_irq(chip, DCIN_VALID_IRQ);
@@ -6487,6 +6564,7 @@ static void __devinit determine_initial_state(struct pm8921_chg_chip *chip)
 	} else if (pm8xxx_get_version(chip->dev->parent) ==
 						PM8XXX_VERSION_8038) {
 		chip->usb_trim_table = usb_trim_8038_table;
+#ifndef CONFIG_MACH_APQ8064_FIND5
 	} else if (pm8xxx_get_version(chip->dev->parent) ==
 						PM8XXX_VERSION_8921) {
 		rc = pm8xxx_readb(chip->dev->parent, REG_SBI_CONFIG, &regsbi);
@@ -6502,6 +6580,7 @@ static void __devinit determine_initial_state(struct pm8921_chg_chip *chip)
 		else
 			chip->usb_trim_table = usb_trim_pm8921_table_2;
 	}
+#endif
 }
 
 struct pm_chg_irq_init_data {
@@ -7247,11 +7326,11 @@ static int pm8921_charger_resume_noirq(struct device *dev)
 	int rc;
 	struct pm8921_chg_chip *chip = dev_get_drvdata(dev);
 
+	pm8921_chg_force_19p2mhz_clk(chip);
+
 	rc = pm8921_chg_set_lpm(chip, 0);
 	if (rc)
 		pr_err("Failed to set lpm rc=%d\n", rc);
-
-	pm8921_chg_force_19p2mhz_clk(chip);
 
 	rc = pm_chg_masked_write(chip, CHG_CNTRL, VREF_BATT_THERM_FORCE_ON,
 						VREF_BATT_THERM_FORCE_ON);
@@ -7272,18 +7351,18 @@ static int pm8921_charger_resume(struct device *dev)
 	if (chip->btc_override && (is_dc_chg_plugged_in(the_chip) ||
 					is_usb_chg_plugged_in(the_chip)))
 		schedule_delayed_work(&chip->btc_override_work, 0);
-
+#ifndef CONFIG_MACH_APQ8064_FIND5
 	schedule_delayed_work(&chip->update_heartbeat_work, 0);
-
+#endif
 	return 0;
 }
 
 static int pm8921_charger_suspend(struct device *dev)
 {
 	struct pm8921_chg_chip *chip = dev_get_drvdata(dev);
-
+#ifndef CONFIG_MACH_APQ8064_FIND5
 	cancel_delayed_work_sync(&chip->update_heartbeat_work);
-
+#endif
 	if (chip->btc_override)
 		cancel_delayed_work_sync(&chip->btc_override_work);
 
@@ -7620,12 +7699,12 @@ static int __devinit pm8921_charger_probe(struct platform_device *pdev)
 		chip->warm_temp_dc = pdata->warm_temp * 10;
 	else
 		chip->warm_temp_dc = INT_MIN;
-
+#ifndef CONFIG_MACH_APQ8064_FIND5
 	if (pdata->hysteresis_temp)
 		chip->hysteresis_temp_dc = pdata->hysteresis_temp * 10;
 	else
 		chip->hysteresis_temp_dc = TEMP_HYSTERISIS_DECIDEGC;
-
+#endif
 	chip->temp_check_period = pdata->temp_check_period;
 	chip->max_bat_chg_current = pdata->max_bat_chg_current;
 	/* Assign to corresponding module parameter */
