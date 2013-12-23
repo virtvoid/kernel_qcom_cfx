@@ -170,20 +170,6 @@ static int syna_log_level = TS_DEBUG;
 #define TP_CMD_FORCE_UPDATE	90
 #define TP_CMD_UPDATE_FROM_FILE	91
 /*****************************************************************/
-/* OPPO 2013-09-22 ranfei Add begin for 增加对启动模式的识别 */
-#ifdef CONFIG_MACH_APQ8064_FIND5
-extern int get_boot_mode(void);
-enum{
-	MSM_BOOT_MODE__NORMAL,
-	MSM_BOOT_MODE__FASTBOOT,
-	MSM_BOOT_MODE__RECOVERY,
-	MSM_BOOT_MODE__FACTORY,
-	MSM_BOOT_MODE__RF,
-	MSM_BOOT_MODE__WLAN,
-	MSM_BOOT_MODE__CHARGE,
-};
-#endif
-/* OPPO 2013-09-22 ranfei Add end */
 
 /* Filter the first point, added by Eric for solve the bug: click action will change to glide action */
 static int input_point_num = 0;

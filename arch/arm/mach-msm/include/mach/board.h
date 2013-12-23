@@ -630,5 +630,14 @@ void msm_snddev_tx_route_deconfig(void);
 
 extern unsigned int msm_shared_ram_phys; /* defined in arch/arm/mach-msm/io.c */
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
+enum boot_mode_type {
+	MSM_BOOT_MODE__NORMAL,
+	MSM_BOOT_MODE__RECOVERY,
+	MSM_BOOT_MODE__FACTORY,
+	MSM_BOOT_MODE__CHARGE,
+};
 
+int get_boot_mode(void);
+#endif
 #endif

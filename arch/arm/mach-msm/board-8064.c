@@ -153,38 +153,41 @@ static struct kobject *modeminfo_kobj;
 
 static struct kobject *systeminfo_kobj;
 
-enum{
-	MSM_BOOT_MODE__NORMAL,
-	MSM_BOOT_MODE__FASTBOOT,
-	MSM_BOOT_MODE__RECOVERY,
-	MSM_BOOT_MODE__FACTORY,
-	MSM_BOOT_MODE__RF,
-	MSM_BOOT_MODE__WLAN,
-	MSM_BOOT_MODE__CHARGE,
-};
+static int ftm_mode = MSM_BOOT_MODE__NORMAL;
 
-static int ftm_mode = 0;
+char pwron_event[16];
 
-int __init board_mfg_mode_init(char *s)
+static int __init start_reason_setup(char *str)
 {
-	if (!strcmp(s, "normal"))
+    strcpy(pwron_event, str);
+    printk(KERN_INFO "%s: parse poweron reason %s\n", __func__, pwron_event);
+	
+	return 1;
+}
+__setup("androidboot.startupmode=", start_reason_setup);
+
+char boot_mode[16];
+static int __init boot_mode_setup(char *str)
+{
+    strcpy(boot_mode, str);
+
+    printk(KERN_INFO "%s: parse boot_mode is %s\n", __func__, boot_mode);
+
+	if (!strcmp(boot_mode, "normal"))
 		ftm_mode = MSM_BOOT_MODE__NORMAL;
-	else if (!strcmp(s, "factory2"))
+	else if (!strcmp(boot_mode, "factory"))
 		ftm_mode = MSM_BOOT_MODE__FACTORY;
-	else if (!strcmp(s, "ftmrecovery"))
+	else if (!strcmp(boot_mode, "recovery"))
 		ftm_mode = MSM_BOOT_MODE__RECOVERY;
-	else if (!strcmp(s, "charge"))
+	else if (!strcmp(boot_mode, "charger"))
 		ftm_mode = MSM_BOOT_MODE__CHARGE;
-	else if (!strcmp(s, "ftmwifi"))
-		ftm_mode = MSM_BOOT_MODE__WLAN;
-	else if (!strcmp(s, "ftmrf"))
-		ftm_mode = MSM_BOOT_MODE__RF;
 	else 
 		ftm_mode = MSM_BOOT_MODE__NORMAL;
-	return 0;
 
+    printk(KERN_INFO "%s: parse ftm_mode is %d\n", __func__, ftm_mode);
+    return 1;
 }
-__setup("oppo_ftm_mode=", board_mfg_mode_init);
+__setup("androidboot.mode=", boot_mode_setup);
 
 int get_boot_mode(void)
 {
@@ -4244,29 +4247,6 @@ static void __init apq8064_cdp_init(void)
 	}
 #endif
 }
-
-#ifdef CONFIG_MACH_APQ8064_FIND5
-char pwron_event[16];
-
-static int __init start_reason_setup(char *str)
-{
-    strcpy(pwron_event, str);
-    printk(KERN_INFO "%s: parse poweron reason %s\n", __func__, pwron_event);
-	
-	return 1;
-}
-__setup("androidboot.startupmode=", start_reason_setup);
-
-char boot_mode[16];
-static int __init boot_mode_setup(char *str)
-{
-    strcpy(boot_mode, str);
-
-    printk(KERN_INFO "%s: parse boot_mode is %s\n", __func__, boot_mode);
-    return 1;
-}
-__setup("androidboot.mode=", boot_mode_setup);
-#endif
 
 MACHINE_START(APQ8064_CDP, "QCT APQ8064 CDP")
 	.map_io = apq8064_map_io,

@@ -2880,7 +2880,6 @@ static int recalculate_soc(struct pm8921_bms_chip *chip)
 #endif
 
 	mutex_lock(&chip->last_ocv_uv_mutex);
-	calib_hkadc_check(chip, batt_temp);
 	read_soc_params_raw(chip, &raw, batt_temp);
 
 	soc = calculate_state_of_charge(chip, &raw,
@@ -3214,7 +3213,6 @@ void pm8921_bms_charging_began(void)
 	get_batt_temp(the_chip, &batt_temp);
 
 	mutex_lock(&the_chip->last_ocv_uv_mutex);
-	calib_hkadc_check(the_chip, batt_temp);
 	read_soc_params_raw(the_chip, &raw, batt_temp);
 	mutex_unlock(&the_chip->last_ocv_uv_mutex);
 
@@ -3630,7 +3628,6 @@ enum bms_request_operation {
 	STOP_OCV,
 	START_OCV,
 	SET_OCV,
-	BATT_PRESENT,
 };
 
 static int test_batt_temp = 5;
