@@ -104,15 +104,13 @@ enum {
 	BINDER_DEBUG_PRIORITY_CAP           = 1U << 14,
 	BINDER_DEBUG_BUFFER_ALLOC_ASYNC     = 1U << 15,
 };
-/* OPPO 2013-08-06 huanggd Modify for reduce printk rate*/
-#if 0
+#ifndef CONFIG_MACH_APQ8064_FIND5
 static uint32_t binder_debug_mask = BINDER_DEBUG_USER_ERROR |
 	BINDER_DEBUG_FAILED_TRANSACTION | BINDER_DEBUG_DEAD_TRANSACTION;
 #else
 static uint32_t binder_debug_mask = BINDER_DEBUG_USER_ERROR |
 	BINDER_DEBUG_DEAD_TRANSACTION;
 #endif
-/* OPPO 2013-08-06 huanggd Modify end*/
 module_param_named(debug_mask, binder_debug_mask, uint, S_IWUSR | S_IRUGO);
 
 static bool binder_debug_no_lock;
