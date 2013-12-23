@@ -5306,8 +5306,7 @@ static struct clk_lookup msm_clocks_8064[] = {
 	CLK_LOOKUP("core_clk",		gsbi2_uart_clk.c,	""),
 	CLK_LOOKUP("core_clk",		gsbi3_uart_clk.c,	""),
 
-/* OPPO 2013-03-18 zhenwx  Modify begin for config gsbi uart5 clk */
-#if 0
+#ifndef CONFIG_MACH_APQ8064_FIND5
 #ifdef CONFIG_MACH_LGE
 	CLK_LOOKUP("core_clk",		gsbi4_uart_clk.c,	"msm_serial_hsl.0"),
 #else
@@ -5335,7 +5334,7 @@ static struct clk_lookup msm_clocks_8064[] = {
 #endif
 
 #endif
-/* OPPO 2013-03-18 zhenwx Add end */
+
 	CLK_LOOKUP("core_clk",		gsbi1_qup_clk.c,	"qup_i2c.0"),
 	CLK_LOOKUP("core_clk",		gsbi2_qup_clk.c,	""),
 	CLK_LOOKUP("core_clk",		gsbi3_qup_clk.c,	"qup_i2c.3"),
