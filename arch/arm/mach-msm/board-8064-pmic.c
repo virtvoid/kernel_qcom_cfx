@@ -274,7 +274,7 @@ static struct pm8xxx_misc_platform_data apq8064_pm8921_misc_pdata = {
 };
 
 #ifdef CONFIG_MACH_APQ8064_FIND5
-#define PM8921_LC_LED_MAX_CURRENT	14	/* I = 4mA */
+#define PM8921_LC_LED_MAX_CURRENT	14	/* I = 14mA */
 #else
 #define PM8921_LC_LED_MAX_CURRENT	12	/* I = 12mA */
 #endif
@@ -511,10 +511,10 @@ apq8064_pm8921_chg_pdata __devinitdata = {
 static struct pm8xxx_ccadc_platform_data
 apq8064_pm8xxx_ccadc_pdata = {
 #ifdef CONFIG_MACH_APQ8064_FIND5
-	.r_sense_uohm		= 10000,
+	.r_sense_uohm		= RSENSE_MOHM*1000,
 	.calib_delay_ms		= 600000,
 #else
-	.r_sense_uohm		= RSENSE_MOHM*1000,
+	.r_sense_uohm		= 10000,
 	.calib_delay_ms		= 600000,
 #endif
 };
