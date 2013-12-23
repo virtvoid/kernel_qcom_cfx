@@ -2522,52 +2522,57 @@ static int mdp4_overlay_req2pipe(struct mdp_overlay *req, int mixer,
 		return -ENODEV;
 	}
 	
-/* OPPO 2013-08-06 huanggd Modify for reduce printk rate*/	
 	if (mixer >= MDP4_MIXER_MAX) {
+#ifdef CONFIG_MACH_APQ8064_FIND5
 		if (printk_ratelimit())	
+#endif
 			pr_err("%s: mixer out of range!\n", __func__);
 		mdp4_stat.err_mixer++;
 		return -ERANGE;
 	}
 
 	if (req->z_order < 0 || req->z_order > 3) {
-		if (printk_ratelimit())	
+#ifdef CONFIG_MACH_APQ8064_FIND5
+		if (printk_ratelimit())
+#endif
 			pr_err("%s: z_order=%d out of range!\n", __func__,
 				req->z_order);
 		mdp4_stat.err_zorder++;
 		return -ERANGE;
 	}
 
-<<<<<<< HEAD
+#ifndef CONFIG_MACH_APQ8064_FIND5
 	if (req->src_rect.h > 0xFFF || req->src_rect.h < 2) {
 		pr_err("%s: src_h is out of range: 0X%x!\n",
 		       __func__, req->src_rect.h);
-=======
+#else
 	if (req->src_rect.h > 0xFFF) {
 		if (printk_ratelimit())	
 			pr_err("%s: src_h is out of range: 0X%x!\n",
 		       	__func__, req->src_rect.h);
->>>>>>> c7b44a4... --fixed high battery consumption by different strategy of CPU governor
+#endif
 		mdp4_stat.err_size++;
 		return -EINVAL;
 	}
 
-<<<<<<< HEAD
+#ifndef CONFIG_MACH_APQ8064_FIND5
 	if (req->src_rect.w > 0xFFF || req->src_rect.w < 2) {
 		pr_err("%s: src_w is out of range: 0X%x!\n",
 		       __func__, req->src_rect.w);
-=======
+#else
 	if (req->src_rect.w > 0xFFF) {
 		if (printk_ratelimit())	
 			pr_err("%s: src_w is out of range: 0X%x!\n",
 		       	__func__, req->src_rect.w);
->>>>>>> c7b44a4... --fixed high battery consumption by different strategy of CPU governor
+#endif
 		mdp4_stat.err_size++;
 		return -EINVAL;
 	}
 
 	if (req->src_rect.x > 0xFFF) {
+#ifdef CONFIG_MACH_APQ8064_FIND5
 		if (printk_ratelimit())	
+#endif
 			pr_err("%s: src_x is out of range: 0X%x!\n",
 		       	__func__, req->src_rect.x);
 		mdp4_stat.err_size++;
@@ -2575,43 +2580,47 @@ static int mdp4_overlay_req2pipe(struct mdp_overlay *req, int mixer,
 	}
 
 	if (req->src_rect.y > 0xFFF) {
+#ifdef CONFIG_MACH_APQ8064_FIND5
 		if (printk_ratelimit())	
+#endif
 			pr_err("%s: src_y is out of range: 0X%x!\n",
 		      		__func__, req->src_rect.y);
 		mdp4_stat.err_size++;
 		return -EINVAL;
 	}
 
-<<<<<<< HEAD
+#ifndef CONFIG_MACH_APQ8064_FIND5
 	if (req->dst_rect.h > 0xFFF || req->dst_rect.h < 2) {
 		pr_err("%s: dst_h is out of range: 0X%x!\n",
 		       __func__, req->dst_rect.h);
-=======
+#else
 	if (req->dst_rect.h > 0xFFF) {
 		if (printk_ratelimit())	
 			pr_err("%s: dst_h is out of range: 0X%x!\n",
 		       	__func__, req->dst_rect.h);
->>>>>>> c7b44a4... --fixed high battery consumption by different strategy of CPU governor
+#endif
 		mdp4_stat.err_size++;
 		return -EINVAL;
 	}
 
-<<<<<<< HEAD
+#ifndef CONFIG_MACH_APQ8064_FIND5
 	if (req->dst_rect.w > 0xFFF || req->dst_rect.w < 2) {
 		pr_err("%s: dst_w is out of range: 0X%x!\n",
 		       __func__, req->dst_rect.w);
-=======
+#else
 	if (req->dst_rect.w > 0xFFF) {
 		if (printk_ratelimit())	
 			pr_err("%s: dst_w is out of range: 0X%x!\n",
 		       	__func__, req->dst_rect.w);
->>>>>>> c7b44a4... --fixed high battery consumption by different strategy of CPU governor
+#endif
 		mdp4_stat.err_size++;
 		return -EINVAL;
 	}
 
 	if (req->dst_rect.x > 0xFFF) {
-		if (printk_ratelimit())	
+#ifdef CONFIG_MACH_APQ8064_FIND5
+		if (printk_ratelimit())
+#endif
 			pr_err("%s: dst_x is out of range: 0X%x!\n",
 		       	__func__, req->dst_rect.x);
 		mdp4_stat.err_size++;
@@ -2619,7 +2628,9 @@ static int mdp4_overlay_req2pipe(struct mdp_overlay *req, int mixer,
 	}
 
 	if (req->dst_rect.y > 0xFFF) {
+#ifdef CONFIG_MACH_APQ8064_FIND5
 		if (printk_ratelimit())	
+#endif
 			pr_err("%s: dst_y is out of range: 0X%x!\n",
 		       	__func__, req->dst_rect.y);
 		mdp4_stat.err_size++;
@@ -2627,7 +2638,9 @@ static int mdp4_overlay_req2pipe(struct mdp_overlay *req, int mixer,
 	}
 
 	if (req->src_rect.h == 0 || req->src_rect.w == 0) {
+#ifdef CONFIG_MACH_APQ8064_FIND5
 		if (printk_ratelimit())	
+#endif
 			pr_err("%s: src img of zero size!\n", __func__);
 		mdp4_stat.err_size++;
 		return -EINVAL;
@@ -2635,32 +2648,39 @@ static int mdp4_overlay_req2pipe(struct mdp_overlay *req, int mixer,
 
 	if (req->dst_rect.h > (req->src_rect.h * upscale_max)) {
 		mdp4_stat.err_scale++;
+#ifdef CONFIG_MACH_APQ8064_FIND5
 		if (printk_ratelimit())	
+#endif
 			pr_err("%s: scale up, too much (h)!\n", __func__);
 		return -ERANGE;
 	}
 
 	if (req->src_rect.h > (req->dst_rect.h * 8)) {	/* too little */
 		mdp4_stat.err_scale++;
+#ifdef CONFIG_MACH_APQ8064_FIND5
 		if (printk_ratelimit())	
+#endif
 			pr_err("%s: scale down, too little (h)!\n", __func__);
 		return -ERANGE;
 	}
 
 	if (req->dst_rect.w > (req->src_rect.w * upscale_max)) {
 		mdp4_stat.err_scale++;
+#ifdef CONFIG_MACH_APQ8064_FIND5
 		if (printk_ratelimit())	
+#endif
 			pr_err("%s: scale up, too much (w)!\n", __func__);
 		return -ERANGE;
 	}
 
 	if (req->src_rect.w > (req->dst_rect.w * 8)) {	/* too little */
 		mdp4_stat.err_scale++;
+#ifdef CONFIG_MACH_APQ8064_FIND5
 		if (printk_ratelimit())	
+#endif
 			pr_err("%s: scale down, too little (w)!\n", __func__);
 		return -ERANGE;
 	}
-/* OPPO 2013-08-06 huanggd Modify end*/
 
 	if (mdp_hw_revision == MDP4_REVISION_V1) {
 		/*  non integer down saceling ratio  smaller than 1/4
@@ -3599,10 +3619,10 @@ int mdp4_overlay_set(struct fb_info *info, struct mdp_overlay *req)
 
 	if (ret < 0) {
 		mutex_unlock(&mfd->dma->ov_mutex);
-/* OPPO 2013-08-06 huanggd Modify for reduce printk rate*/		
-		if (printk_ratelimit())		
+#ifdef CONFIG_MACH_APQ8064_FIND5		
+		if (printk_ratelimit())	
+#endif	
 			pr_err("%s: mdp4_overlay_req2pipe, ret=%d\n", __func__, ret);
-/* OPPO 2013-08-06 huanggd Modify end*/				
 		return ret;
 	}
 
