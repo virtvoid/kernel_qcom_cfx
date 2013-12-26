@@ -1,6 +1,6 @@
 CFLAGS_mipi_novatek.o += -Wno-sizeof-pointer-memaccess
 CFLAGS_mipi_tc358764_dsi2lvds.o += -Wno-sizeof-pointer-memaccess
-CFLAGS_mdp4_overlay.o += -fno-aggressive-loop-optimizations
+#CFLAGS_mdp4_overlay.o += -fno-aggressive-loop-optimizations
 ifeq ($(CONFIG_FB_MSM_MDSS),y)
 obj-y += mdss/
 else
