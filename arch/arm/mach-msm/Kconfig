@@ -2672,15 +2672,15 @@ config FB_MSM_MIPI_BACKLIGHT_LM3528
 
 config MODEM_ERR_ENTER_RAMDUMP
 	bool "MODEM_ERR_ENTER_RAMDUMP"
-    default n
-       help 
-        modem error interrupt been detected,system enter ramdump mode
+	default n
+	help 
+	  modem error interrupt been detected,system enter ramdump mode
 
 config CONFIG_OPPO_DEBUG_ASSERT
 	bool "CONFIG_OPPO_DEBUG_ASSERT"
-    default y
-       help 
-        config oppo debug assert
+	default n
+	help 
+	  config oppo debug assert
 
 config MSM_CPU_PWRCTL
 	bool "Ensures that krait droop detectors are always off"
@@ -2695,5 +2695,11 @@ config MSM_USE_USER_ACCESSIBLE_TIMERS
 	help
 	  Enables MSM-specific user accessible timers via a shared
 	  memory page containing the cycle counter.
+
+config CPU_VOLTAGE_TABLE
+	bool "Enable CPU Voltage Table via sysfs for adjustements"
+	default n
+	help
+	  Krait User Votlage Control
 
 endif
