@@ -68,11 +68,11 @@ enum gpio_update_config {
 	GPIO_UPDATE_BOOTING_CONFIG = 1,
 	GPIO_UPDATE_RUNNING_CONFIG,
 };
-
+#ifndef CONFIG_MACH_APQ8064_FIND5
 static LIST_HEAD(mdm_driver_list);
 static DEFINE_MUTEX(mdm_driver_list_lock);
 static DEFINE_MUTEX(mdm_driver_list_add_lock);
-
+#endif
 struct mdm_device {
 	struct list_head		link;
 	struct mdm_modem_drv	mdm_data;
@@ -232,7 +232,7 @@ static void mdm_ssr_completed(struct mdm_device *mdev)
 	}
 	spin_unlock_irqrestore(&ssr_lock, flags);
 }
-
+#ifndef CONFIG_MACH_APQ8064_FIND5
 static struct mdm_driver_notif_info *mdm_notif_find_subsys(const char *name)
 {
 	struct mdm_driver_notif_info *notif;
@@ -309,6 +309,7 @@ static int mdm_driver_queue_notification(char *name,
 			(void *)notif);
 	return ret;
 }
+#endif
 static irqreturn_t mdm_vddmin_change(int irq, void *dev_id)
 {
 	struct mdm_device *mdev = (struct mdm_device *)dev_id;
@@ -597,7 +598,9 @@ static long mdm_modem_ioctl(struct file *filp, unsigned int cmd,
 
 static void mdm_status_fn(struct work_struct *work)
 {
+#ifndef CONFIG_MACH_APQ8064_FIND5
 	enum subsys_notif_type powerup_notify = SUBSYS_AFTER_POWERUP;
+#endif
 	struct mdm_device *mdev =
 		container_of(work, struct mdm_device, mdm_status_work);
 	struct mdm_modem_drv *mdm_drv = &mdev->mdm_data;
@@ -606,10 +609,12 @@ static void mdm_status_fn(struct work_struct *work)
 	pr_debug("%s: status:%d\n", __func__, value);
 	if (atomic_read(&mdm_drv->mdm_ready) && mdm_ops->status_cb) {
 		mdm_ops->status_cb(mdm_drv, value);
+#ifndef CONFIG_MACH_APQ8064_FIND5
 		pr_debug("%s: sending powerup notification for %s\n",
 			__func__, mdm_drv->pdata->subsys_name);
 		mdm_driver_queue_notification(mdm_drv->pdata->subsys_name,
 						 powerup_notify);
+#endif
 	}
 	/* Update gpio configuration to "running" config. */
 	mdm_update_gpio_configs(mdev, GPIO_UPDATE_RUNNING_CONFIG);

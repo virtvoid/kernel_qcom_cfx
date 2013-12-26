@@ -255,6 +255,7 @@ static int modem_debugfs_init(void)
 		&modem_debug_fops);
 	return 0;
 }
+#ifndef CONFIG_MACH_APQ8064_FIND5
 int system_shutdown_notifier(struct notifier_block *this,
 		unsigned long code, void *x)
 {
@@ -292,7 +293,7 @@ static struct notifier_block qsc_powerup_notifier = {
 	.next = NULL,
 	.priority = INT_MAX,
 };
-
+#endif
 static int __init modem_8960_init(void)
 {
 	int ret;
@@ -302,8 +303,10 @@ static int __init modem_8960_init(void)
 
 	ret = smsm_state_cb_register(SMSM_MODEM_STATE, SMSM_RESET,
 		smsm_state_cb, 0);
+#ifndef CONFIG_MACH_APQ8064_FIND5
 	register_reboot_notifier(&shutdown_notifier);
 	mdm_driver_register_notifier("external_modem", &qsc_powerup_notifier);
+#endif
 	if (ret < 0)
 		pr_err("%s: Unable to register SMSM callback! (%d)\n",
 				__func__, ret);

@@ -1411,6 +1411,8 @@ again:
 			retry = 0;
 			goto again;
 		}
+#else
+			goto again;
 #endif
 	if (wake_klogd)
 		wake_up_klogd();
