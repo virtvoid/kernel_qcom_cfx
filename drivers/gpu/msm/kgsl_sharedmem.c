@@ -577,10 +577,15 @@ _kgsl_sharedmem_page_alloc(struct kgsl_memdesc *memdesc,
 	 * get the memory we need.
 	 */
 
+#ifndef CONFIG_MACH_N1
 	if ((memdesc->sglen_alloc * sizeof(struct page *)) > PAGE_SIZE)
 		pages = vmalloc(memdesc->sglen_alloc * sizeof(struct page *));
 	else
 		pages = kmalloc(PAGE_SIZE, GFP_KERNEL);
+#else
+    pages = kmalloc(memdesc->sglen_alloc * sizeof(struct page *),
+                    GFP_KERNEL);
+#endif
 
 	if (pages == NULL) {
 		ret = -ENOMEM;
@@ -691,10 +696,14 @@ _kgsl_sharedmem_page_alloc(struct kgsl_memdesc *memdesc,
 		kgsl_driver.stats.histogram[order]++;
 
 done:
+#ifndef CONFIG_MACH_N1
 	if ((memdesc->sglen_alloc * sizeof(struct page *)) > PAGE_SIZE)
 		vfree(pages);
 	else
 		kfree(pages);
+#else
+	kfree(pages);
+#endif
 
 	if (ret)
 		kgsl_sharedmem_free(memdesc);

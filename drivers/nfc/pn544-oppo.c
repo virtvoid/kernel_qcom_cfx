@@ -96,7 +96,8 @@ static void nfc_verify(void)
 static void mainboard_verify(void)
 {
 	switch(get_pcb_version()) {
-		case PCB_VERSION_EVB:		
+#ifndef CONFIG_MACH_N1
+		case PCB_VERSION_EVB:
 			mainboard_info.version ="EVB";
 			break;
 		case PCB_VERSION_EVT:
@@ -159,13 +160,78 @@ static void mainboard_verify(void)
 		case PCB_VERSION_PVT_N1W:
 			mainboard_info.version = "PVT_N1W";
 			break;
+#else
+        case PCB_VERSION_EVB:
+            mainboard_info.version ="X909W_10";
+            break;
+        case PCB_VERSION_EVT:
+            mainboard_info.version = "X909W_11";
+            break;
+        case PCB_VERSION_DVT:
+            mainboard_info.version = "X909W_12";
+            break;
+        case PCB_VERSION_PVT:
+            mainboard_info.version = "X909W_13";
+            break;
+        case PCB_VERSION_EVB_TD:
+            mainboard_info.version = "X909T_10";
+            break;
+        case PCB_VERSION_EVT_TD:
+            mainboard_info.version = "X909T_11";
+            break;
+        case PCB_VERSION_DVT_TD:
+            mainboard_info.version = "X909T_12";
+            break;
+        case PCB_VERSION_PVT_TD:
+            mainboard_info.version = "X909T_13";
+            break;
+        case PCB_VERSION_PVT2_TD:
+            mainboard_info.version = "X909T_14";
+            break;
+        case PCB_VERSION_PVT3_TD:
+            mainboard_info.version = "X909T_15";
+            break;
+        case PCB_VERSION_EVT_N1:
+            mainboard_info.version = "N1T_11";
+            break;
+        case PCB_VERSION_EVT_N1F:
+            mainboard_info.version = "N1F_11";
+            break;
+        case PCB_VERSION_EVT3_N1F:
+            mainboard_info.version = "N1F_11";
+            break;
+        case PCB_VERSION_DVT_N1F:
+            mainboard_info.version = "N1F_12";
+            break;
+        case PCB_VERSION_PVT_N1F:
+            mainboard_info.version = "N1F_13";
+            break;
+        case PCB_VERSION_EVT3_N1T:
+            mainboard_info.version = "N1T_11";
+            break;
+        case PCB_VERSION_DVT_N1T:
+            mainboard_info.version = "N1T_12";
+            break;
+        case PCB_VERSION_PVT_N1T:
+            mainboard_info.version = "N1T_13";
+            break;
+        case PCB_VERSION_EVT_N1W:
+            mainboard_info.version = "N1W_11";
+            break;
+        case PCB_VERSION_DVT_N1W:
+            mainboard_info.version = "N1W_12";
+            break;
+        case PCB_VERSION_PVT_N1W:
+            mainboard_info.version = "N1W_13";
+            break;
+#endif
 		default:
 			mainboard_info.version = "UNKOWN";
 		}
 	mainboard_info.manufacture = "SA";
 	
 }
-			
+
 /*OPPO yuyi 2013-10-24 add end for nfc and mainboard devinfo*/
 
 
@@ -174,7 +240,7 @@ static void pn544_disable_irq(struct pn544_dev *pn544_dev)
 	unsigned long flags;
 
 	spin_lock_irqsave(&pn544_dev->irq_enabled_lock, flags);
-	if (pn544_dev->irq_enabled) 
+	if (pn544_dev->irq_enabled)
 	{
 		disable_irq_nosync(pn544_dev->client->irq);
 		pn544_dev->irq_enabled = false;

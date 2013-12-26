@@ -3280,10 +3280,21 @@ EXPORT_SYMBOL(pm8921_charger_enable);
 
 int pm8921_is_usb_chg_plugged_in(void)
 {
+/* OPPO 2013-11-28 sjc Modify begin for reduce log */
+#ifndef CONFIG_MACH_N1
 	if (!the_chip) {
 		pr_err("called before init\n");
 		return -EINVAL;
 	}
+#else
+	static DEFINE_RATELIMIT_STATE(rl, 60*HZ, 1);
+	if (!the_chip) {
+		if (__ratelimit(&rl))
+			pr_err("called before init\n");
+		return -EINVAL;
+	}
+#endif
+/* OPPO 2013-11-28 sjc Modify end */
 	return is_usb_chg_plugged_in(the_chip);
 }
 EXPORT_SYMBOL(pm8921_is_usb_chg_plugged_in);
@@ -3310,10 +3321,21 @@ EXPORT_SYMBOL(pm8921_is_battery_present);
 
 int pm8921_is_batfet_closed(void)
 {
+/* OPPO 2013-11-28 sjc Modify begin for reduce log */
+#ifndef CONFIG_MACH_N1
 	if (!the_chip) {
 		pr_err("called before init\n");
 		return -EINVAL;
 	}
+#else
+	static DEFINE_RATELIMIT_STATE(rl, 60*HZ, 1);
+	if (!the_chip) {
+		if (__ratelimit(&rl))
+			pr_err("called before init\n");
+		return -EINVAL;
+	}
+#endif
+/* OPPO 2013-11-28 sjc Modify end */
 	return is_batfet_closed(the_chip);
 }
 EXPORT_SYMBOL(pm8921_is_batfet_closed);

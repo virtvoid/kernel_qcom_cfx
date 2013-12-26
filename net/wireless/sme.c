@@ -812,9 +812,17 @@ int __cfg80211_connect(struct cfg80211_registered_device *rdev,
 	}
 
 	if (!rdev->ops->connect) {
+		/* OPPO 2013-12-10 liuhd Add begin for wifi saved debgug */
+		#ifdef CONFIG_MACH_N1
+		if (!rdev->ops->auth || !rdev->ops->assoc){
+			printk("__cfg80211_connect connected  called \n");
+			return -EOPNOTSUPP;
+		}
+		#else
 		if (!rdev->ops->auth || !rdev->ops->assoc)
 			return -EOPNOTSUPP;
-
+		#endif
+		/* OPPO 2013-12-10 liuhd Add end */
 		if (WARN_ON(wdev->conn))
 			return -EINPROGRESS;
 
@@ -899,6 +907,12 @@ int __cfg80211_connect(struct cfg80211_registered_device *rdev,
 		wdev->sme_state = CFG80211_SME_CONNECTING;
 		wdev->connect_keys = connkeys;
 		err = rdev->ops->connect(&rdev->wiphy, dev, connect);
+		/* OPPO 2013-12-10 liuhd Add begin for wifi bug */
+		#ifdef CONFIG_MACH_N1
+		printk("__cfg80211_connect test here err :%d\n",err);
+		#endif
+		/* OPPO 2013-12-10 liuhd Add end */
+
 		if (err) {
 			wdev->connect_keys = NULL;
 			wdev->sme_state = CFG80211_SME_IDLE;

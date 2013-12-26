@@ -1059,7 +1059,8 @@ struct msm_snapshot_pp_status {
 #define CFG_SET_CAF_RESULT		  78
 #define CFG_GET_FLASH_INFO	  	  79
 #define CFG_SET_FLIP_HINT	  	  80
-#define CFG_MAX                   81
+#define CFG_FRAME_OUT			  81
+#define CFG_MAX                   82
 #endif
 
 #define MOVE_NEAR	0
@@ -1413,6 +1414,8 @@ struct cord {
 #endif
 #ifdef CONFIG_MACH_N1
 struct cord {
+    /*oppo lanhe add for AE&AF mode */
+    int8_t mode;
 	uint32_t x;
 	uint32_t y;
 	uint32_t dx;

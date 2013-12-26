@@ -5469,6 +5469,11 @@ static int nl80211_connect(struct sk_buff *skb, struct genl_info *info)
 	}
 
 	err = cfg80211_connect(rdev, dev, &connect, connkeys);
+/* OPPO 2013-12-10 liuhd Add begin for wifi saved bug */
+	#ifdef CONFIG_MACH_N1
+	printk("cfg80211_connect is called --error:%d\n",err);
+	#endif
+/* OPPO 2013-12-10 liuhd Add end */
 	if (err)
 		kfree(connkeys);
 	return err;

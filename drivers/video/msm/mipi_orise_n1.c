@@ -199,12 +199,16 @@ static char sleep_in[2] =
     0x00,
 };
 
+/* OPPO 2013-12-10 gousj Modify begin for new panel adaption tear effects */
+#ifdef CONFIG_MACH_N1
 static char tear_scan[3] =
 {
     0x44,   //TE scan line
     0x00,
-    0x01
+    0xc8
 };
+#endif
+/* OPPO 2013-12-10 gousj Add end */
 
 static char nvm_black[5] =
 {
