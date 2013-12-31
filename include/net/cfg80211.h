@@ -2130,11 +2130,6 @@ struct wiphy_wowlan_support {
  *
  * @max_acl_mac_addrs: Maximum number of MAC addresses that the device
  *	supports for ACL.
-<<<<<<< HEAD
- * @country_ie_pref: country IE processing preferences specified
- *	by enum nl80211_country_ie_pref
-=======
->>>>>>> 5037cd1... cfg80211/nl80211: add API for MAC address ACLs
  */
 struct wiphy {
 	/* assign these fields before you register the wiphy */

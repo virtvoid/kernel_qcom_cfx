@@ -3171,10 +3171,6 @@ enum nl80211_acl_policy {
 	NL80211_ACL_POLICY_ACCEPT_UNLESS_LISTED,
 	NL80211_ACL_POLICY_DENY_UNLESS_LISTED,
 };
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 46ffd58... cfg80211: Allow TDLS peer AID to be configured for VHT
 /**
  * enum nl80211_crit_proto_id - nl80211 critical protocol identifiers
  *
@@ -3196,9 +3192,4 @@ enum nl80211_crit_proto_id {
 /* maximum duration for critical protocol measures */
 #define NL80211_CRIT_PROTO_MAX_DURATION		5000 /* msec */
 
-<<<<<<< HEAD
-=======
->>>>>>> 5037cd1... cfg80211/nl80211: add API for MAC address ACLs
-=======
->>>>>>> 46ffd58... cfg80211: Allow TDLS peer AID to be configured for VHT
 #endif /* __LINUX_NL80211_H */
