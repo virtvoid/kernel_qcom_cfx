@@ -608,10 +608,6 @@
  *	with the relevant Information Elements. This event is used to report
  *	received FT IEs (MDIE, FTIE, RSN IE, TIE, RICIE).
  *
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 46ffd58... cfg80211: Allow TDLS peer AID to be configured for VHT
  * @NL80211_CMD_CRIT_PROTOCOL_START: Indicates user-space will start running
  *	a critical protocol that needs more reliability in the connection to
  *	complete.
@@ -619,11 +615,6 @@
  * @NL80211_CMD_CRIT_PROTOCOL_STOP: Indicates the connection reliability can
  *	return back to normal.
  *
-<<<<<<< HEAD
-=======
->>>>>>> a62086d... cfg80211: Extend support for IEEE 802.11r Fast BSS Transition
-=======
->>>>>>> 46ffd58... cfg80211: Allow TDLS peer AID to be configured for VHT
  * @NL80211_CMD_MAX: highest used command number
  * @__NL80211_CMD_AFTER_LAST: internal use
  */
@@ -784,18 +775,9 @@ enum nl80211_commands {
 	NL80211_CMD_UPDATE_FT_IES,
 	NL80211_CMD_FT_EVENT,
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 	NL80211_CMD_CRIT_PROTOCOL_START,
 	NL80211_CMD_CRIT_PROTOCOL_STOP,
 
-=======
->>>>>>> a62086d... cfg80211: Extend support for IEEE 802.11r Fast BSS Transition
-=======
-	NL80211_CMD_CRIT_PROTOCOL_START,
-	NL80211_CMD_CRIT_PROTOCOL_STOP,
-
->>>>>>> 46ffd58... cfg80211: Allow TDLS peer AID to be configured for VHT
 	/* add new commands above here */
 
 	/* used to define NL80211_CMD_MAX below */
@@ -1387,10 +1369,6 @@ enum nl80211_commands {
  * @NL80211_ATTR_VHT_CAPABILITY: VHT Capability information element (from
  *	association request when used with NL80211_CMD_NEW_STATION)
  *
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 9f6d091... cfg80211: Pass station (extended) capability info to kernel
  * @NL80211_ATTR_SCAN_FLAGS: scan request control flags (u32)
  *
  * @NL80211_ATTR_P2P_CTWINDOW: P2P GO Client Traffic Window (u8), used with
@@ -1429,10 +1407,6 @@ enum nl80211_commands {
  *	advertised to the driver, e.g., to enable TDLS off channel operations
  *	and PU-APSD.
  *
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> a62086d... cfg80211: Extend support for IEEE 802.11r Fast BSS Transition
  * @NL80211_ATTR_PROTOCOL_FEATURES: global nl80211 feature flags, see
  *	&enum nl80211_protocol_features, the attribute is a u32.
  *
@@ -1445,10 +1419,6 @@ enum nl80211_commands {
  * @NL80211_ATTR_IE_RIC: Resource Information Container Information
  *	Element
  *
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 46ffd58... cfg80211: Allow TDLS peer AID to be configured for VHT
  * @NL80211_ATTR_CRIT_PROT_ID: critical protocol identifier requiring increased
  *	reliability, see &enum nl80211_crit_proto_id (u16).
  * @NL80211_ATTR_MAX_CRIT_PROT_DURATION: duration in milliseconds in which
@@ -1459,15 +1429,6 @@ enum nl80211_commands {
  *	allowed to be used with the first @NL80211_CMD_SET_STATION command to
  *	update a TDLS peer STA entry.
  *
-<<<<<<< HEAD
-=======
->>>>>>> 5fed1a7... {nl,cfg}80211: Peer STA VHT caps
-=======
->>>>>>> 9f6d091... cfg80211: Pass station (extended) capability info to kernel
-=======
->>>>>>> a62086d... cfg80211: Extend support for IEEE 802.11r Fast BSS Transition
-=======
->>>>>>> 46ffd58... cfg80211: Allow TDLS peer AID to be configured for VHT
  * @NL80211_ATTR_MAX: highest attribute number currently defined
  * @__NL80211_ATTR_AFTER_LAST: internal use
  */
@@ -1729,10 +1690,6 @@ enum nl80211_attrs {
 
 	NL80211_ATTR_VHT_CAPABILITY,
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 9f6d091... cfg80211: Pass station (extended) capability info to kernel
 	NL80211_ATTR_SCAN_FLAGS,
 
 	NL80211_ATTR_CHANNEL_WIDTH,
@@ -1758,10 +1715,6 @@ enum nl80211_attrs {
 	NL80211_ATTR_STA_CAPABILITY,
 	NL80211_ATTR_STA_EXT_CAPABILITY,
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> a62086d... cfg80211: Extend support for IEEE 802.11r Fast BSS Transition
 	NL80211_ATTR_PROTOCOL_FEATURES,
 	NL80211_ATTR_SPLIT_WIPHY_DUMP,
 
@@ -1771,24 +1724,11 @@ enum nl80211_attrs {
 	NL80211_ATTR_MDID,
 	NL80211_ATTR_IE_RIC,
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 46ffd58... cfg80211: Allow TDLS peer AID to be configured for VHT
 	NL80211_ATTR_CRIT_PROT_ID,
 	NL80211_ATTR_MAX_CRIT_PROT_DURATION,
 
 	NL80211_ATTR_PEER_AID,
 
-<<<<<<< HEAD
-=======
->>>>>>> 5fed1a7... {nl,cfg}80211: Peer STA VHT caps
-=======
->>>>>>> 9f6d091... cfg80211: Pass station (extended) capability info to kernel
-=======
->>>>>>> a62086d... cfg80211: Extend support for IEEE 802.11r Fast BSS Transition
-=======
->>>>>>> 46ffd58... cfg80211: Allow TDLS peer AID to be configured for VHT
 	/* add attributes here, update the policy in nl80211.c */
 
 	__NL80211_ATTR_AFTER_LAST,
