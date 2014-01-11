@@ -152,7 +152,7 @@ struct msm_camera_sensor_flash_src {
 		struct msm_camera_sensor_flash_external
 			ext_driver_src;
 		struct msm_camera_sensor_flash_led led_src;
-#if defined CONFIG_MACH_APQ8064_FIND5 || defined CONFIG_MACH_N1
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 		struct msm_camera_sensor_flash_oppo oppo_src;
 #endif
 	} _fsrc;

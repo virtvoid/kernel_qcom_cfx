@@ -5355,7 +5355,7 @@ static struct clk_lookup msm_clocks_8064[] = {
 #endif
 	CLK_LOOKUP("core_clk",		gsbi5_qup_clk.c,	"qup_i2c.5"),
 	CLK_LOOKUP("core_clk",		gsbi6_qup_clk.c,	""),
-#if defined CONFIG_MACH_APQ8064_FIND5 || defined CONFIG_MACH_N1
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 	CLK_LOOKUP("core_clk",		gsbi7_qup_clk.c,	"qup_i2c.7"),
 #else
 	CLK_LOOKUP("core_clk",		gsbi7_qup_clk.c,	""),
@@ -5406,11 +5406,11 @@ static struct clk_lookup msm_clocks_8064[] = {
 #endif
 	CLK_LOOKUP("iface_clk",		gsbi4_p_clk.c,		"qup_i2c.4"),
 
-#if defined defined CONFIG_MACH_N1
+#ifdef CONFIG_MACH_N1
     CLK_LOOKUP("iface_clk",		gsbi4_p_clk.c,		"spi_qsd.0"),
 #endif
     
-#if defined CONFIG_MACH_APQ8064_FIND5 || defined CONFIG_MACH_N1
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 	CLK_LOOKUP("iface_clk",		gsbi5_p_clk.c,		"spi_qsd.0"),
 	CLK_LOOKUP("iface_clk",		gsbi5_p_clk.c,		"msm_serial_hsl.0"),
 	CLK_LOOKUP("iface_clk",		gsbi6_p_clk.c,		""),
@@ -5456,7 +5456,7 @@ static struct clk_lookup msm_clocks_8064[] = {
 #endif
 	CLK_LOOKUP("cam_clk",		cam1_clk.c,	"4-0048"),
 	CLK_LOOKUP("cam_clk",		cam1_clk.c,	"4-006c"),
-#if defined CONFIG_MACH_APQ8064_FIND5 || defined CONFIG_MACH_N1
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 	CLK_LOOKUP("cam_clk",		cam2_clk.c,	"0-0010"),
 	CLK_LOOKUP("cam_clk",		cam2_clk.c,	"7-0010"),
 #endif
