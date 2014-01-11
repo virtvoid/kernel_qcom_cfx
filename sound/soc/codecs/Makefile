@@ -49,7 +49,7 @@ snd-soc-twl6040-objs := twl6040.o
 snd-soc-uda134x-objs := uda134x.o
 snd-soc-uda1380-objs := uda1380.o
 snd-soc-wcd9304-objs := wcd9304.o wcd9304-tables.o
-ifdef CONFIG_MACH_OPPO
+ifdef CONFIG_MACH_N1
 snd-soc-wcd9310-objs := wcd9310-oppo.o wcd9310-tables.o
 else
 snd-soc-wcd9310-objs := wcd9310.o wcd9310-tables.o
