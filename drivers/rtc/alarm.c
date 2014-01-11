@@ -624,7 +624,7 @@ ktime_t alarm_get_elapsed_realtime(void)
 	return now;
 }
 
-#ifdef CONFIG_MACH_OPPO
+#ifdef CONFIG_MACH_N1
 int
 alarm_read_rtc_time(struct rtc_time *tm)
 {
