@@ -26,7 +26,7 @@
 #include <linux/of_platform.h>
 #include <linux/msm_ssbi.h>
 #include <mach/msm_bus.h>
-#ifdef CONFIG_MACH_OPPO
+#ifdef CONFIG_MACH_N1
 #include <mach/board-ext-oppo.h>
 #endif
 

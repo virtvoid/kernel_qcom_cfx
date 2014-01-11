@@ -3,4 +3,4 @@
 #
 
 # N1
-obj-$(CONFIG_MACH_OPPO) += n1/
+obj-$(CONFIG_MACH_N1) += n1/

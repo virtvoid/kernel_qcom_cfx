@@ -29,13 +29,13 @@
 #include <linux/input/pmic8xxx-pwrkey.h>
 #include <linux/input/pmic8xxx-keypad.h>
 #include <linux/regulator/pm8xxx-regulator.h>
-#ifdef CONFIG_MACH_OPPO
+#ifdef CONFIG_MACH_N1
 #include <linux/mfd/pm8xxx/pm8921-charger-oppo.h>
 #else
 #include <linux/mfd/pm8xxx/pm8921-charger.h>
 #endif
 #include <linux/mfd/pm8xxx/pm8xxx-adc.h>
-#ifdef CONFIG_MACH_OPPO
+#ifdef CONFIG_MACH_N1
 #include <linux/mfd/pm8xxx/pm8921-bms-oppo.h>
 #else
 #include <linux/mfd/pm8xxx/pm8921-bms.h>

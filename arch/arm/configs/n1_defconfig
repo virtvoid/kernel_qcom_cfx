@@ -392,7 +392,6 @@ CONFIG_BOARD_HEADER_FILE=""
 # LGE Specific Patches
 #
 # CONFIG_LGE_CRASH_HANDLER is not set
-CONFIG_MACH_OPPO=y
 
 #
 # Oppo board selection

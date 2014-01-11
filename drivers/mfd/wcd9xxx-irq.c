@@ -251,15 +251,13 @@ static irqreturn_t wcd9xxx_irq_thread(int irq, void *data)
 			wcd9xxx_irq_dispatch(wcd9xxx, i);
 	}
 	wcd9xxx_unlock_sleep(wcd9xxx);
-	/*OPPO 2012-12-10 zhzhyon Add for headset detect*/
-	#ifdef CONFIG_MACH_OPPO
+	#ifdef CONFIG_MACH_N1
 done:
 	enable_irq(irq);
 	wake_unlock(&wcd9xxx_wakelock);
 	if(ret == -1)
 		return IRQ_NONE;
 	#endif
-	/*OPPO 2012-12-10 zhzhyon Add end*/
 
 #ifdef CONFIG_MACH_APQ8064_FIND5
 done:

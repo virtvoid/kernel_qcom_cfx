@@ -45,11 +45,9 @@
 
 #include "queue.h"
 
-/* OPPO 2013-11-15 songxh Add begin for device information */
-#ifdef CONFIG_MACH_OPPO
+#ifdef CONFIG_MACH_N1
 #include <mach/device_info.h>
 #endif
-/* OPPO 2013-11-15 songxh Add end */
 
 MODULE_ALIAS("mmc:block");
 #ifdef MODULE_PARAM_PREFIX
@@ -2490,8 +2488,7 @@ static int mmc_blk_probe(struct mmc_card *card)
 	if (!(card->csd.cmdclass & CCC_BLOCK_READ))
 		return -ENODEV;
 
-/* OPPO 2013-11-15 songxh Add begin for device information */
-#ifdef CONFIG_MACH_OPPO
+#ifdef CONFIG_MACH_N1
 	switch (card->cid.manfid)
 	{
 		case  0x11:
@@ -2509,7 +2506,6 @@ static int mmc_blk_probe(struct mmc_card *card)
 	}
 	register_device_proc("emmc", card->cid.prod_name, manufacturerid);
 #endif
-/* OPPO 2013-11-15 songxh Add end */
 
 	md = mmc_blk_alloc(card);
 	if (IS_ERR(md))

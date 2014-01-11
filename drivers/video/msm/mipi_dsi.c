@@ -42,12 +42,10 @@ u32 esc_byte_ratio;
 
 static boolean tlmm_settings = FALSE;
 
-/*OPPO 2013-10-10 zhzhyon Add for reason*/
 #define PANEL_SRE
 #ifdef PANEL_SRE
 struct mutex sre_mutex;
 #endif
-/*OPPO 2013-10-10 zhzhyon Add end*/
 
 static int mipi_dsi_probe(struct platform_device *pdev);
 static int mipi_dsi_remove(struct platform_device *pdev);
@@ -107,7 +105,6 @@ static int mipi_dsi_off(struct platform_device *pdev)
 		down(&mfd->dma->mutex);
 
 	if (mfd->panel_info.type == MIPI_CMD_PANEL) {
-		/*OPPO 2013-10-11 zhzhyon Add for reason*/
 		#ifdef PANEL_SRE
 		if(get_pcb_version() >= PCB_VERSION_EVT_N1)
 		{
@@ -123,8 +120,6 @@ static int mipi_dsi_off(struct platform_device *pdev)
 			mutex_unlock(&sre_mutex);
 		}
 		#endif
-		/*OPPO 2013-10-11 zhzhyon Add end*/
-
 
 		/* make sure dsi_cmd_mdp is idle */
 		mipi_dsi_cmd_mdp_busy();
@@ -493,11 +488,9 @@ static int mipi_dsi_probe(struct platform_device *pdev)
 
 		return 0;
 	}
-	/*OPPO 2013-10-11 zhzhyon Add for reason*/
        #ifdef PANEL_SRE
        mutex_init(&sre_mutex);
        #endif
-       /*OPPO 2013-10-11 zhzhyon Add end*/
 
 	if (!mipi_dsi_resource_initialized)
 		return -EPERM;
@@ -526,11 +519,9 @@ static int mipi_dsi_probe(struct platform_device *pdev)
 #endif
 
 
-    /* OPPO 2013-02-04 zhengzk Add begin for reason */
-#ifdef CONFIG_MACH_OPPO
+#ifdef CONFIG_MACH_N1
     g_mdp_dev = mdp_dev;
 #endif
-    /* OPPO 2013-02-04 zhengzk Add end */
 
 	/*
 	 * link to the latest pdev

@@ -20,7 +20,7 @@
 #include <asm/mach-types.h>
 #include <mach/socinfo.h>
 
-#ifdef CONFIG_MACH_OPPO
+#ifdef CONFIG_MACH_N1
 #include <linux/pcb_version.h>
 #endif
 
@@ -684,7 +684,7 @@ static struct sysdev_attribute socinfo_v7_files[] = {
 			socinfo_show_pmic_die_revision, NULL),
 };
 
-#ifdef CONFIG_MACH_OPPO
+#ifdef CONFIG_MACH_N1
 static struct sysdev_attribute socinfo_v8_files[] = {
 	_SYSDEV_ATTR(hw_pcb_version, 0444,
 			socinfo_show_hw_pcb_version, NULL),
@@ -779,7 +779,7 @@ static int __init socinfo_init_sysdev(void)
 	return socinfo_create_files(&soc_sys_device, socinfo_v7_files,
 				ARRAY_SIZE(socinfo_v7_files));
 
-#ifdef CONFIG_MACH_OPPO
+#ifdef CONFIG_MACH_N1
 	socinfo_create_files(&soc_sys_device, socinfo_v8_files,
 			ARRAY_SIZE(socinfo_v8_files));
 

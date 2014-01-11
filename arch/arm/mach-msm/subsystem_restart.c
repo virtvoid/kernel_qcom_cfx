@@ -35,7 +35,7 @@
 #include <mach/subsystem_notif.h>
 #include <mach/subsystem_restart.h>
 
-#ifdef CONFIG_MACH_OPPO
+#ifdef CONFIG_MACH_N1
 #include <linux/oppo_attributes.h>
 #endif
 

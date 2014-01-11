@@ -788,7 +788,7 @@ qup_i2c_xfer(struct i2c_adapter *adap, struct i2c_msg msgs[], int num)
 		uint32_t fifo_reg;
 
 		if (dev->gsbi) {
-#ifdef CONFIG_MACH_OPPO_N1
+#ifdef CONFIG_MACH_N1
 			writel_relaxed(0x6 << 4, dev->gsbi);
 #else
 			writel_relaxed(0x2 << 4, dev->gsbi);
