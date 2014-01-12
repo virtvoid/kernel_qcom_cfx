@@ -2481,7 +2481,10 @@ static int mmc_blk_probe(struct mmc_card *card)
 {
 	struct mmc_blk_data *md, *part_md;
 	char cap_str[10];
-	char * manufacturerid; 
+#ifdef CONFIG_MACH_N1
+	char * manufacturerid;
+#endif
+
 	/*
 	 * Check that the card supports the command class(es) we need.
 	 */

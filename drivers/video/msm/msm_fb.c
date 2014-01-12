@@ -101,7 +101,7 @@ u32 mddi_msg_level = 5;
 extern int32 mdp_block_power_cnt[MDP_MAX_BLOCK];
 extern unsigned long mdp_timer_duration;
 
-/* OPPO 2012-12-26 Van add begin for boot mode */
+#ifdef CONFIG_MACH_N1
 extern int get_boot_mode(void);
 enum{
 	MSM_BOOT_MODE__NORMAL,
@@ -112,7 +112,7 @@ enum{
 	MSM_BOOT_MODE__WLAN,
 	MSM_BOOT_MODE__CHARGE,
 };
-/* OPPO 2012-12-26 Van add begin for boot mode */
+#endif
 
 static int msm_fb_register(struct msm_fb_data_type *mfd);
 static int msm_fb_open(struct fb_info *info, int user);
@@ -1109,20 +1109,19 @@ void msm_fb_set_backlight(struct msm_fb_data_type *mfd, __u32 bkl_lvl)
 {
 	struct msm_fb_panel_data *pdata;
 	__u32 temp = bkl_lvl;
-/* OPPO 2012-12-26 Van modify begin for boot mode */
-    //if (!mfd->panel_power_on || !bl_updated) {
-/* OPPO 2013-09-18 gousj Modify begin for recovery mode */
-#ifndef CONFIG_MACH_N1
-    if ((get_boot_mode()==MSM_BOOT_MODE__NORMAL)&&(!mfd->panel_power_on || !bl_updated)) {
-#else
+#ifdef CONFIG_MACH_N1
     if (((get_boot_mode()==MSM_BOOT_MODE__NORMAL) || (get_boot_mode()==MSM_BOOT_MODE__RECOVERY)) && (!mfd->panel_power_on || !bl_updated)) {
 #endif
-/* OPPO 2013-09-18 gousj Modify end */
 		unset_bl_level = bkl_lvl;
+#ifdef CONFIG_MACH_APQ8064_FIND5
+	if (!mfd->panel_power_on || !bl_updated)
+#endif
 		return;
+#ifdef CONFIG_MACH_N1
 	} else {
 		unset_bl_level = 0;
 	}
+#endif
 	pdata = (struct msm_fb_panel_data *)mfd->pdev->dev.platform_data;
 
 	if ((pdata) && (pdata->set_backlight)) {
@@ -1885,22 +1884,9 @@ static int msm_fb_register(struct msm_fb_data_type *mfd)
 #else
     /* Flip buffer */
     ftmmode = get_boot_mode();
-    //printk("huyu ------------%s: ftmmode = %d \n", __func__, ftmmode);
     switch(ftmmode)
     {
         case MSM_BOOT_MODE__NORMAL:
-#if 0
-            if (!load_565rle_image(INIT_IMAGE_FILE, bf_supported)){
-                    //printk("update lcd !!!!!_____________________________huyu \n\n\n");
-                    //mdp_set_dma_pan_info(mfd->fbi, NULL, TRUE);
-                    //mdp_dma_pan_update(mfd->fbi);
-                    schedule_delayed_work(&startup_refresh_work,  HZ/20);
-                    if (msm_fb_blank_sub(FB_BLANK_UNBLANK, mfd->fbi, mfd->op_enable)) {
-                        printk(KERN_ERR "msm_fb_open: can't turn on display!\n");
-                        return -1;
-                    }
-                }
-#endif
             break;
         case MSM_BOOT_MODE__FASTBOOT:
             if (!load_565rle_image(INIT_IMAGE_FASTBOOT, bf_supported)){
@@ -1912,14 +1898,11 @@ static int msm_fb_register(struct msm_fb_data_type *mfd)
                     }
                 }
             break;
-        //case MSM_BOOT_MODE__RECOVERY:
         case MSM_BOOT_MODE__FACTORY:
             if (!load_565rle_image(INIT_IMAGE_AT, bf_supported)){
-/* OPPO 2012-12-1 huyu modify for modify backlight control*/
 #ifdef CONFIG_MACH_N1
                     bl_updated = 1;
 #endif
-/* OPPO 2012-12-1 huyu modify for modify backlight control*/
                     schedule_delayed_work(&startup_refresh_work,  HZ/20);
                     if (msm_fb_blank_sub(FB_BLANK_UNBLANK, mfd->fbi, mfd->op_enable)) {
                         printk(KERN_ERR "msm_fb_open: can't turn on display!\n");
@@ -1954,7 +1937,6 @@ static int msm_fb_register(struct msm_fb_data_type *mfd)
 
     }
 #endif
-/* OPPO 2012-11-15 huyu Delete for boot LOGO */
 #endif
 	ret = 0;
 

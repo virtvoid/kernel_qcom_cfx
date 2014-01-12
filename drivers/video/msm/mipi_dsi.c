@@ -42,9 +42,11 @@ u32 esc_byte_ratio;
 
 static boolean tlmm_settings = FALSE;
 
+#ifdef CONFIG_MACH_N1
 #define PANEL_SRE
 #ifdef PANEL_SRE
 struct mutex sre_mutex;
+#endif
 #endif
 
 static int mipi_dsi_probe(struct platform_device *pdev);
@@ -381,7 +383,6 @@ static int mipi_dsi_late_init(struct platform_device *pdev)
 
 static int mipi_dsi_resource_initialized;
 #if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
-#ifdef CONFIG_MACH_APQ8064_FIND5
 struct platform_device *g_mdp_dev = NULL;
 #endif
 

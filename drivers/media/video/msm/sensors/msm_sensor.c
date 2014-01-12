@@ -2017,6 +2017,7 @@ int msm_sensor_enable_debugfs(struct msm_sensor_ctrl_t *s_ctrl)
 	return 0;
 }
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	static struct regulator *ldo8;
 	static struct regulator *lvs5;
 	static struct regulator *ldo16;

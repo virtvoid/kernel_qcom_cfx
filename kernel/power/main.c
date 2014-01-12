@@ -507,7 +507,7 @@ extern char pwron_event[];
 static ssize_t startup_mode_show(struct kobject *kobj, struct kobj_attribute *attr,
 			     char *buf)
 {
-	return sprintf(buf, "%s", get_start_reason());
+	return sprintf(buf, "%s", pwron_event);
 }
 
 static ssize_t startup_mode_store(struct kobject *kobj, struct kobj_attribute *attr,
@@ -517,11 +517,12 @@ static ssize_t startup_mode_store(struct kobject *kobj, struct kobj_attribute *a
 }
 power_attr(startup_mode);
 
+extern char boot_mode[];
 static ssize_t app_boot_show(struct kobject *kobj, struct kobj_attribute *attr,
 			     char *buf)
 {
 #if 1
-	return sprintf(buf, "%s", get_boot_mode_str());
+	return sprintf(buf, "%s", boot_mode);
 #else
     if (reboot_reason == 0x77665501)
         return sprintf(buf, "reboot");

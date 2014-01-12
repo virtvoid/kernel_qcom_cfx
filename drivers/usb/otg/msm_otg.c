@@ -2398,13 +2398,6 @@ static void nonstandard_detect_work(struct work_struct *w)
 out:
 	enable_nonstandard_worker_fn("nonstandard_detect_work");
 }
-
-void cancel_charger_type_detect_work(void)
-{
-	struct msm_otg *motg = the_msm_otg;
-	cancel_delayed_work_sync(&motg->nonstandard_detect_work);
-	cancel_delayed_work_sync(&motg->chg_work);
-}
 #endif
 
 /*
@@ -2479,7 +2472,7 @@ static void msm_otg_init_sm(struct msm_otg *motg)
 	}
 }
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 void cancel_charger_type_detect_work(void)
 {
 	struct msm_otg * motg=the_msm_otg;

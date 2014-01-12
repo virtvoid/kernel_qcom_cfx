@@ -1009,7 +1009,7 @@ config TOUCHSCREEN_SYNAPTICS_DSX_FW_UPDATE
 	  module will be called synaptics_dsx_fw_update.
 
 config TOUCHSCREEN_SYNAPTICS_S3202_I2C_RMI
-	tristate "Synaptics s3202 i2c touchscreen"
+	tristate "Synaptics s3202 i2c touchscreen for Oppo Find 5"
 	depends on I2C
 	help
 	  This enables support for Synaptics s3202 RMI over I2C based touchscreens.
@@ -1020,17 +1020,11 @@ config TOUCHSCREEN_Y8C20X66A
 	help
 	  Say Y here to enable support for Y8C20X66A back touchscreen driver.
 
-config TOUCHSCREEN_SYNAPTICS_S3202_I2C_RMI
-	tristate "Synaptics S3202 I2C touchscreen device"
+config TOUCHSCREEN_SYNAPTICS_S3202_I2C_RMI_N1
+	tristate "Synaptics s3202 i2c touchscreen for Oppo N1"
 	depends on I2C
 	help
-	  Say Y here if you have a Synaptics S3202 I2C touchscreen
-	  connected to your system.
-
-	  If unsure, say N.
-
-	  To compile this driver as a module, choose M here: the
-	  module will be called synaptics_s3202_i2c_rmi.
+	  This enables support for Synaptics s3202 RMI over I2C based touchscreens.
 
 endif
 

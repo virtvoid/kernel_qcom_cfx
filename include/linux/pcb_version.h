@@ -5,7 +5,7 @@
 #ifndef _PCB_VERSION_H
 #define _PCB_VERSION_H
 
-#ifdef CONFIG_MACH_N1
+#ifndef CONFIG_MACH_N1
 enum {
 	PCB_VERSION_EVB,
 	PCB_VERSION_EVT,
@@ -17,8 +17,10 @@ enum {
 	PCB_VERSION_PVT_TD,
 	PCB_VERSION_PVT2_TD,
 	PCB_VERSION_PVT3_TD,
+#endif
 
 #ifdef CONFIG_MACH_N1
+enum {
 	PCB_VERSION_EVT_N1,	 //900mv
 	PCB_VERSION_EVT_N1F,	 //1800mv
 	PCB_VERSION_EVT3_N1F,
@@ -35,9 +37,14 @@ enum {
 	PCB_VERSION_UNKNOWN,
 };
 
-//extern int get_pcb_version(void);
+#ifdef CONFIG_MACH_APQ8064_FIND5
+extern int get_pcb_version(void);
+#endif
+
+#ifdef CONFIG_MACH_N1
 int get_pcb_version(void);
 char *get_hw_pcb_version(void);
 char *get_hw_rf_version(void);
+#endif
 
 #endif /* _PCB_VERSION_H */

@@ -406,7 +406,9 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
 		   -fno-delete-null-pointer-checks \
-                   -Wno-maybe-uninitialized
+                   -Wno-maybe-uninitialized \
+		   -Wno-unused-function \
+                   -Wno-return-type -Wno-implicit-int
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__

@@ -23,13 +23,13 @@
 
 #include <linux/irq.h>
 #include <asm/system.h>
-#if defined (CONFIG_MACH_APQ8064_FIND5) || (CONFIG_MACH_N1)
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 #include <linux/delay.h>
 #endif
 #define fb_width(fb)	((fb)->var.xres)
 #define fb_height(fb)	((fb)->var.yres)
 #define fb_size(fb)	((fb)->var.xres * (fb)->var.yres * 2)
-#if defined (CONFIG_MACH_APQ8064_FIND5) || (CONFIG_MACH_N1)
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 #define fb_bpp(fb) ((fb)->var.bits_per_pixel)
 #endif
 static void memset16(void *_ptr, unsigned short val, unsigned count)
@@ -39,7 +39,7 @@ static void memset16(void *_ptr, unsigned short val, unsigned count)
 	while (count--)
 		*ptr++ = val;
 }
-#if defined (CONFIG_MACH_APQ8064_FIND5) || (CONFIG_MACH_N1)
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 static void memset32(void *_ptr, unsigned int val, unsigned count)
 {
 	unsigned int *ptr = _ptr;
@@ -55,7 +55,7 @@ int load_565rle_image(char *filename, bool bf_supported)
 	int fd, count, err = 0;
 	unsigned max;
 	unsigned short *data, *bits, *ptr;
-#if defined (CONFIG_MACH_APQ8064_FIND5) || (CONFIG_MACH_N1)
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
     unsigned int rgb32, red, green, blue, alpha;
 #endif
 	info = registered_fb[0];
@@ -96,12 +96,9 @@ int load_565rle_image(char *filename, bool bf_supported)
 		       __func__, __LINE__, info->node);
 		goto err_logo_free_data;
 	}
-#ifndef CONFIG_MACH_N1
 	if (info->screen_base) {
 		bits = (unsigned short *)(info->screen_base);
-#else
-	bits = (unsigned short *)(info->screen_base);
-#endif
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 	while (count > 3) {
 		unsigned n = ptr[0];
 		if (n > max)
@@ -120,14 +117,25 @@ int load_565rle_image(char *filename, bool bf_supported)
 	        alpha = 0xff;
 	        rgb32 = (alpha << 24) | (blue << 16)
 	        | (green << 8) | (red);
-			//printk("huyu----------%s: red = %x  green = %x  blue = %x\n", __func__, red,green,blue);
 	        memset32(bits, rgb32, n << 2);
-			//printk("huyu----------%s: rgb32 = %x  n << 2 = %d\n", __func__, rgb32,n << 2);
 	        bits += (n * 2);
 		}
 		max -= n;
 		ptr += 2;
 		count -= 4;
+	}
+#else
+		while (count > 3) {
+			unsigned n = ptr[0];
+			if (n > max)
+				break;
+			memset16(bits, ptr[1], n << 1);
+			bits += n;
+			max -= n;
+			ptr += 2;
+			count -= 4;
+		}
+#endif
 	}
 
 err_logo_free_data:

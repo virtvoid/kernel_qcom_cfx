@@ -793,7 +793,6 @@ static struct resource resources_msm_cam_i2c_mux_gsbi7[] = {
 		.flags  = IORESOURCE_MEM,
 	},
 };
-#endif
 
 struct platform_device apq8064_device_i2c_mux_gsbi7 = {
 	.name           = "msm_cam_i2c_mux",
@@ -801,6 +800,7 @@ struct platform_device apq8064_device_i2c_mux_gsbi7 = {
 	.resource       = resources_msm_cam_i2c_mux_gsbi7,
 	.num_resources  = ARRAY_SIZE(resources_msm_cam_i2c_mux_gsbi7),
 };
+#endif
 
 struct platform_device apq_pcm = {
 	.name	= "msm-pcm-dsp",

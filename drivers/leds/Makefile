@@ -18,11 +18,8 @@ obj-$(CONFIG_LEDS_COBALT_QUBE)		+= leds-cobalt-qube.o
 obj-$(CONFIG_LEDS_COBALT_RAQ)		+= leds-cobalt-raq.o
 obj-$(CONFIG_LEDS_SUNFIRE)		+= leds-sunfire.o
 obj-$(CONFIG_LEDS_PCA9532)		+= leds-pca9532.o
-if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
-obj-$(CONFIG_LEDS_PM8XXX)		+= leds-pm8xxx-41.o
-else
+obj-$(CONFIG_LEDS_PM8XXX_OPPO)		+= leds-pm8xxx-41.o
 obj-$(CONFIG_LEDS_PM8XXX)		+= leds-pm8xxx.o
-endif
 obj-$(CONFIG_LEDS_QPNP)			+= leds-qpnp.o
 obj-$(CONFIG_LEDS_GPIO_REGISTER)	+= leds-gpio-register.o
 obj-$(CONFIG_LEDS_GPIO)			+= leds-gpio.o

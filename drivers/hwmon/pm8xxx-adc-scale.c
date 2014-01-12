@@ -1001,7 +1001,7 @@ int32_t pm8xxx_adc_scale_batt_therm(int32_t adc_code,
 	bat_voltage = pm8xxx_adc_scale_ratiometric_calib(adc_code,
 			adc_properties, chan_properties);
     
-#ifdef CONFIG_MACH_N1
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 	if(get_pcb_version() == PCB_VERSION_PVT3_TD) {
 		return pm8xxx_adc_map_batt_therm(
 			adcmap_btm_threshold2,
@@ -1022,7 +1022,6 @@ int32_t pm8xxx_adc_scale_batt_therm(int32_t adc_code,
 			ARRAY_SIZE(adcmap_btm_threshold),
 			bat_voltage,
 			&adc_chan_result->physical);
-	}
 }
 #endif
 EXPORT_SYMBOL_GPL(pm8xxx_adc_scale_batt_therm);

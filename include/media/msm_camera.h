@@ -1026,10 +1026,7 @@ struct msm_snapshot_pp_status {
 #define CFG_ACTUAOTOR_REG_INIT        58
 #define CFG_MAX                       59
 
-/* OPPO 2013-07-24 lanhe Add for m9mo start */
-#if 0
-#define CFG_MAX                       58
-#else
+#ifdef CONFIG_MACH_N1
 #define CFG_SET_AF_MODE			  58
 #define CFG_SET_AE_MODE           59
 #define CFG_SET_FLASH_MODE        60
@@ -1055,7 +1052,6 @@ struct msm_snapshot_pp_status {
 #define CFG_SET_FLIP_HINT	  	  80
 #define CFG_MAX                   81
 #endif
-/* OPPO 2013-07-24 lanhe Add end */
 
 #define MOVE_NEAR	0
 #define MOVE_FAR	1
@@ -1716,7 +1712,6 @@ struct sensor_cfg_data {
 		int32_t vision_mode_enable;
 		int32_t vision_ae;
 #ifdef CONFIG_MACH_N1
-		/* OPPO 2013-07-24 lanhe And for m9mo Touch AE&AF start */
 		struct cord af_cord;
 		int af_mode;
 		int flash_mode;
@@ -1736,10 +1731,7 @@ struct sensor_cfg_data {
 		int32_t ae_lock;
 		int32_t awb_lock;
 		int32_t flip_hint;
-        /* OPPO 2013-07-24 lanhe Add end */
-		/*OPPO 2013-09-14 guanjindian add for N1 asd start*/
 		int sport_enable;
-		/*OPPO 2013-09-14 guanjindian add end*/
 #endif
 	} cfg;
 };

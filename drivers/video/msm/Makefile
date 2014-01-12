@@ -1,6 +1,12 @@
+# TODO: enable CFLAGS again.
+CFLAGS_mdp4_overlay.o += -fno-aggressive-loop-optimizations \
+			 -Wno-implicit-function-declaration
+CFLAGS_mdp.o += -Wno-implicit-function-declaration
+CFLAGS_msm_fb.o += -Wno-unused-function
+CFLAGS_mdp_debugfs.o += -Wno-unused-function
 CFLAGS_mipi_novatek.o += -Wno-sizeof-pointer-memaccess
 CFLAGS_mipi_tc358764_dsi2lvds.o += -Wno-sizeof-pointer-memaccess
-CFLAGS_mdp4_overlay.o += -fno-aggressive-loop-optimizations
+
 ifeq ($(CONFIG_FB_MSM_MDSS),y)
 obj-y += mdss/
 else
@@ -128,7 +134,8 @@ obj-y += mipi_toshiba_video_wvga_pt.o mipi_toshiba_video_wsvga_pt.o mipi_toshiba
 obj-y += mipi_novatek_video_qhd_pt.o mipi_novatek_cmd_qhd_pt.o
 ifeq ($(CONFIG_FB_MSM_MIPI_DSI_ORISE_N1),y)
 obj-y += mipi_orise_video_720p_pt_n1.o mipi_orise_cmd_720p_pt_n1.o
-else
+endif
+ifeq ($(CONFIG_FB_MSM_MIPI_DSI_ORISE),y)
 obj-y += mipi_orise_video_720p_pt.o mipi_orise_cmd_720p_pt.o
 endif
 obj-y += mipi_renesas_video_fwvga_pt.o mipi_renesas_cmd_fwvga_pt.o

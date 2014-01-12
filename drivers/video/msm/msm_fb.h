@@ -266,7 +266,6 @@ int msm_fb_check_frame_rate(struct msm_fb_data_type *mfd,
 #ifdef CONFIG_FB_MSM_LOGO
 #define INIT_IMAGE_FILE "/initlogo.rle"
 #if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
-#ifdef CONFIG_MACH_APQ8064_FIND5
 #define	INIT_IMAGE_WLAN "wlan.rle"
 #define	INIT_IMAGE_RF "rf.rle"
 #define	INIT_IMAGE_FASTBOOT "fastboot.rle"

@@ -468,7 +468,11 @@ static int SN3193_power(int on)
 				goto lvs5_get_failed;
 			}
 		}
+#ifdef CONFIG_MACH_N1
 		else if ((get_pcb_version() > PCB_VERSION_EVT)&&(get_pcb_version() < PCB_VERSION_EVT_N1)){
+#else
+		else {
+#endif
 		//dvt---l21
 			ldo121 = regulator_get(NULL, "8921_l21");
 			if (IS_ERR(ldo121)){
@@ -491,7 +495,11 @@ static int SN3193_power(int on)
 				regulator_disable(lvs5);
 				regulator_put(lvs5);
 			}
+#ifdef CONFIG_MACH_N1
 		}else if ((get_pcb_version() > PCB_VERSION_EVT)&&(get_pcb_version() < PCB_VERSION_EVT_N1)){ //dvt
+#else
+		}else { //dvt
+#endif
 			if (ldo121) {
 				regulator_disable(ldo121);
 				regulator_put(ldo121);
