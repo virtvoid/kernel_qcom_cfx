@@ -1,6 +1,6 @@
 #
 # Automatically generated file; DO NOT EDIT.
-# Linux/arm 3.4.65 Kernel Configuration
+# Linux/arm 3.4.0 Kernel Configuration
 #
 CONFIG_ARM=y
 CONFIG_ARM_HAS_SG_CHAIN=y
@@ -397,11 +397,30 @@ CONFIG_BOARD_HEADER_FILE=""
 # Oppo board selection
 #
 CONFIG_MACH_N1=y
+# CONFIG_MACH_APQ8064_FIND5 is not set
 
 #
 # Oppo specific options
 #
 # CONFIG_OPPO_TRACE is not set
+# CONFIG_CONFIG_OPPO_DEBUG_ASSERT is not set
+
+#
+# Faux123 voltage control
+#
+# CONFIG_CPU_VOLTAGE_TABLE is not set
+
+#
+# Showp1984 mpdecision and thermal control
+# Be sure to disable CONFIG_MSM_AVS_HW
+#
+# CONFIG_MSM_MPDEC=y
+# CONFIG_MSM_MPDEC_INPUTBOOST_CPUMIN=y
+# CONFIG_MSM_CPU_FREQ_SET_MIN_MAX=y
+# CONFIG_MSM_CPU_FREQ_MAX=1512000
+# CONFIG_MSM_CPU_FREQ_MIN=384000
+CONFIG_MSM_AVS_HW=y
+
 # CONFIG_MSM_STACKED_MEMORY is not set
 CONFIG_KERNEL_MSM_CONTIG_MEM_REGION=y
 CONFIG_MSM_AMSS_VERSION=6225
@@ -457,7 +476,6 @@ CONFIG_MSM_IPC_ROUTER_SMD_XPRT=y
 # CONFIG_MSM_IPC_ROUTER_SECURITY is not set
 # CONFIG_MSM_DALRPC is not set
 # CONFIG_MSM_CPU_FREQ_SET_MIN_MAX is not set
-CONFIG_MSM_AVS_HW=y
 # CONFIG_MSM_HW3D is not set
 CONFIG_AMSS_7X25_VERSION_2009=y
 # CONFIG_AMSS_7X25_VERSION_2008 is not set

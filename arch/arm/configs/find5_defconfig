@@ -384,14 +384,15 @@ CONFIG_BOARD_HEADER_FILE=""
 # CONFIG_LGE_CRASH_HANDLER is not set
 
 #
-# OPPO board selection
+# Oppo board selection
 #
 # CONFIG_MACH_N1 is not set
 CONFIG_MACH_APQ8064_FIND5=y
 
 #
-# OPPO Specific Patches
+# Oppo specific options
 #
+# CONFIG_OPPO_TRACE is not set
 # CONFIG_CONFIG_OPPO_DEBUG_ASSERT is not set
 
 #
