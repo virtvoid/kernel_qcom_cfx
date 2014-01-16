@@ -53,7 +53,7 @@
 
 
 /******************* tp function switch **************************/
-#define TP_UPDATE_FIRMWARE  0
+#define TP_UPDATE_FIRMWARE  1
 #define SUPPORT_DOUBLE_TAP  1
 /*****************************************************************/
 
