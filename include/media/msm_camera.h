@@ -1024,7 +1024,10 @@ struct msm_snapshot_pp_status {
 #define CFG_SET_VISION_AE             56
 #define CFG_HDR_UPDATE                57
 #define CFG_ACTUAOTOR_REG_INIT        58
+
+#ifndef CONFIG_MACH_N1
 #define CFG_MAX                       59
+#endif
 
 #ifdef CONFIG_MACH_N1
 #define CFG_SET_AF_MODE			  58
