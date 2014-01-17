@@ -81,12 +81,12 @@ static int download_mode = 0;
 #endif
 #endif
 
-#ifndef CONFIG_MACH_APQ8064_FIND5
-static int download_mode = 1;
-#endif
-
 #ifdef CONFIG_MACH_N1
 static int download_mode = 0;
+#endif
+
+#if !defined(CONFIG_MACH_APQ8064_FIND5) && !defined(CONFIG_MACH_N1)
+static int download_mode = 1;
 #endif
 
 module_param_call(download_mode, dload_set, param_get_int,
