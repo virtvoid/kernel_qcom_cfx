@@ -2327,9 +2327,17 @@ static void msm_chg_detect_work(struct work_struct *w)
 #if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 extern bool is_usb_dc_plugged_in(void);
 
+#ifdef CONFIG_MACH_N1
+#define PORTSC_LS_NON        (2 << 10)        //sjc1030
+#endif
+
 static void nonstandard_detect_work(struct work_struct *w)
 {
 	struct msm_otg *motg = container_of(w, struct msm_otg, nonstandard_detect_work.work);
+    
+#ifdef CONFIG_MACH_N1
+    int line_status = 0;
+#endif
 
 	pr_info("%s,%d\n", __func__,cancel_nonstandard_worker);
 
