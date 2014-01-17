@@ -12,7 +12,11 @@
  */
 
 #define pr_fmt(fmt)	"%s: " fmt, __func__
-#define CONFIG_VENDOR_EDIT
+
+/* Keeping this around for safety purposes */
+#ifndef CONFIG_MACH_N1
+#define CONFIG_MACH_N1
+#endif
 
 #include <linux/module.h>
 #include <linux/moduleparam.h>
@@ -34,14 +38,14 @@
 #include <linux/mutex.h>
 #include <linux/rtc.h>
 
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 //OPPO exp zhanglong 2013-04-27 add begin for average current
 #include <linux/pcb_version.h>
 //OPPO exp zhanglong 2013-04-27 add begin for average current end
-#endif //#ifdef CONFIG_VENDOR_EDIT
+#endif //#ifdef CONFIG_MACH_N1
 
 /* OPPO 2013-01-07 chendx Add begin for very low voltage */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 #include <linux/mfd/pm8xxx/batt-alarm.h>
 #endif
 /* OPPO 2013-01-07 chendx Add end */
@@ -92,7 +96,7 @@ struct pm8921_soc_params {
 };
 
 /* OPPO 2012-12-17 chendx Add begin for BMS */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 #if 0
 #undef pr_debug 
 #define pr_debug(fmt, ...) printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
@@ -434,7 +438,7 @@ static int usb_chg_plugged_in(struct pm8921_bms_chip *chip)
 }
 
 /* OPPO 2012-12-29 chendx Add begin for low power shutdown feature */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 /**
 * XXX:#define DEFAULT_THRESHOLD_LOWER		3400
          #define DEFAULT_THRESHOLD_UPPER		4350
@@ -1490,7 +1494,7 @@ out:
 }
 
 /* OPPO 2012-12-21 chendx Modify begin for fix PON OCV LOW 2V */
-#ifndef CONFIG_VENDOR_EDIT
+#ifndef CONFIG_MACH_N1
 #define IAVG_SAMPLES 16
 #else
 #define IAVG_SAMPLES 32
@@ -2249,7 +2253,7 @@ static void read_shutdown_soc_and_iavg(struct pm8921_bms_chip *chip)
 
 	rc = pm8xxx_readb(chip->dev->parent, TEMP_SOC_STORAGE, &temp);
 	/* OPPO 2012-12-14 chendx Add begin for soc debug log */
-	#ifdef CONFIG_VENDOR_EDIT
+	#ifdef CONFIG_MACH_N1
 	pr_err("Read Soc=%d from storage =0x%0x\n", temp ,TEMP_SOC_STORAGE);
 	#endif
 	/* OPPO 2012-12-14 chendx Add end */
@@ -2299,7 +2303,7 @@ static int scale_soc_while_chg(struct pm8921_bms_chip *chip,
 	 */
 
 /* OPPO 2013-02-22 chendx Modify begin for charge soc not up */
-#ifndef CONFIG_VENDOR_EDIT
+#ifndef CONFIG_MACH_N1
 		/* if we are not charging return last soc */
 		if (the_chip->start_percent == -EINVAL)
 			return prev_soc;
@@ -2340,7 +2344,7 @@ static int scale_soc_while_chg(struct pm8921_bms_chip *chip,
 }
 
 /* OPPO 2012-12-24 chendx Add begin for force soc limts */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 #define SHUTDOWN_SOC_LIMITS_WITH_BOOT_MIN 20
 #define SHUTDOWN_SOC_LIMITS_WITH_BOOT_MAX 50
 #define SHUTDOWN_SOC_VALID_LIMITS 20
@@ -2362,7 +2366,7 @@ static bool is_shutdown_soc_within_limits(struct pm8921_bms_chip *chip, int soc)
 	return 1;
 	
 /* OPPO 2012-12-24 chendx Add begin for force soc limts */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 	pr_info("shutdown soc = %d%%,soc =%d%%\n", chip->shutdown_soc,soc);
 	if(soc <= SHUTDOWN_SOC_VALID_LIMITS &&
 		chip->shutdown_soc < SHUTDOWN_SOC_LIMITS &&
@@ -2477,7 +2481,7 @@ static void calib_hkadc_check(struct pm8921_bms_chip *chip, int batt_temp)
 	}
 }
 
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 //OPPO exp zhanglong 2013-04-27 add begin for average current 
 static int current_cc_uah;
 
@@ -2510,7 +2514,7 @@ static ssize_t pm_average_current_show(struct device *dev,
 static DEVICE_ATTR(pm_average_current, 0644,
                     pm_average_current_show, NULL);
 //OPPO exp zhanglong 2013-04-27 add begin for average current end
-#endif //#ifdef CONFIG_VENDOR_EDIT
+#endif //#ifdef CONFIG_MACH_N1
 
 /*
  * Remaining Usable Charge = remaining_charge (charge at ocv instance)
@@ -2536,7 +2540,7 @@ static int calculate_state_of_charge(struct pm8921_bms_chip *chip,
 	static int firsttime = 1;
 	
 /* OPPO 2012-12-19 chendx Add begin for bms debug log */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 	int ibat_ua = 0, vbat_uv = 0;
 	int rc;
 	static int soc_backup=0;
@@ -2552,13 +2556,13 @@ static int calculate_state_of_charge(struct pm8921_bms_chip *chip,
 						&rbatt,
 						&iavg_ua);
 
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 //OPPO exp zhanglong 2013-04-27 add begin for average current 
     if((get_pcb_version() >= PCB_VERSION_EVT_N1F) &&(get_pcb_version() <= PCB_VERSION_PVT_N1F)) {
         current_cc_uah = cc_uah;
     }
 //OPPO exp zhanglong 2013-04-27 add begin for average current end
-#endif //#ifdef CONFIG_VENDOR_EDIT
+#endif //#ifdef CONFIG_MACH_N1
 
 	/* calculate remaining usable charge */
 	remaining_usable_charge_uah = remaining_charge_uah
@@ -2607,7 +2611,7 @@ static int calculate_state_of_charge(struct pm8921_bms_chip *chip,
 	}
 
 	/* OPPO 2012-12-19 chendx Add begin for BMS debug log */
-	#ifdef CONFIG_VENDOR_EDIT
+	#ifdef CONFIG_MACH_N1
 	if(debug_feature)
 	{
 	   /*Soc change dump log*/
@@ -2703,7 +2707,7 @@ static int calculate_state_of_charge(struct pm8921_bms_chip *chip,
 	pr_debug("calculated SOC = %d\n", new_calculated_soc);
 	
 	/* OPPO 2012-12-19 chendx Add begin for BMS debug log */
-	#ifdef CONFIG_VENDOR_EDIT
+	#ifdef CONFIG_MACH_N1
 	if (new_calculated_soc != calculated_soc)
 	{
 		pr_debug("SOC before adjustment = %d%%,calculated SOC = %d%%,calculated_soc=%d%%\n", 
@@ -2752,7 +2756,7 @@ static int recalculate_soc(struct pm8921_bms_chip *chip)
 	wake_lock(&the_chip->soc_wake_lock);
 	get_batt_temp(chip, &batt_temp);
 		/* OPPO 2012-12-17 chendx Add begin for handle battery remove */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 		if(batt_temp <= BMS_BATT_REMOVE_TEMP)
 			batt_temp = BMS_BATT_DEFAULT_TEMP;
 #endif
@@ -2795,7 +2799,7 @@ static int report_state_of_charge(struct pm8921_bms_chip *chip)
 
 	get_batt_temp(chip, &batt_temp);
 		/* OPPO 2012-12-17 chendx Add begin for handle battery remove */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 		if(batt_temp <= BMS_BATT_REMOVE_TEMP)
 			batt_temp = BMS_BATT_DEFAULT_TEMP;
 #endif
@@ -2990,7 +2994,7 @@ int pm8921_bms_get_fcc(void)
 
 	get_batt_temp(the_chip, &batt_temp);
 	/* OPPO 2012-12-17 chendx Add begin for handle battery remove */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 	if(batt_temp <= BMS_BATT_REMOVE_TEMP)
 		batt_temp = BMS_BATT_DEFAULT_TEMP;
 #endif
@@ -3037,7 +3041,7 @@ void pm8921_bms_charging_end(int is_battery_full)
 
 	get_batt_temp(the_chip, &batt_temp);
 	/* OPPO 2012-12-17 chendx Add begin for handle battery remove */
-	#ifdef CONFIG_VENDOR_EDIT
+	#ifdef CONFIG_MACH_N1
 	if(batt_temp <= BMS_BATT_REMOVE_TEMP)
 		batt_temp = BMS_BATT_DEFAULT_TEMP;
 	#endif
@@ -3339,7 +3343,7 @@ static int set_battery_data(struct pm8921_bms_chip *chip)
 	int64_t battery_id;
 
 /* OPPO 2012-12-10 chendx Add begin for LG battery data */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 	goto lg_batt;
 #endif
 /* OPPO 2012-12-10 chendx Add end */
@@ -3379,7 +3383,7 @@ lg_batt:
 
 palladium:
 /* OPPO 2012-12-10 chendx Delete begin for LG BATT */
-#ifndef CONFIG_VENDOR_EDIT
+#ifndef CONFIG_MACH_N1
 		chip->fcc = palladium_1500_data.fcc;
 		chip->fcc_temp_lut = palladium_1500_data.fcc_temp_lut;
 		chip->fcc_sf_lut = palladium_1500_data.fcc_sf_lut;
@@ -3841,7 +3845,7 @@ static int __devinit pm8921_bms_probe(struct platform_device *pdev)
 	the_chip = chip;
 	create_debugfs_entries(chip);
 
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 //OPPO exp zhanglong 2013-04-27 add begin for average current
     if((get_pcb_version() >= PCB_VERSION_EVT_N1F) &&(get_pcb_version() <= PCB_VERSION_PVT_N1F)) {
         rc = device_create_file(chip->dev, &dev_attr_pm_average_current);
@@ -3851,7 +3855,7 @@ static int __devinit pm8921_bms_probe(struct platform_device *pdev)
         }
     }
 //OPPO exp zhanglong 2013-04-27 add begin for average current end
-#endif //#ifdef CONFIG_VENDOR_EDIT
+#endif //#ifdef CONFIG_MACH_N1
 
 	rc = read_ocv_trim(chip);
 	if (rc) {
@@ -3902,13 +3906,13 @@ static int __devexit pm8921_bms_remove(struct platform_device *pdev)
 {
 	struct pm8921_bms_chip *chip = platform_get_drvdata(pdev);
 
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 //OPPO exp zhanglong 2013-04-27 add begin for average current
     if((get_pcb_version() >= PCB_VERSION_EVT_N1F) &&(get_pcb_version() <= PCB_VERSION_PVT_N1F)) {
         device_remove_file(chip->dev, &dev_attr_pm_average_current);
     }
 //OPPO exp zhanglong 2013-04-27 add begin for average current end
-#endif //#ifdef CONFIG_VENDOR_EDIT
+#endif //#ifdef CONFIG_MACH_N1
 
 	free_irqs(chip);
 	kfree(chip->adjusted_fcc_temp_lut);
@@ -3919,7 +3923,7 @@ static int __devexit pm8921_bms_remove(struct platform_device *pdev)
 }
 
 /* OPPO 2013-01-05 chendx Add begin for check very low voltage */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 extern int msmrtc_alarm_read_time(struct rtc_time *tm);
 /*2 minute*/
 #define RESUME_TIME  2*60 
