@@ -235,7 +235,7 @@ retry_block:
         g_cypress_id, g_cypress_ver, boot_mode);
 
 /* OPPO 2013-10-11 ranfei Add begin for AT模式不升级固件 */
-#ifdef CONFIG_VENDOR_EDIT    
+#ifdef CONFIG_MACH_N1    
     if(get_boot_mode() == MSM_BOOT_MODE__FACTORY ||
        get_boot_mode() == MSM_BOOT_MODE__WLAN ||
        get_boot_mode() == MSM_BOOT_MODE__RF ) {
@@ -841,7 +841,7 @@ static int y8c20x66a_ts_probe(
 	struct y8c20x66a_i2c_rmi_platform_data *pdata;
 	unsigned long irqflags=0;
 	
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 /*OPPO 2013.09.28 hewei modify begin for recovery mode do not use touchscreen*/
     if(get_boot_mode() == MSM_BOOT_MODE__RECOVERY)
         return -EPERM;

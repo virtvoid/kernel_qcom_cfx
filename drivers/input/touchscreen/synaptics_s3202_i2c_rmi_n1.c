@@ -48,13 +48,10 @@
 #include <asm/uaccess.h>
 #include <linux/syscalls.h>
 #include <linux/wakelock.h>
-#include <linux/pcb_version.h>   //add by yubin,oppo
-/* OPPO 2013-11-15 ranfei Add begin for 增加工程模式设备信息 */
-#ifdef CONFIG_VENDOR_EDIT
+#include <linux/pcb_version.h>
+#ifdef CONFIG_MACH_N1
 #include <mach/device_info.h>
 #endif
-/* OPPO 2013-11-15 ranfei Add end */
-
 
 /******************* tp function switch **************************/
 #define TP_UPDATE_FIRMWARE  1
@@ -178,7 +175,7 @@ static int syna_log_level = TS_INFO;
 #define TP_CMD_UPDATE_FROM_FILE	91
 /*****************************************************************/
 /* OPPO 2013-09-22 ranfei Add begin for 增加对启动模式的识别 */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 extern int get_boot_mode(void);
 enum{
 	MSM_BOOT_MODE__NORMAL,
@@ -230,11 +227,9 @@ struct synaptics_ts_data {
 	uint8_t finger_data[((MAX_FINGERS+3)/4)+(MAX_FINGERS*5)+1];
 	uint16_t vendor_id;
 	uint8_t version[4];
-/* OPPO 2013-11-15 ranfei Add begin for 增加工程模式设备信息 */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
     uint8_t str_version[9];
 #endif
-/* OPPO 2013-11-15 ranfei Add end */
 	uint16_t snap_left;
 	uint16_t snap_right;
 	uint16_t snap_top;
@@ -1012,11 +1007,9 @@ static int synaptics_scan_param(struct synaptics_ts_data *ts)
 		dev_err(&ts->client->dev, "%s: get customer id failed\n", __func__);
 		return -1;
 	}
-/* OPPO 2013-11-15 ranfei Add begin for 增加工程模式设备信息 */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
     sprintf(ts->str_version, "%02x%02x%02x%02x", ts->version[0], ts->version[1], ts->version[2], ts->version[3]); 
 #endif
-/* OPPO 2013-11-15 ranfei Add end */
     //ts->version = (fn34_customer_id[2]<<8) | fn34_customer_id[3];
 
 	if (1)
@@ -2336,22 +2329,18 @@ static int synaptics_ts_probe(
 	unsigned long irqflags;
 	int force_update;
 
-/* OPPO 2013-09-28 hewei Add begin for 在AT，WLAN和RF模式下不使用黑屏手势功能 */
    	 int not_need_update = 0;
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
     	if(get_boot_mode() == MSM_BOOT_MODE__FACTORY ||
        		get_boot_mode() == MSM_BOOT_MODE__RF ||
        			get_boot_mode() == MSM_BOOT_MODE__WLAN ) {
         			not_need_update = 1;
     }
-/* OPPO 2013-10-07 wangjc Add begin for solve the rf test mode problem */
 	if(get_boot_mode() == MSM_BOOT_MODE__RF ||
        			get_boot_mode() == MSM_BOOT_MODE__WLAN) {
 		return -EPERM;
 	}
-/* OPPO 2013-10-07 wangjc Add end */
 #endif
-/* OPPO 2013-09-28 hewei Add end */
 
 	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
 		print_ts(TS_ERROR, KERN_ERR "synaptics_ts_probe: need I2C_FUNC_I2C\n");
@@ -2621,13 +2610,11 @@ firmware_update:
 	synaptics_ts_sysfs_init(ts->input_dev);
 	init_synaptics_proc(ts);
 
-/* OPPO 2013-11-15 ranfei Add begin for 增加工程模式设备信息 */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
     register_device_proc("tp", ts->str_version, 
                          (ts->vendor_id == 0) ? "TPK" :
                          (ts->vendor_id == 1) ? "YFO" : "unkown");
 #endif
-/* OPPO 2013-11-15 ranfei Add end */
 
 	print_ts(TS_INFO, KERN_INFO "synaptics_ts_probe: Start touchscreen %s in %s mode\n", ts->input_dev->name, ts->use_irq ? "interrupt" : "polling");
 
@@ -2769,12 +2756,10 @@ static int synaptics_ts_resume(struct i2c_client *client)
 		enable_irq(client->irq);
 /* OPPO 2013-05-02 huanggd Add end*/	
 		synaptics_set_int_mask(ts, 1);
-/* OPPO 2013-10-15 ranfei Add begin for 在唤醒的时候上报一次up事件 */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
         input_mt_sync(ts->input_dev);
         input_sync(ts->input_dev);
 #endif
-/* OPPO 2013-10-15 ranfei Add end */
 		up(&synaptics_sem);
 		return 0;
 	}
@@ -2807,12 +2792,10 @@ static int synaptics_ts_resume(struct i2c_client *client)
 	else
 		synaptics_set_int_mask(ts, 1); /* enable abs int */
 
-/* OPPO 2013-10-15 ranfei Add begin for 在唤醒的时候上报一次up事件 */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
     input_mt_sync(ts->input_dev);
     input_sync(ts->input_dev);
 #endif
-/* OPPO 2013-10-15 ranfei Add end */
 	up(&synaptics_sem);
 	return 0;
 }

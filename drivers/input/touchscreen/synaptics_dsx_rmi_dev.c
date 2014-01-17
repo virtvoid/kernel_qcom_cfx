@@ -88,7 +88,7 @@ static struct bin_attribute attr_data = {
 	.attr = {
 		.name = "data",
 /* OPPO 2013-09-17 ranfei Modify begin for CTS 测试不允许其它用户有写权限 */
-#ifndef CONFIG_VENDOR_EDIT
+#ifndef CONFIG_MACH_N1
 		.mode = (S_IRUGO | S_IWUGO),
 #else
 	    .mode = (S_IRUSR | S_IWUSR),
@@ -102,7 +102,7 @@ static struct bin_attribute attr_data = {
 
 static struct device_attribute attrs[] = {
 /* OPPO 2013-09-17 ranfei Modify begin for CTS 测试不允许其它用户有写权限 */
-#ifndef CONFIG_VENDOR_EDIT
+#ifndef CONFIG_MACH_N1
 	__ATTR(open, S_IWUGO,
 			NULL,
 			rmidev_sysfs_open_store),

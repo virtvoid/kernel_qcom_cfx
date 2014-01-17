@@ -36,15 +36,10 @@
 #include <linux/irq.h>
 #include <linux/suspend.h>
 #include <linux/wakelock.h>
-
 #include <linux/pcb_version.h>
-
-#define CONFIG_VENDOR_EDIT
-
 #include <mach/oppo_hs_detect.h>
 
-/*OPPO 2012-08-06 zhzhyon Add for codec debug*/
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 #include <linux/kobject.h>
 #endif
 /*OPPO 2012-08-06 zhzhyon Add end*/
@@ -71,7 +66,7 @@ MODULE_PARM_DESC(cfilt_adjust_ms, "delay after adjusting cfilt voltage in ms");
 	(((a) <= 0) ? ((a) - b) : (a))
 
 /*OPPO 2012-12-01 zhzhyon Modify for codec channel change*/
-#ifndef CONFIG_VENDOR_EDIT
+#ifndef CONFIG_MACH_N1
 #define SLIM_CLOSE_TIMEOUT 1000
 #else
 #define SLIM_CLOSE_TIMEOUT 50
@@ -79,7 +74,7 @@ MODULE_PARM_DESC(cfilt_adjust_ms, "delay after adjusting cfilt voltage in ms");
 /*OPPO 2012-12-01 zhzhyon Modify end*/
 #define COMP_BRINGUP_WAIT_TIME  2000
 /*OPPO 2012-08-06 zhzhyon Add for codec debug*/
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 #define CODEC_REG_DEBUG "codec"
 #define CDC_RXn_VOL_CTL_B2_CTL (0X2B7+8*n)
 #define RX_EAR_GAIN 0x1BD
@@ -94,7 +89,7 @@ MODULE_PARM_DESC(cfilt_adjust_ms, "delay after adjusting cfilt voltage in ms");
 #endif
 /*OPPO 2012-08-06 zhzhyon Add end*/
 /*OPPO 2012-12-29 zhzhyon Add for headset detect*/
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 #define V_TYPE_THRESHOLD 700
 #endif
 /*OPPO 2012-12-28 zhzhyon Add end*/
@@ -106,7 +101,7 @@ enum {
 #define MBHC_NUM_DCE_PLUG_DETECT 3
 #define NUM_ATTEMPTS_INSERT_DETECT 25
 /*OPPO 2013-09-12 zhzhyon Modify for reason*/
-#ifndef CONFIG_VENDOR_EDIT
+#ifndef CONFIG_MACH_N1
 #define NUM_ATTEMPTS_TO_REPORT 5
 #else
 #define NUM_ATTEMPTS_TO_REPORT 10
@@ -421,7 +416,7 @@ struct tabla_priv {
 	struct mutex codec_resource_lock;
 
 /*OPPO 2012-08-06 zhzhyon Add for codec debug*/
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 	 struct kobject codec_debug_kobject;
 #endif
 /*OPPO 2012-08-06 zhzhyon Add end*/
@@ -433,7 +428,7 @@ struct tabla_priv {
 	struct work_struct hs_correct_plug_work_nogpio;
 
 	/*OPPO 2013-02-05 zhzhyon Delete for transplant*/
-	#ifndef CONFIG_VENDOR_EDIT
+	#ifndef CONFIG_MACH_N1
 	bool gpio_irq_resend;
 	struct wake_lock irq_resend_wlock;
 	#endif
@@ -525,13 +520,13 @@ static unsigned short tx_digital_gain_reg[] = {
 };
 
 /*OPPO 2012-11-27 zhzhyon Add for headset detect*/
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 static struct wake_lock headset_detect;
 #endif
 /*OPPO 2012-11-27 zhzhyon Add end*/
 
 /*OPPO 2013-05-04 zhzhyon Add for reason*/
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 static struct wake_lock headset_key;
 #endif
 /*OPPO 2013-05-04 zhzhyon Add end*/
@@ -1240,7 +1235,7 @@ static const struct snd_kcontrol_new tabla_snd_controls[] = {
 		tabla_pa_gain_get, tabla_pa_gain_put),
 
 	/*OPPO 2012-12-25 zhzhyon Add for reason*/
-	#ifdef CONFIG_VENDOR_EDIT
+	#ifdef CONFIG_MACH_N1
 	SOC_SINGLE("EAR PA ENABLE", TABLA_A_RX_EAR_EN, 4, 1, 0),		
 	SOC_SINGLE("ADC5 COUPLING", TABLA_A_TX_5_6_EN, 4, 1, 0),
 	/*OPPO 2012-12-28 zhzhyon Add for reason*/
@@ -1322,7 +1317,7 @@ static const struct snd_kcontrol_new tabla_snd_controls[] = {
 		aux_pga_gain),
 
 	/*OPPO 2013-09-09 zhzhyon Modify for EVT4 capless switch*/
-	#ifndef CONFIG_VENDOR_EDIT
+	#ifndef CONFIG_MACH_N1
 	SOC_SINGLE("MICBIAS1 CAPLESS Switch", TABLA_A_MICB_1_CTL, 4, 1, 1),
 	SOC_SINGLE("MICBIAS2 CAPLESS Switch", TABLA_A_MICB_2_CTL, 4, 1, 1),
 	SOC_SINGLE("MICBIAS3 CAPLESS Switch", TABLA_A_MICB_3_CTL, 4, 1, 1),
@@ -1921,7 +1916,7 @@ static const struct snd_kcontrol_new dac1_switch[] = {
 	SOC_DAPM_SINGLE("Switch", TABLA_A_RX_EAR_EN, 5, 1, 0)
 };
 /*OPPO 2012-12-28 zhzhyon Modify for headset detect*/
-#ifndef CONFIG_VENDOR_EDIT
+#ifndef CONFIG_MACH_N1
 static const struct snd_kcontrol_new hphl_switch[] = {
 	SOC_DAPM_SINGLE("Switch", TABLA_A_RX_HPH_L_DAC_CTL, 6, 1, 0)
 };
@@ -3450,7 +3445,7 @@ static int tabla_lineout_dac_event(struct snd_soc_dapm_widget *w,
 	return 0;
 }
 /*OPPO 2012-12-11 zhzhyon Add for receiver pop*/
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 static int tabla_ear_pa_event(struct snd_soc_dapm_widget *w,
 	struct snd_kcontrol *kcontrol, int event)
 {
@@ -5182,7 +5177,7 @@ static const struct snd_soc_dapm_widget tabla_dapm_widgets[] = {
 	/*RX stuff */
 	SND_SOC_DAPM_OUTPUT("EAR"),
 	/*OPPO 2012-12-11 zhzhyon Modify for receiver pop*/
-	#ifndef CONFIG_VENDOR_EDIT
+	#ifndef CONFIG_MACH_N1
 	SND_SOC_DAPM_PGA("EAR PA", TABLA_A_RX_EAR_EN, 4, 0, NULL, 0),
 
 	SND_SOC_DAPM_MIXER("DAC1", TABLA_A_RX_EAR_EN, 6, 0, dac1_switch,
@@ -5203,7 +5198,7 @@ static const struct snd_soc_dapm_widget tabla_dapm_widgets[] = {
 		tabla_hph_pa_event, SND_SOC_DAPM_PRE_PMU |
 			SND_SOC_DAPM_POST_PMD),
 	/*OPPO 2012-12-28 zhzhyon Modify for reason*/
-	#ifndef CONFIG_VENDOR_EDIT
+	#ifndef CONFIG_MACH_N1
 	SND_SOC_DAPM_MIXER("HPHL DAC", TABLA_A_RX_HPH_L_DAC_CTL, 7, 0,
 		hphl_switch, ARRAY_SIZE(hphl_switch)),
 	#else
@@ -5866,7 +5861,7 @@ static void tabla_codec_report_plug(struct snd_soc_codec *codec, int insertion,
 		{
 			tabla->current_plug = PLUG_TYPE_HEADPHONE;
 			/*OPPO 2012-07-27 zhzhyon Add for headset detect*/
-			#ifdef CONFIG_VENDOR_EDIT
+			#ifdef CONFIG_MACH_N1
 			oppo_hs_detect_update(1, 0);
 			#endif
 			/*OPPO 2012-07-27 zhzhyon Add end*/
@@ -5875,7 +5870,7 @@ static void tabla_codec_report_plug(struct snd_soc_codec *codec, int insertion,
 		{
 			tabla->current_plug = PLUG_TYPE_GND_MIC_SWAP;
 			/*OPPO 2012-07-27 zhzhyon Add for headset detect*/
-			#ifdef CONFIG_VENDOR_EDIT
+			#ifdef CONFIG_MACH_N1
 			tabla->mbhc_polling_active = true;
 			//msleep(50);
 			//gpio_set_value(58,1); //this will do in tabla_codec_get_plug_type
@@ -5887,14 +5882,14 @@ static void tabla_codec_report_plug(struct snd_soc_codec *codec, int insertion,
 			tabla->mbhc_polling_active = true;
 			tabla->current_plug = PLUG_TYPE_HEADSET;
 			/*OPPO 2012-07-27 zhzhyon Add for headset detect*/
-			#ifdef CONFIG_VENDOR_EDIT
+			#ifdef CONFIG_MACH_N1
 			oppo_hs_detect_update(1, 1);
 			#endif
 			/*OPPO 2012-07-27 zhzhyon Add end*/
 		} else if (jack_type == SND_JACK_LINEOUT)
 			tabla->current_plug = PLUG_TYPE_HIGH_HPH;
 		/*OPPO 2013-09-18 zhzhyon Add for reason*/
-		#ifdef CONFIG_VENDOR_EDIT
+		#ifdef CONFIG_MACH_N1
 		if(get_pcb_version() >= PCB_VERSION_EVT3_N1F)
 		{
 			if(tabla_hs_gpio_level_remove(tabla))
@@ -5918,7 +5913,7 @@ static void tabla_codec_report_plug(struct snd_soc_codec *codec, int insertion,
 						  TABLA_JACK_MASK);
 		}
 		/*OPPO 2012-12-29 zhzhyon Add for reason*/
-		#ifdef CONFIG_VENDOR_EDIT
+		#ifdef CONFIG_MACH_N1
 		snd_soc_update_bits(codec, TABLA_A_RX_HPH_L_DAC_CTL, 0xc0, 0xC0);
 		#endif
 		/*OPPO 2012-12-29 zhzhyon Add end*/
@@ -6604,12 +6599,12 @@ static irqreturn_t tabla_dce_handler(int irq, void *data)
 
 	btn_high = tabla_mbhc_cal_btn_det_mp(d, TABLA_BTN_DET_V_BTN_HIGH);
 	/*OPPO 2012-07-27 zhzhyon Add for debug*/
-	#ifdef CONFIG_VENDOR_EDIT
+	#ifdef CONFIG_MACH_N1
 	printk(KERN_INFO "headset mic key press\n");
 	#endif
 	/*OPPO 2012-07-27 zhzhyon Add end*/
 	/*OPPO 2013-05-04 zhzhyon Add for reason*/
-	#ifdef CONFIG_VENDOR_EDIT
+	#ifdef CONFIG_MACH_N1
 	wake_lock_timeout(&headset_key, 500);
 	#endif
 	/*OPPO 2013-05-04 zhzhyon Add end*/
@@ -6699,7 +6694,7 @@ static irqreturn_t tabla_dce_handler(int irq, void *data)
 	}
 
 	/*OPPO 2013-05-04 zhzhyon Add for reason*/
-	#ifdef CONFIG_VENDOR_EDIT
+	#ifdef CONFIG_MACH_N1
 	btn = 0;
 	#endif
 	/*OPPO 2013-05-04 zhzhyon Add end*/
@@ -6734,7 +6729,7 @@ static irqreturn_t tabla_dce_handler(int irq, void *data)
 	return IRQ_HANDLED;
 }
 /*OPPO 2013-01-04 zhzhyon Delete for reason*/
-#ifndef CONFIG_VENDOR_EDIT
+#ifndef CONFIG_MACH_N1
 static int tabla_is_fake_press(struct tabla_priv *priv)
 {
 	int i;
@@ -6785,7 +6780,7 @@ static irqreturn_t tabla_release_handler(int irq, void *data)
 	priv->mbhc_state = MBHC_STATE_RELEASE;
 
 	/*OPPO 2012-07-27 zhzhyon Add for debug*/
-	#ifdef CONFIG_VENDOR_EDIT
+	#ifdef CONFIG_MACH_N1
 	printk(KERN_INFO "headset mic key release\n");
 	#endif
 	/*OPPO 2012-07-27 zhzhyon Add end*/
@@ -6798,7 +6793,7 @@ static irqreturn_t tabla_release_handler(int irq, void *data)
 			pr_debug("%s: Reporting long button release event\n",
 				 __func__);
 			/*OPPO 2012-12-10 zhzhyon Add for debug*/
-			#ifdef CONFIG_VENDOR_EDIT
+			#ifdef CONFIG_MACH_N1
 			printk(KERN_INFO "Reporting long button release event\n");
 			#endif
 			/*OPPO 2012-12-10 zhzhyon Add end*/
@@ -6808,7 +6803,7 @@ static irqreturn_t tabla_release_handler(int irq, void *data)
 						  priv->buttons_pressed);
 		} else {
 			/*OPPO 2013-01-04 zhzhyon Modify for reason*/
-			#ifndef CONFIG_VENDOR_EDIT
+			#ifndef CONFIG_MACH_N1
 			if (tabla_is_fake_press(priv)) {
 				pr_debug("%s: Fake button press interrupt\n",
 					 __func__);
@@ -6827,7 +6822,7 @@ static irqreturn_t tabla_release_handler(int irq, void *data)
 						 "press and release\n",
 						 __func__);
 					/*OPPO 2012-12-10 zhzhyon Add for debug*/
-					#ifdef CONFIG_VENDOR_EDIT
+					#ifdef CONFIG_MACH_N1
 					printk(KERN_INFO "Reporting short button press and release\n");
 					priv->buttons_pressed = SND_JACK_BTN_0;
 					#endif
@@ -6852,7 +6847,7 @@ static irqreturn_t tabla_release_handler(int irq, void *data)
 
 
 	/*OPPO 2013-01-04 zhzhyon Delete for reason*/
-	#ifndef CONFIG_VENDOR_EDIT
+	#ifndef CONFIG_MACH_N1
 	if (priv->mbhc_cfg.gpio)
 		msleep(TABLA_MBHC_GPIO_REL_DEBOUNCE_TIME_MS);
 	#endif
@@ -7026,7 +7021,7 @@ void tabla_find_plug_and_report(struct snd_soc_codec *codec,
 		}
 		tabla_codec_report_plug(codec, 1, SND_JACK_UNSUPPORTED);
 		/*OPPO 2012-12-14 zhzhyon Modify for DVT headset detect*/
-		#ifndef CONFIG_VENDOR_EDIT
+		#ifndef CONFIG_MACH_N1
 		tabla_codec_cleanup_hs_polling(codec);
 		#else
 		tabla_codec_start_hs_polling(codec);
@@ -7062,7 +7057,7 @@ void tabla_find_plug_and_report(struct snd_soc_codec *codec,
 			pr_debug("setup mic trigger for further detection\n");
 			tabla->lpi_enabled = true;
 			/*OPPO 2012-07-29 zhzhyon Delete begin for reason*/		
-			#ifndef CONFIG_VENDOR_EDIT
+			#ifndef CONFIG_MACH_N1
 			tabla_codec_enable_hs_detect(codec, 1,
 						     MBHC_USE_MB_TRIGGER |
 						     MBHC_USE_HPHL_TRIGGER,
@@ -7107,7 +7102,7 @@ static void tabla_cancel_hs_detect_plug(struct tabla_priv *tabla,
 static void tabla_codec_hphr_gnd_switch(struct snd_soc_codec *codec, bool on)
 {
 	/*OPPO 2012-12-28 zhzhyon Modify for headset detect*/
-	#ifndef CONFIG_VENDOR_EDIT
+	#ifndef CONFIG_MACH_N1
 	snd_soc_update_bits(codec, TABLA_A_MBHC_HPH, 0x01, on);
 	#endif
 	/*OPPO 2012-12-28 zhzhyon Modify end*/
@@ -7117,7 +7112,7 @@ static void tabla_codec_hphr_gnd_switch(struct snd_soc_codec *codec, bool on)
 
 /* called under codec_resource_lock acquisition and mbhc override = 1 */
 /*OPPO 2013-01-18 zhzhyon Modify for reason*/
-#ifndef CONFIG_VENDOR_EDIT
+#ifndef CONFIG_MACH_N1
 static enum tabla_mbhc_plug_type
 tabla_codec_get_plug_type(struct snd_soc_codec *codec, bool highhph)
 {
@@ -7215,7 +7210,7 @@ tabla_codec_get_plug_type(struct snd_soc_codec *codec, bool highhph)
 	}
 
 	/*OPPO 2012-11-28 zhzhyon Add for reason*/
-	#ifdef CONFIG_VENDOR_EDIT
+	#ifdef CONFIG_MACH_N1
 	for(i = 0;i<num_det;i++)
 	{
 		printk(KERN_INFO "headset detect adc mic_mv[%d] = %dmv\n",i,mic_mv[i]);
@@ -7241,7 +7236,7 @@ tabla_codec_get_plug_type(struct snd_soc_codec *codec, bool highhph)
 				 "Headphone\n", __func__, i);
 		} else {
 			/*OPPO 2012-12-28 zhzhyon Modify for headset detect*/
-			#ifndef CONFIG_VENDOR_EDIT
+			#ifndef CONFIG_MACH_N1
 			plug_type[i] = PLUG_TYPE_HEADSET;
 			pr_debug("%s: Detect attempt %d, detected Headset\n",
 				 __func__, i);
@@ -7258,7 +7253,7 @@ tabla_codec_get_plug_type(struct snd_soc_codec *codec, bool highhph)
 			/*OPPO 2012-12-28 zhzhyon Modify end*/
 		}
 		/*OPPO 2012-12-29 zhzhyon Delete for reason*/
-		#ifndef CONFIG_VENDOR_EDIT
+		#ifndef CONFIG_MACH_N1
 		if (i > 0 && (plug_type[i - 1] != plug_type[i])) {
 			pr_err("%s: Detect attempt %d and %d are not same",
 			       __func__, i - 1, i);
@@ -7733,7 +7728,7 @@ static void tabla_hs_correct_gpio_plug(struct work_struct *work)
 				tabla_codec_report_plug(codec, 1,
 							SND_JACK_HEADPHONE);
 				/*OPPO 2013-09-12 zhzhyon Add for reason*/
-				#ifdef CONFIG_VENDOR_EDIT
+				#ifdef CONFIG_MACH_N1
 				if(get_pcb_version() >= PCB_VERSION_EVT3_N1F)
 					break;
 				#endif
@@ -7841,7 +7836,7 @@ static void tabla_hs_correct_gpio_plug(struct work_struct *work)
 }
 
 /*OPPO 2013-09-03 zhzhyon Add for 13005 new headset detect*/
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 #define DET_NUM_ADC_PUBLISH 4
 static void tabla_codec_decide_gpio_plug_publish(struct snd_soc_codec *codec)
 {
@@ -7942,7 +7937,7 @@ static void tabla_codec_decide_gpio_plug(struct snd_soc_codec *codec)
 
 	tabla_turn_onoff_override(codec, true);
 	/*OPPO 2012-07-27 zhzhyon Add for headset detect*/
-	#ifdef CONFIG_VENDOR_EDIT
+	#ifdef CONFIG_MACH_N1
 	msleep(25);
 	#endif
 	/*OPPO 2012-07-27 zhzhyon Add end*/
@@ -7956,7 +7951,7 @@ static void tabla_codec_decide_gpio_plug(struct snd_soc_codec *codec)
 	}
 
 	/*OPPO 2012-12-14 zhzhyon Modify for DVT headset detect*/
-	#ifndef CONFIG_VENDOR_EDIT
+	#ifndef CONFIG_MACH_N1
 	if (plug_type == PLUG_TYPE_INVALID ||
 	    plug_type == PLUG_TYPE_GND_MIC_SWAP) {
 		tabla_schedule_hs_detect_plug(tabla,
@@ -7973,7 +7968,7 @@ static void tabla_codec_decide_gpio_plug(struct snd_soc_codec *codec)
 	else if (plug_type == PLUG_TYPE_HEADPHONE) {
 		tabla_codec_report_plug(codec, 1, SND_JACK_HEADPHONE);
 		/*OPPO 2012-07-27 zhzhyon Delete for reason*/
-		#ifndef CONFIG_VENDOR_EDIT
+		#ifndef CONFIG_MACH_N1
 		tabla_schedule_hs_detect_plug(tabla,
 					&tabla->hs_correct_plug_work);
 		#endif
@@ -7996,7 +7991,7 @@ static void tabla_codec_detect_plug_type(struct snd_soc_codec *codec)
 	/* Turn on the override,
 	 * tabla_codec_setup_hs_polling requires override on */
 	/*OPPO 2012-11-22 zhzhyon Delete for micbias*/
-	#ifndef CONFIG_VENDOR_EDIT
+	#ifndef CONFIG_MACH_N1
 	tabla_turn_onoff_override(codec, true);
 	#endif
 	/*OPPO 2012-11-22 zhzhyon Delete end*/
@@ -8010,7 +8005,7 @@ static void tabla_codec_detect_plug_type(struct snd_soc_codec *codec)
 	if (tabla->mbhc_cfg.gpio) {
 		/* Turn off the override */
 		/*OPPO 2012-11-22 zhzhyon Delete for micbias*/
-		#ifndef CONFIG_VENDOR_EDIT
+		#ifndef CONFIG_MACH_N1
 		tabla_turn_onoff_override(codec, false);
 		#endif
 		/*OPPO 2012-11-22 zhzhyon Delete end*/
@@ -8471,7 +8466,7 @@ static void tabla_hs_gpio_handler(struct snd_soc_codec *codec,bool irq_detect)
 	pr_debug("%s: enter\n", __func__);
 
 	/*OPPO 2012-12-10 zhzhyon Modify for reason*/
-	#ifndef CONFIG_VENDOR_EDIT
+	#ifndef CONFIG_MACH_N1
 	tabla->in_gpio_handler = true;
 	/* Wait here for debounce time */
 	usleep_range(TABLA_GPIO_IRQ_DEBOUNCE_TIME_US,
@@ -8493,7 +8488,7 @@ static void tabla_hs_gpio_handler(struct snd_soc_codec *codec,bool irq_detect)
 		  tabla->mbhc_cfg.gpio_level_insert);
 	
 	/*OPPO 2012-11-28 zhzhyon and liuyan Add for headset detect*/
-	#ifdef CONFIG_VENDOR_EDIT
+	#ifdef CONFIG_MACH_N1
 	hs_on = (tabla->current_plug == PLUG_TYPE_HEADSET ||
 			tabla->current_plug == PLUG_TYPE_GND_MIC_SWAP ||
 			tabla->current_plug == PLUG_TYPE_HEADPHONE);
@@ -8503,7 +8498,7 @@ static void tabla_hs_gpio_handler(struct snd_soc_codec *codec,bool irq_detect)
 		if ((hs_on == 0)/* && l15_users*/)
 		{
 			/*OPPO 2012-12-28 zhzhyon Add for reason*/
-			#ifdef CONFIG_VENDOR_EDIT
+			#ifdef CONFIG_MACH_N1
 			snd_soc_update_bits(codec, TABLA_A_RX_HPH_L_DAC_CTL, 0xc0, 0x00);
 			#endif
 			/*OPPO 2012-12-28 zhzhyon Add end*/
@@ -8541,7 +8536,7 @@ static void tabla_hs_gpio_handler(struct snd_soc_codec *codec,bool irq_detect)
 					&tabla->hs_correct_plug_work);
 
 		/*OPPO 2012-12-28 zhzhyon Add for reason*/
-		#ifdef CONFIG_VENDOR_EDIT
+		#ifdef CONFIG_MACH_N1
 		snd_soc_update_bits(codec, TABLA_A_RX_HPH_L_DAC_CTL, 0xc0, 0x00);
 		#endif
 		/*OPPO 2012-12-28 zhzhyon Add end*/
@@ -8553,7 +8548,7 @@ static void tabla_hs_gpio_handler(struct snd_soc_codec *codec,bool irq_detect)
 			is_removed = true;
 		} else if (tabla->current_plug == PLUG_TYPE_GND_MIC_SWAP) {
 			/*OPPO 2012-12-28 zhzhyon Add for reason*/
-			#ifdef CONFIG_VENDOR_EDIT
+			#ifdef CONFIG_MACH_N1
 			tabla_codec_pause_hs_polling(codec);
 			tabla_codec_cleanup_hs_polling(codec);
 			#endif			
@@ -8604,7 +8599,7 @@ static irqreturn_t tabla_mechanical_plug_detect_irq(int irq, void *data)
 	int r = IRQ_HANDLED;
 	struct snd_soc_codec *codec = data;
 	/*OPPO 2013-02-05 zhzhyon Delete for transplant*/
-	#ifndef CONFIG_VENDOR_EDIT
+	#ifndef CONFIG_MACH_N1
 	struct tabla_priv *tabla = snd_soc_codec_get_drvdata(codec);
 	#endif
 	/*OPPO 2013-02-05 zhzhyon Delete end*/
@@ -8612,7 +8607,7 @@ static irqreturn_t tabla_mechanical_plug_detect_irq(int irq, void *data)
 	if (unlikely(wcd9xxx_lock_sleep(codec->control_data) == false)) {
 		pr_warn("%s: failed to hold suspend\n", __func__);
 		/*OPPO 2013-02-05 zhzhyon Delete for transplant*/
-		#ifndef CONFIG_VENDOR_EDIT
+		#ifndef CONFIG_MACH_N1
 		/*
 		 * Give up this IRQ for now and resend this IRQ so IRQ can be
 		 * handled after system resume
@@ -8630,7 +8625,7 @@ static irqreturn_t tabla_mechanical_plug_detect_irq(int irq, void *data)
 	}
 
 	/*OPPO 2012-11-28 zhzhyon Add for headset detect*/
-	#ifdef CONFIG_VENDOR_EDIT
+	#ifdef CONFIG_MACH_N1
 	enable_irq(irq);
 	wake_unlock(&headset_detect);
 	#endif
@@ -8711,7 +8706,7 @@ static void tabla_hs_correct_plug_nogpio(struct work_struct *work)
 }
 
 /*OPPO 2012-11-28 zhzhyon add for reason*/
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 static irqreturn_t headset_irq_handler(int irq, void *data)
 {
 	
@@ -8731,7 +8726,7 @@ static int tabla_mbhc_init_and_calibrate(struct tabla_priv *tabla)
 	tabla->mbhc_cfg.mclk_cb_fn(codec, 1, false);
 	tabla_mbhc_init(codec);
 	/*OPPO 2013-01-18 liuyan Add for pop sound*/
-	#ifdef CONFIG_VENDOR_EDIT
+	#ifdef CONFIG_MACH_N1
 	oppo_hs_detect_power(1);
 	mdelay(20);
 	#endif
@@ -8754,7 +8749,7 @@ static int tabla_mbhc_init_and_calibrate(struct tabla_priv *tabla)
 	} else {
 		/* Enable Mic Bias pull down and HPH Switch to GND */
 	  	/*OPPO 2013-01-18 liuyan Add for pop sound*/
-	       #ifndef CONFIG_VENDOR_EDIT
+	       #ifndef CONFIG_MACH_N1
 		snd_soc_update_bits(codec, tabla->mbhc_bias_regs.ctl_reg,
 				    0x01, 0x01);
 		snd_soc_update_bits(codec, TABLA_A_MBHC_HPH, 0x01, 0x01);
@@ -8773,7 +8768,7 @@ static int tabla_mbhc_init_and_calibrate(struct tabla_priv *tabla)
 
 		if (tabla->mbhc_cfg.gpio) {
 			/*OPPO 2012-11-28 zhzhyon Modify for reason*/
-			#ifndef CONFIG_VENDOR_EDIT
+			#ifndef CONFIG_MACH_N1
 			ret = request_threaded_irq(tabla->mbhc_cfg.gpio_irq,
 					       NULL,
 					       tabla_mechanical_plug_detect_irq,
@@ -9400,7 +9395,7 @@ static const struct file_operations codec_mbhc_debug_ops = {
 #endif
 
 /*OPPO 2012-08-06 zhzhyon Add for codec deug*/
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 static struct kset * codec_debug_kset;
 
 static struct attribute codec_debug_attr = 
@@ -9727,7 +9722,7 @@ static int tabla_codec_probe(struct snd_soc_codec *codec)
 	tabla->mbhc_state = MBHC_STATE_NONE;
 	tabla->mbhc_last_resume = 0;
 	/*OPPO 2012-08-06 zhzhyon Add for codec detect*/
-	#ifdef CONFIG_VENDOR_EDIT
+	#ifdef CONFIG_MACH_N1
 	codec_debug_kset  = kset_create_and_add(CODEC_REG_DEBUG,NULL, NULL);
 	if (!codec_debug_kset) 
 	{
@@ -9746,13 +9741,13 @@ static int tabla_codec_probe(struct snd_soc_codec *codec)
 	/*OPPO 2012-08-06 zhzhyon Add end*/
 
 	/*OPPO 2012-11-27 zhzhyon Add for headset detect*/
-	#ifdef CONFIG_VENDOR_EDIT
+	#ifdef CONFIG_MACH_N1
 	wake_lock_init(&headset_detect, WAKE_LOCK_SUSPEND,	"headset_detect");
 	#endif
 	/*OPPO 2012-11-27 zhzhyon Add end*/
 
 	/*OPPO 2013-05-04 zhzhyon Add for reason*/
-	#ifdef CONFIG_VENDOR_EDIT
+	#ifdef CONFIG_MACH_N1
 	wake_lock_init(&headset_key, WAKE_LOCK_SUSPEND,	"headset_key");
 	#endif
 	/*OPPO 2013-05-04 zhzhyon Add end*/
@@ -9887,7 +9882,7 @@ static int tabla_codec_probe(struct snd_soc_codec *codec)
 	}
 	wcd9xxx_disable_irq(codec->control_data, TABLA_IRQ_HPH_PA_OCPR_FAULT);
 	/*OPPO 2013-02-05 zhzhyon Delete for transplant*/
-	#ifndef CONFIG_VENDOR_EDIT
+	#ifndef CONFIG_MACH_N1
 	/*
 	 * Register suspend lock and notifier to resend edge triggered
 	 * gpio IRQs
@@ -9969,7 +9964,7 @@ static int tabla_codec_remove(struct snd_soc_codec *codec)
 	int i;
 	struct tabla_priv *tabla = snd_soc_codec_get_drvdata(codec);
 	/*OPPO 2013-02-05 zhzhyon Delete for transplant*/
-	#ifndef CONFIG_VENDOR_EDIT
+	#ifndef CONFIG_MACH_N1
 	wake_lock_destroy(&tabla->irq_resend_wlock);
 	#endif
 	/*OPPO 2013-02-05 zhzhyon Delete end*/
@@ -10020,7 +10015,7 @@ static int tabla_suspend(struct device *dev)
 	return 0;
 }
 /*OPPO 2013-02-05 zhzhyon Modify for transplant*/
-#ifndef CONFIG_VENDOR_EDIT
+#ifndef CONFIG_MACH_N1
 static int tabla_resume(struct device *dev)
 {
 	int irq;
@@ -10088,7 +10083,7 @@ static int __devexit tabla_remove(struct platform_device *pdev)
 }
 
 /*OPPO 2013-01-18 liuyan Add for pop sound*/
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 static void tabla_oppo_shutdown(struct platform_device *pdev)
 {
 	oppo_hs_detect_power(0);
@@ -10100,7 +10095,7 @@ static struct platform_driver tabla_codec_driver = {
 	.probe = tabla_probe,
 	.remove = tabla_remove,
 	/*OPPO 2013-01-18 liuyan Add for pop sound*/
-	#ifdef CONFIG_VENDOR_EDIT
+	#ifdef CONFIG_MACH_N1
 	.shutdown = tabla_oppo_shutdown,
 	#endif
 	/*OPPO 2013-01-18 liuyan Add end*/
@@ -10117,7 +10112,7 @@ static struct platform_driver tabla1x_codec_driver = {
 	.probe = tabla_probe,
 	.remove = tabla_remove,
 	/*OPPO 2013-01-18 liuyan Add for pop sound*/
-	#ifdef CONFIG_VENDOR_EDIT
+	#ifdef CONFIG_MACH_N1
 	.shutdown = tabla_oppo_shutdown,
 	#endif
 	/*OPPO 2013-01-18 liuyan Add end*/
