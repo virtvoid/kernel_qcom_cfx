@@ -257,7 +257,7 @@ static char cabc_video_image[2] = { 0x55, 0x03};
 static char cabc_movie_bl_ctr[] = { 0x07,0xba,0x00,0x78,0x64,0x10,0x64,0xff};
 
 /* OPPO 2013-10-15 gousj Add begin for cabc flicker */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 static char cabc_min_brightness[2] = { 0x5e, 0x0b};
 #endif
 /* OPPO 2013-10-15 gousj Add end */
@@ -511,7 +511,7 @@ static int mipi_orise_lcd_on(struct platform_device *pdev)
 		mipi_dsi_cmds_tx(&orise_tx_buf, cmd_mipi_initial_sequence,
 				ARRAY_SIZE(cmd_mipi_initial_sequence));
 		/* OPPO 2013-10-10 gousj Add begin for cabc init on system up */
-#ifdef CONFIG_VENDOR_EDIT
+#ifdef CONFIG_MACH_N1
 		cabc_mode = CABC_HIGH_MODE;
 #endif
 		/* OPPO 2013-10-10 gousj Add end */
