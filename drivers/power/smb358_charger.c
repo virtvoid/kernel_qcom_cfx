@@ -14,12 +14,13 @@ date:2013-6-9
 #include <linux/mutex.h>
 #include <linux/power_supply.h>
 #include <linux/slab.h>
-#include <smb358_regs.h>
 #include <linux/power/smb358_charger.h>
 #include <linux/pcb_version.h>
 #include <linux/delay.h>
 #include <linux/hrtimer.h>
 #include <linux/pcb_version.h>
+
+#include "smb358_regs.h"
 
 /*macores defined begin*/
 #define IRQ_POWER_SUPPLY_UPDATE_DELAY	50//ms
