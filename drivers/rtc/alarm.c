@@ -24,7 +24,8 @@
 #include <linux/wakelock.h>
 
 #include <asm/mach/time.h>
-#ifdef CONFIG_MACH_APQ8064_FIND5
+
+#ifdef CONFIG_OPPO_OFFMODE_ALARM
 #include <linux/slab.h>
 #endif
 
@@ -47,7 +48,7 @@ module_param_named(debug_mask, debug_mask, int, S_IRUGO | S_IWUSR | S_IWGRP);
 		} \
 	} while (0)
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef CONFIG_OPPO_OFFMODE_ALARM
 #define ANDROID_ALARM_WAKEUP_MASK ( \
 	ANDROID_ALARM_RTC_WAKEUP_MASK | \
 	ANDROID_ALARM_ELAPSED_REALTIME_WAKEUP_MASK | \
@@ -71,7 +72,15 @@ struct alarm_queue {
 	ktime_t stopped_time;
 };
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
+static struct rtc_device *alarm_rtc_dev;
+static DEFINE_SPINLOCK(alarm_slock);
+static DEFINE_MUTEX(alarm_setrtc_mutex);
+static struct wake_lock alarm_rtc_wake_lock;
+static struct platform_device *alarm_platform_dev;
+struct alarm_queue alarms[ANDROID_ALARM_TYPE_COUNT];
+static bool suspended;
+
+#ifdef CONFIG_OPPO_OFFMODE_ALARM
 enum RTC_CMD {
 	RTC_CMD_CLEAR = 0x61,
 	RTC_CMD_UPDATE,
@@ -90,18 +99,9 @@ struct rtc_alarm_work {
 	spinlock_t slock;
 	bool active;
 };
+
 #define DEBUG_PRINT_TIME
-#endif
 
-static struct rtc_device *alarm_rtc_dev;
-static DEFINE_SPINLOCK(alarm_slock);
-static DEFINE_MUTEX(alarm_setrtc_mutex);
-static struct wake_lock alarm_rtc_wake_lock;
-static struct platform_device *alarm_platform_dev;
-struct alarm_queue alarms[ANDROID_ALARM_TYPE_COUNT];
-static bool suspended;
-
-#ifdef CONFIG_MACH_APQ8064_FIND5
 static struct rtc_alarm_work rtc_work;
 static int rtc_alarm_update(struct timespec *alarm);
 static void rtc_alarm_clear(void);
@@ -111,7 +111,7 @@ static void rtc_task(struct work_struct *work)
 	unsigned long flags;
 	struct rtc_cmd *cmd;
 	struct list_head *list_pos, *list_pos_tmp;
-	struct rtc_alarm_work *rwork = 
+	struct rtc_alarm_work *rwork =
 		container_of(work, struct rtc_alarm_work, alarm_task);
 
 	pr_alarm(FLOW, "handle rtc task...\n");
@@ -168,13 +168,12 @@ static void update_timer_locked(struct alarm_queue *base, bool head_removed)
 {
 	struct alarm *alarm;
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef CONFIG_OPPO_OFFMODE_ALARM
 	unsigned long flags;
 	struct rtc_cmd *cmd;
 	bool is_wakeup = base == &alarms[ANDROID_ALARM_RTC_WAKEUP] ||
 			base == &alarms[ANDROID_ALARM_ELAPSED_REALTIME_WAKEUP] ||
 			base == &alarms[ANDROID_ALARM_RTC_POWERUP];
-
 #else
 	bool is_wakeup = base == &alarms[ANDROID_ALARM_RTC_WAKEUP] ||
 			base == &alarms[ANDROID_ALARM_ELAPSED_REALTIME_WAKEUP];
@@ -188,8 +187,8 @@ static void update_timer_locked(struct alarm_queue *base, bool head_removed)
 	if (is_wakeup && !suspended && head_removed)
 		wake_unlock(&alarm_rtc_wake_lock);
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
 	if (!base->first) {
+#ifdef CONFIG_OPPO_OFFMODE_ALARM
 		/* There is no more alarm */
 		if (base == &alarms[ANDROID_ALARM_RTC_POWERUP]) {
 			spin_lock_irqsave(&rtc_work.slock, flags);
@@ -205,13 +204,9 @@ static void update_timer_locked(struct alarm_queue *base, bool head_removed)
 				pr_alarm(FLOW, "alarm clear task is in queue\n");
 			}
 		}
-
+#endif
 		return;
 	}
-#else
-	if (!base->first)
-		return;
-#endif
 
 	alarm = container_of(base->first, struct alarm, node);
 
@@ -229,7 +224,7 @@ static void update_timer_locked(struct alarm_queue *base, bool head_removed)
 	base->timer._softexpires = ktime_add(base->delta, alarm->softexpires);
 	hrtimer_start_expires(&base->timer, HRTIMER_MODE_ABS);
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef CONFIG_OPPO_OFFMODE_ALARM
 	if (alarm->type == ANDROID_ALARM_RTC_POWERUP) {
 		spin_lock_irqsave(&rtc_work.slock, flags);
 		cmd = (struct rtc_cmd*)kzalloc(sizeof(*cmd), GFP_ATOMIC);
@@ -384,7 +379,7 @@ int alarm_cancel(struct alarm *alarm)
 	}
 }
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef CONFIG_OPPO_OFFMODE_ALARM
 #ifdef DEBUG_PRINT_TIME
 /**
  * print_rtc_time - print time in struct rtc_time as man readable
@@ -399,7 +394,7 @@ static void inline print_rtc_time(struct rtc_time *rt)
 }
 #endif
 
-/** 
+/**
  * rtc_alarm_update - update alarm time in rtc
  * @author mwalker
  */
@@ -412,14 +407,14 @@ static int rtc_alarm_update(struct timespec *alarm)
 	unsigned long       rtc_alarm_time;
 	struct timespec     rtc_delta;
 	struct timespec     wall_time;
-	
+
 	wake_lock(&alarm_rtc_wake_lock);
 	ret = rtc_read_time(alarm_rtc_dev, &rtc_current_rtc_time);
 	if (ret < 0) {
 		pr_alarm(ERROR, "%s: Failed to read RTC time\n", __func__);
 		goto err;
 	}
-	
+
 	getnstimeofday(&wall_time);
 	rtc_tm_to_time(&rtc_current_rtc_time, &rtc_current_time);
 	set_normalized_timespec(&rtc_delta,
@@ -443,10 +438,10 @@ static int rtc_alarm_update(struct timespec *alarm)
 	pr_alarm(FLOW, "to: ");
 	print_rtc_time(&rtc_alarm.time);
 #endif
-	
+
 	wake_unlock(&alarm_rtc_wake_lock);
 	return 0;
-	
+
 err:
 	pr_alarm(ERROR, "%s: rtc alarm will lost!", __func__);
 	wake_unlock(&alarm_rtc_wake_lock);
@@ -533,7 +528,7 @@ int alarm_set_rtc(struct timespec new_time)
 		alarms[i].stopped = true;
 		alarms[i].stopped_time = timespec_to_ktime(tmp_time);
 	}
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef CONFIG_OPPO_OFFMODE_ALARM
 	hrtimer_try_to_cancel(&alarms[ANDROID_ALARM_RTC_POWERUP].timer);
 	alarms[ANDROID_ALARM_RTC_POWERUP].stopped = true;
 	alarms[ANDROID_ALARM_RTC_POWERUP].stopped_time = timespec_to_ktime(tmp_time);
@@ -549,7 +544,7 @@ int alarm_set_rtc(struct timespec new_time)
 		alarms[i].stopped = false;
 		update_timer_locked(&alarms[i], false);
 	}
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef CONFIG_OPPO_OFFMODE_ALARM
 	alarms[ANDROID_ALARM_RTC_POWERUP].stopped = false;
 	update_timer_locked(&alarms[ANDROID_ALARM_RTC_POWERUP], false);
 #endif
@@ -586,7 +581,7 @@ alarm_update_timedelta(struct timespec tmp_time, struct timespec new_time)
 		alarms[i].stopped = true;
 		alarms[i].stopped_time = timespec_to_ktime(tmp_time);
 	}
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef CONFIG_OPPO_OFFMODE_ALARM
 	hrtimer_try_to_cancel(&alarms[ANDROID_ALARM_RTC_POWERUP].timer);
 	alarms[ANDROID_ALARM_RTC_POWERUP].stopped = true;
 	alarms[ANDROID_ALARM_RTC_POWERUP].stopped_time = timespec_to_ktime(tmp_time);
@@ -599,7 +594,7 @@ alarm_update_timedelta(struct timespec tmp_time, struct timespec new_time)
 		alarms[i].stopped = false;
 		update_timer_locked(&alarms[i], false);
 	}
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef CONFIG_OPPO_OFFMODE_ALARM
 	alarms[ANDROID_ALARM_RTC_POWERUP].stopped = false;
 	update_timer_locked(&alarms[ANDROID_ALARM_RTC_POWERUP], false);
 #endif
@@ -623,24 +618,6 @@ ktime_t alarm_get_elapsed_realtime(void)
 	spin_unlock_irqrestore(&alarm_slock, flags);
 	return now;
 }
-
-#ifdef CONFIG_MACH_N1
-int
-alarm_read_rtc_time(struct rtc_time *tm)
-{
-	int ret = 0;
-
-	wake_lock(&alarm_rtc_wake_lock);
-	ret = rtc_read_time(alarm_rtc_dev, tm);
-	if (ret < 0) {
-		pr_alarm(ERROR, "%s: Failed to read RTC time", __func__);
-	}
-
-	wake_unlock(&alarm_rtc_wake_lock);
-	return ret;
-}
-EXPORT_SYMBOL(alarm_read_rtc_time);
-#endif
 
 static enum hrtimer_restart alarm_timer_triggered(struct hrtimer *timer)
 {
@@ -715,7 +692,7 @@ static int alarm_suspend(struct platform_device *pdev, pm_message_t state)
 	hrtimer_cancel(&alarms[ANDROID_ALARM_RTC_WAKEUP].timer);
 	hrtimer_cancel(&alarms[
 			ANDROID_ALARM_ELAPSED_REALTIME_WAKEUP].timer);
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef CONFIG_OPPO_OFFMODE_ALARM
 	hrtimer_cancel(&alarms[ANDROID_ALARM_RTC_POWERUP].timer); /* mwalker */
 #endif
 
@@ -728,7 +705,7 @@ static int alarm_suspend(struct platform_device *pdev, pm_message_t state)
 				hrtimer_get_expires(&wakeup_queue->timer).tv64))
 		wakeup_queue = tmp_queue;
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef CONFIG_OPPO_OFFMODE_ALARM
 	tmp_queue = &alarms[ANDROID_ALARM_RTC_POWERUP];
 	if (tmp_queue->first && (!wakeup_queue ||
 				hrtimer_get_expires(&tmp_queue->timer).tv64 <
@@ -770,7 +747,7 @@ static int alarm_suspend(struct platform_device *pdev, pm_message_t state)
 									false);
 			update_timer_locked(&alarms[
 				ANDROID_ALARM_ELAPSED_REALTIME_WAKEUP], false);
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef CONFIG_OPPO_OFFMODE_ALARM
 			update_timer_locked(&alarms[ANDROID_ALARM_RTC_POWERUP],
 									false);
 #endif
@@ -797,7 +774,7 @@ static int alarm_resume(struct platform_device *pdev)
 	update_timer_locked(&alarms[ANDROID_ALARM_RTC_WAKEUP], false);
 	update_timer_locked(&alarms[ANDROID_ALARM_ELAPSED_REALTIME_WAKEUP],
 									false);
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef CONFIG_OPPO_OFFMODE_ALARM
 	update_timer_locked(&alarms[ANDROID_ALARM_RTC_POWERUP], false); /* mwalker */
 #endif
 
@@ -835,9 +812,11 @@ static int rtc_alarm_add_device(struct device *dev,
 	alarm_rtc_dev = rtc;
 	pr_alarm(INIT_STATUS, "using rtc device, %s, for alarms", rtc->name);
 	mutex_unlock(&alarm_setrtc_mutex);
-#ifdef CONFIG_MACH_APQ8064_FIND5
+
+#ifdef CONFIG_OPPO_OFFMODE_ALARM
 	rtc_work.active = true;
 #endif
+
 	return 0;
 
 err3:
@@ -852,10 +831,11 @@ static void rtc_alarm_remove_device(struct device *dev,
 				    struct class_interface *class_intf)
 {
 	if (dev == &alarm_rtc_dev->dev) {
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef CONFIG_OPPO_OFFMODE_ALARM
 		rtc_work.active = false;
 		cancel_work_sync(&rtc_work.alarm_task);
-#endif    
+#endif
+
 		pr_alarm(INIT_STATUS, "lost rtc device for alarms");
 		rtc_irq_unregister(alarm_rtc_dev, &alarm_rtc_task);
 		platform_device_unregister(alarm_platform_dev);
@@ -907,7 +887,7 @@ static int __init alarm_driver_init(void)
 				CLOCK_REALTIME, HRTIMER_MODE_ABS);
 		alarms[i].timer.function = alarm_timer_triggered;
 	}
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef CONFIG_OPPO_OFFMODE_ALARM
 	hrtimer_init(&alarms[ANDROID_ALARM_RTC_POWERUP].timer,
 				CLOCK_REALTIME, HRTIMER_MODE_ABS);
 	alarms[ANDROID_ALARM_RTC_POWERUP].timer.function = alarm_timer_triggered;
@@ -920,7 +900,7 @@ static int __init alarm_driver_init(void)
 		goto err1;
 	wake_lock_init(&alarm_rtc_wake_lock, WAKE_LOCK_SUSPEND, "alarm_rtc");
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef CONFIG_OPPO_OFFMODE_ALARM
 	INIT_LIST_HEAD(&rtc_work.cmd_list);
 	INIT_WORK(&rtc_work.alarm_task, rtc_task);
 	mutex_init(&rtc_work.mutex);
@@ -943,7 +923,7 @@ err1:
 
 static void  __exit alarm_exit(void)
 {
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef CONFIG_OPPO_OFFMODE_ALARM
 	unsigned long flags;
 	struct rtc_cmd *cmd;
 	struct list_head *list_pos, *list_pos_tmp;
@@ -961,6 +941,7 @@ static void  __exit alarm_exit(void)
 
 	mutex_destroy(&rtc_work.mutex);
 #endif
+
 	class_interface_unregister(&rtc_alarm_interface);
 	wake_lock_destroy(&alarm_rtc_wake_lock);
 	platform_driver_unregister(&alarm_driver);

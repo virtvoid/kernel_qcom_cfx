@@ -12,12 +12,6 @@
  */
 
 #define pr_fmt(fmt)	"%s: " fmt, __func__
-
-/* Keeping this around for safety purposes */
-#ifndef CONFIG_MACH_N1
-#define CONFIG_MACH_N1
-#endif
-
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/platform_device.h>
@@ -39,16 +33,9 @@
 #include <linux/rtc.h>
 
 #ifdef CONFIG_MACH_N1
-//OPPO exp zhanglong 2013-04-27 add begin for average current
 #include <linux/pcb_version.h>
-//OPPO exp zhanglong 2013-04-27 add begin for average current end
-#endif //#ifdef CONFIG_MACH_N1
-
-/* OPPO 2013-01-07 chendx Add begin for very low voltage */
-#ifdef CONFIG_MACH_N1
 #include <linux/mfd/pm8xxx/batt-alarm.h>
 #endif
-/* OPPO 2013-01-07 chendx Add end */
 
 #define BMS_CONTROL		0x224
 #define BMS_S1_DELAY		0x225
@@ -97,10 +84,6 @@ struct pm8921_soc_params {
 
 /* OPPO 2012-12-17 chendx Add begin for BMS */
 #ifdef CONFIG_MACH_N1
-#if 0
-#undef pr_debug 
-#define pr_debug(fmt, ...) printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
-#endif
 #define BMS_BATT_REMOVE_TEMP -350
 #define BMS_BATT_DEFAULT_TEMP 230
 extern int debug_feature;

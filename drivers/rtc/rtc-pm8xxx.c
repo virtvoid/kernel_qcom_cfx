@@ -236,7 +236,7 @@ pm8xxx_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alarm)
 	struct pm8xxx_rtc *rtc_dd = dev_get_drvdata(dev);
 	struct rtc_time rtc_tm;
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef CONFIG_OPPO_OFFMODE_ALARM
 	/*
 	 * Open a door to clear alarm register since the boot alarm may 
 	 * becomes corrupt. mwalker

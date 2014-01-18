@@ -26,7 +26,7 @@ enum android_alarm_type {
 	ANDROID_ALARM_ELAPSED_REALTIME_WAKEUP,
 	ANDROID_ALARM_ELAPSED_REALTIME,
 	ANDROID_ALARM_SYSTEMTIME,
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef CONFIG_OPPO_OFFMODE_ALARM
 	ANDROID_ALARM_RTC_POWERUP, // mwalker for power up alarm
 #endif
 
@@ -79,7 +79,7 @@ ktime_t alarm_get_elapsed_realtime(void);
 int alarm_set_rtc(const struct timespec ts);
 void alarm_update_timedelta(struct timespec tv, struct timespec ts);
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef CONFIG_OPPO_OFFMODE_ALARM
 /* mwalker for alarm powerup */
 int alarm_rtc_powerup_get(struct timespec *up_time);
 int alarm_rtc_powerup_set(struct timespec *up_time);

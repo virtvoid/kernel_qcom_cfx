@@ -328,15 +328,14 @@ static int __rtc_set_alarm(struct rtc_device *rtc, struct rtc_wkalrm *alarm)
 	struct rtc_time tm;
 	long now, scheduled;
 	int err;
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef CONFIG_OPPO_OFFMODE_ALARM
 	struct rtc_time rtc_tm;
 
 	memset(&rtc_tm, 0, sizeof(rtc_tm));// mwalker
 #endif
 
 	err = rtc_valid_tm(&alarm->time);
-
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef CONFIG_OPPO_OFFMODE_ALARM
 	/* Open a door to clear alarm register by mwalker. */
 	if (err != 0 && memcmp(&alarm->time, &rtc_tm, sizeof(rtc_tm))){
 		dev_err(&rtc->dev, "invalide alarm time\n");//Roshan
@@ -352,7 +351,7 @@ static int __rtc_set_alarm(struct rtc_device *rtc, struct rtc_wkalrm *alarm)
 	/* Make sure we're not setting alarms in the past */
 	err = __rtc_read_time(rtc, &tm);
 	rtc_tm_to_time(&tm, &now);
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef CONFIG_OPPO_OFFMODE_ALARM
 	if (scheduled <= now && memcmp(&alarm->time, &rtc_tm, sizeof(rtc_tm))){
 		dev_warn(&rtc->dev, "%s : try to set alarm in the past\n", __func__);//Roshan
 		return -ETIME;
@@ -382,7 +381,7 @@ int rtc_set_alarm(struct rtc_device *rtc, struct rtc_wkalrm *alarm)
 {
 	int err;
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#ifdef CONFIG_OPPO_OFFMODE_ALARM
 	struct rtc_time rtc_tm;
 
 	memset(&rtc_tm, 0, sizeof(rtc_tm));

@@ -32,7 +32,6 @@
 #include <linux/mfd/pm8xxx/core.h>
 #include <linux/mfd/pm8xxx/mpp.h>
 #include <mach/board-msm8660.h>
-
 #include <linux/rtc.h>
 
 
