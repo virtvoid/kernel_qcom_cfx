@@ -443,7 +443,7 @@ static int msm_server_control(struct msm_cam_server_dev *server_dev,
 	/* wait event may be interrupted by sugnal,
 	 * in this case -ERESTARTSYS is returned and retry is needed.
 	 * Now we only retry once. */
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 	wait_count = 1;
 	do {
 		rc = wait_event_timeout(queue->wait,
@@ -1420,7 +1420,7 @@ static long msm_ioctl_server(struct file *file, void *fh,
 		}
 
 		mutex_lock(&g_server_dev.server_queue_lock);
-
+#ifdef CONFIG_MACH_APQ8064_FIND5
 		if(u_isp_event.isp_data.ctrl.queue_idx < 0 ||
 		u_isp_event.isp_data.ctrl.queue_idx >= MAX_NUM_ACTIVE_CAMERA) {
 			pr_err("%s: Invalid index %d\n", __func__,
@@ -1428,6 +1428,7 @@ static long msm_ioctl_server(struct file *file, void *fh,
 			rc = -EINVAL;
 			return rc;
 		}
+#endif
 
 		if (!g_server_dev.server_queue
 			[u_isp_event.isp_data.ctrl.queue_idx].queue_active) {
@@ -1871,6 +1872,27 @@ static void msm_cam_server_subdev_notify(struct v4l2_subdev *sd,
 		if (p_mctl && p_mctl->isp_notify && p_mctl->vfe_sdev)
 			rc = p_mctl->isp_notify(p_mctl,
 				p_mctl->vfe_sdev, notification, arg);
+#ifdef CONFIG_MACH_N1
+		/* OPPO 2013-07-29 lanhe Add for m9m0 caf start */
+		if(notification == NOTIFY_VFE_BUF_EVT)
+		{
+			struct sensor_cfg_data cfgarg;
+			cfgarg.cfgtype = CFG_FRAME_NOTIFICATION;
+			if (p_mctl && p_mctl->sensor_sdev)
+			    v4l2_subdev_call(p_mctl->sensor_sdev, core, ioctl,
+				VIDIOC_MSM_SENSOR_CFG, &cfgarg);
+
+		}
+		
+		if (p_mctl && p_mctl->vfe_output_mode == VFE_OUTPUTS_MAIN_AND_THUMB)
+		{
+			if (NOTIFY_VFE_MSG_OUT == notification)
+			{
+				printk("%s: capture stream output \r\n", __func__);
+			}
+		}
+		/* OPPO 2013-07-29 lanhe Add end */
+#endif
 		break;
 	case NOTIFY_VFE_IRQ:{
 		struct msm_vfe_cfg_cmd cfg_cmd;

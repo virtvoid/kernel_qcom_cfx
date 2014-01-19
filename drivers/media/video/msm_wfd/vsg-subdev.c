@@ -101,8 +101,10 @@ static void vsg_work_func(struct work_struct *task)
 
 	list_for_each_entry(temp, &context->busy_queue.node, node) {
 		if (++count > MAX_BUFS_BUSY_WITH_ENC) {
+#ifndef CONFIG_MACH_N1
 			WFD_MSG_WARN("Skipping encode, too many "
 				"buffers with encoder");
+#endif
 			goto err_skip_encode;
 		}
 	}

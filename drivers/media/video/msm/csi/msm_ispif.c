@@ -281,7 +281,12 @@ static int msm_ispif_config(struct ispif_device *ispif,
 		rc = msm_ispif_validate_intf_status(ispif, intftype, vfe_intf);
 		if (rc < 0) {
 			pr_err("%s:%d failed rc %d\n", __func__, __LINE__, rc);
+#ifdef CONFIG_MACH_APQ8064_FIND5
 			return rc;
+#endif
+#ifdef CONFIG_MACH_N1
+			rc = 0;
+#endif
 		}
 		msm_ispif_sel_csid_core(ispif, intftype, ispif_params[i].csid,
 			vfe_intf);

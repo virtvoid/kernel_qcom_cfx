@@ -26,6 +26,8 @@
 
 #include <mach/board.h>
 #include <linux/i2c/ssl3252.h>
+#include <linux/pcb_version.h>
+extern int get_pcb_version(void);
 
 #ifdef CONFIG_MSM_CAMERA
 
@@ -158,7 +160,43 @@ static struct msm_gpiomux_config apq8064_cam_common_configs[] = {
 		},
 	},
 	{
+		.gpio = 10,
+		.settings = {
+			[GPIOMUX_ACTIVE]    = &cam_settings[9],
+			[GPIOMUX_SUSPENDED] = &cam_settings[8],
+		},
+	},
+	{
+		.gpio = 11,
+		.settings = {
+			[GPIOMUX_ACTIVE]    = &cam_settings[10],
+			[GPIOMUX_SUSPENDED] = &cam_settings[8],
+		},
+	},
+	{
+		.gpio = 12,
+		.settings = {
+			[GPIOMUX_ACTIVE]    = &cam_settings[11],
+			[GPIOMUX_SUSPENDED] = &cam_settings[8],
+		},
+	},
+	{
+		.gpio = 13,
+		.settings = {
+			[GPIOMUX_ACTIVE]    = &cam_settings[11],
+			[GPIOMUX_SUSPENDED] = &cam_settings[8],
+		},
+	},
+/* OPPO 2013-02-04 kangjian added begin for main camera's RST_N */
+	{
 		.gpio = 33,
+		.settings = {
+			[GPIOMUX_ACTIVE]	= &cam_settings[2],
+			[GPIOMUX_SUSPENDED] = &cam_settings[0],
+		},
+	},
+	{
+		.gpio = 36,
 		.settings = {
 			[GPIOMUX_ACTIVE]	= &cam_settings[2],
 			[GPIOMUX_SUSPENDED] = &cam_settings[0],
@@ -173,6 +211,71 @@ static struct msm_gpiomux_config apq8064_cam_common_configs[] = {
 	},
 };
 
+static struct msm_gpiomux_config apq8064_cam_common_configs_n1[] = {
+	{
+		.gpio = 1,
+		.settings = {
+			[GPIOMUX_ACTIVE]    = &cam_settings[2],
+			[GPIOMUX_SUSPENDED] = &cam_settings[0],
+		},
+	},
+	{
+		.gpio = 2,
+		.settings = {
+			[GPIOMUX_ACTIVE]    = &cam_settings[12],
+			[GPIOMUX_SUSPENDED] = &cam_settings[0],
+		},
+	},
+	{
+		.gpio = 3,
+		.settings = {
+			[GPIOMUX_ACTIVE]    = &cam_settings[2],
+			[GPIOMUX_SUSPENDED] = &cam_settings[0],
+		},
+	},
+	{
+		.gpio = 4,
+		.settings = {
+			[GPIOMUX_ACTIVE]    = &cam_settings[3],
+			[GPIOMUX_SUSPENDED] = &cam_settings[0],
+		},
+	},
+	{
+		.gpio = 5,
+		.settings = {
+			[GPIOMUX_ACTIVE]    = &cam_settings[1],
+			[GPIOMUX_SUSPENDED] = &cam_settings[0],
+		},
+	},
+	{
+		.gpio = 34,
+		.settings = {
+			[GPIOMUX_ACTIVE]    = &cam_settings[2],
+			[GPIOMUX_SUSPENDED] = &cam_settings[0],
+		},
+	},
+	{
+		.gpio = 107,
+		.settings = {
+			[GPIOMUX_ACTIVE]    = &cam_settings[2],
+			[GPIOMUX_SUSPENDED] = &cam_settings[0],
+		},
+	},
+	{
+		.gpio = 33,
+		.settings = {
+			[GPIOMUX_ACTIVE]	= &cam_settings[2],
+			[GPIOMUX_SUSPENDED] = &cam_settings[0],
+		},
+	},
+	{
+		.gpio = 37,
+		.settings = {
+			[GPIOMUX_ACTIVE]	= &cam_settings[2],
+			[GPIOMUX_SUSPENDED] = &cam_settings[0],
+		},
+	},
+};
 #define VFE_CAMIF_TIMER1_GPIO 36
 #define VFE_CAMIF_TIMER2_GPIO 1
 
@@ -796,15 +899,29 @@ static int32_t msm_camera_m9mo_ext_power_ctrl(int enable)
       	gpio_request(36,"m9mo_pwr2");
     }
 	if (enable) {
-		gpio_direction_output(34, GPIOF_OUT_INIT_HIGH);
+		gpio_direction_output(
+				34,
+				GPIOF_OUT_INIT_HIGH);
 		msleep(2);
-		gpio_direction_output(36, GPIOF_OUT_INIT_HIGH);
-		gpio_direction_output(23, GPIOF_OUT_INIT_HIGH);
+		gpio_direction_output(
+				36,
+				GPIOF_OUT_INIT_HIGH);
+		gpio_direction_output(
+				23,
+				GPIOF_OUT_INIT_HIGH);
 		printk("msm_camera_m9mo_ext_power_ctrl on\n");
 	} else {
-		gpio_direction_output(23, GPIOF_OUT_INIT_LOW);
-		gpio_direction_output(34, GPIOF_OUT_INIT_LOW);
-		gpio_direction_output(36, GPIOF_OUT_INIT_LOW);
+
+		gpio_direction_output(
+				23,
+				GPIOF_OUT_INIT_LOW);
+		gpio_direction_output(
+				34,
+				GPIOF_OUT_INIT_LOW);
+		gpio_direction_output(
+				36,
+				GPIOF_OUT_INIT_LOW);
+
 	}
 	return rc;
 }
@@ -899,9 +1016,18 @@ void __init apq8064_init_cam(void)
 {
 	/* for SGLTE2 platform, do not configure i2c/gpiomux gsbi4 is used for
 	 * some other purpose */
-	if (socinfo_get_platform_subtype() != PLATFORM_SUBTYPE_SGLTE2) {
-		msm_gpiomux_install(apq8064_cam_common_configs,
-			ARRAY_SIZE(apq8064_cam_common_configs));
+	if (socinfo_get_platform_subtype() != PLATFORM_SUBTYPE_SGLTE2)
+	{
+		if (get_pcb_version() >= PCB_VERSION_EVT_N1)
+		{
+			msm_gpiomux_install(apq8064_cam_common_configs_n1,
+				ARRAY_SIZE(apq8064_cam_common_configs_n1));
+		}
+		else
+		{
+			msm_gpiomux_install(apq8064_cam_common_configs,
+				ARRAY_SIZE(apq8064_cam_common_configs));
+		}
 	}
 
 	if (machine_is_apq8064_cdp()) {
@@ -911,8 +1037,19 @@ void __init apq8064_init_cam(void)
 		sensor_board_info_imx074.mount_angle = 180;
 
 	platform_device_register(&msm_camera_server);
+
 	if (socinfo_get_platform_subtype() != PLATFORM_SUBTYPE_SGLTE2)
-		platform_device_register(&apq8064_device_i2c_mux_gsbi7);
+	{
+		if (get_pcb_version() >= PCB_VERSION_EVT_N1)
+		{
+			platform_device_register(&apq8064_device_i2c_mux_gsbi7);
+		}
+		else
+		{
+			platform_device_register(&msm8960_device_i2c_mux_gsbi4);
+		}
+	}
+
 	platform_device_register(&msm8960_device_csiphy0);
 	platform_device_register(&msm8960_device_csiphy1);
 	platform_device_register(&msm8960_device_csid0);

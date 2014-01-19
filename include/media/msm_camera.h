@@ -945,7 +945,14 @@ struct msm_stats_buf {
 #define MSM_V4L2_SET_CTRL_CMD	12
 #define MSM_V4L2_EVT_SUB_MASK	13
 #define MSM_V4L2_PRIVATE_CMD    14
+#ifdef CONFIG_MACH_APQ8064_FIND5
 #define MSM_V4L2_MAX			15
+#endif
+#ifdef CONFIG_MACH_N1
+#define MSM_V4L2_VENDOR_CMD     15
+#define MSM_V4L2_SCENE_CMD      16 ///guanjindian add
+#define MSM_V4L2_MAX			17
+#endif
 #define V4L2_CAMERA_EXIT		43
 
 struct crop_info {
@@ -1023,12 +1030,11 @@ struct msm_snapshot_pp_status {
 #define CFG_SET_VISION_MODE           55
 #define CFG_SET_VISION_AE             56
 #define CFG_HDR_UPDATE                57
-#define CFG_ACTUAOTOR_REG_INIT        58
 
 #ifndef CONFIG_MACH_N1
+#define CFG_ACTUAOTOR_REG_INIT        58
 #define CFG_MAX                       59
 #endif
-
 #ifdef CONFIG_MACH_N1
 #define CFG_SET_AF_MODE			  58
 #define CFG_SET_AE_MODE           59
@@ -1399,10 +1405,20 @@ struct mirror_flip {
 	int32_t y_flip;
 };
 
+#ifdef CONFIG_MACH_APQ8064_FIND5
 struct cord {
 	uint32_t x;
 	uint32_t y;
 };
+#endif
+#ifdef CONFIG_MACH_N1
+struct cord {
+	uint32_t x;
+	uint32_t y;
+	uint32_t dx;
+	uint32_t dy;
+};
+#endif
 
 struct msm_eeprom_data_t {
 	void *eeprom_data;

@@ -1300,7 +1300,12 @@ static struct v4l2_file_operations g_msm_fops = {
 	.poll	= msm_poll,
 	.mmap	= msm_mmap,
 	.release = msm_close,
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	.ioctl   = video_ioctl2,
+#endif
+#ifdef CONFIG_MACH_N1
+	.unlocked_ioctl   = video_ioctl2,
+#endif
 };
 
 static int msm_cam_dev_init(struct msm_cam_v4l2_device *pcam)

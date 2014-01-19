@@ -1013,7 +1013,7 @@ static int msm_vpe_subdev_close(struct v4l2_subdev *sd,
 	}
 
 	D("%s E ", __func__);
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 	if (frame_info) {		
 		struct msm_cam_media_controller *p_mctl = v4l2_get_subdev_hostdata(&vpe_ctrl->subdev);
 		pr_err("%s release frame\n", __func__);

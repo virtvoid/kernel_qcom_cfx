@@ -80,7 +80,7 @@ struct msm_actuator_ctrl_t {
 	struct region_params_t region_params[MAX_ACTUATOR_REGION];
 	uint16_t reg_tbl_size;
 	struct msm_actuator_reg_params_t reg_tbl[MAX_ACTUATOR_REG_TBL_SIZE];
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
     struct damping_params_t ringing_params[MAX_ACTUATOR_REGION];
 #endif
 	uint16_t region_size;

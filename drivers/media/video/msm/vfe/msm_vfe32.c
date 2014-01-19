@@ -30,7 +30,7 @@
 #include "msm_vfe32.h"
 
 atomic_t irq_cnt;
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 int overflow_cnt = 0;
 #endif
 
@@ -726,7 +726,7 @@ static void vfe32_stop(struct vfe32_ctrl_type *vfe32_ctrl)
 
 	/* in either continuous or snapshot mode, stop command can be issued
 	 * at any time. stop camif immediately. */
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 	overflow_cnt = 0;
 #endif
 	if (!vfe32_ctrl->share_ctrl->dual_enabled)
@@ -1189,7 +1189,7 @@ static int vfe32_reset(struct vfe32_ctrl_type *vfe32_ctrl)
 {
 	uint32_t irq_mask1, irq_mask;
 	atomic_set(&vfe32_ctrl->share_ctrl->vstate, 0);
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 	overflow_cnt = 0;
 #endif
 	msm_camera_io_w(VFE_MODULE_RESET_CMD,
@@ -4361,7 +4361,7 @@ static void vfe32_process_reset_irq(
 	}
 }
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 static void vfe32_process_overflow_error(
 	struct vfe_share_ctrl_t *share_ctrl, uint32_t errStatus)
 {
@@ -4469,7 +4469,7 @@ static void vfe32_process_overflow_error(
 static void vfe32_process_camif_sof_irq(
 		struct vfe32_ctrl_type *vfe32_ctrl)
 {
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 	if(overflow_cnt)
 		vfe32_process_overflow_error(vfe32_ctrl->share_ctrl ,0);
 #endif
@@ -4551,7 +4551,7 @@ static void vfe32_process_error_irq(
 			axi_ctrl->share_ctrl->vfeFrameId, MSG_ID_CAMIF_ERROR);
 		}
 	}
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 	if(errStatus &
 		(VFE32_IMASK_BHIST_OVWR |
 		VFE32_IMASK_STATS_CS_OVWR|
@@ -4618,7 +4618,7 @@ static void vfe32_process_error_irq(
 static void vfe32_process_common_error_irq(
 	struct axi_ctrl_t *axi_ctrl, uint32_t errStatus)
 {
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 	if(errStatus &
 		(VFE32_IMASK_IMG_MAST_0_BUS_OVFL|
 		VFE32_IMASK_IMG_MAST_1_BUS_OVFL|
@@ -6190,7 +6190,25 @@ static long msm_vfe_subdev_ioctl(struct v4l2_subdev *sd,
 	long rc = 0;
 	struct vfe_cmd_stats_buf *scfg = NULL;
 	struct vfe_cmd_stats_ack *sack = NULL;
-
+#ifdef CONFIG_MACH_N1
+	if (!vfe32_ctrl->share_ctrl->vfebase) {
+		if (arg) {
+			vfe_params = (struct msm_camvfe_params *)arg;
+			if (vfe_params == NULL)
+				return -EFAULT;
+			cmd = vfe_params->vfe_cfg;
+			if (cmd == NULL || (cmd->cmd_type != VFE_CMD_STATS_REQBUF &&
+				cmd->cmd_type != VFE_CMD_STATS_ENQUEUEBUF &&
+				cmd->cmd_type != VFE_CMD_STATS_FLUSH_BUFQ &&
+				cmd->cmd_type != VFE_CMD_STATS_UNREGBUF &&
+				subdev_cmd != VIDIOC_MSM_VFE_RELEASE)) {
+				pr_err("%s: base address unmapped\n", __func__);
+				return -EFAULT;
+			}
+		} else
+			return -EFAULT;
+	}
+#endif
 	CDBG("%s\n", __func__);
 	if (subdev_cmd == VIDIOC_MSM_VFE_INIT) {
 		CDBG("%s init\n", __func__);
@@ -6636,10 +6654,12 @@ void msm_axi_subdev_release(struct v4l2_subdev *sd)
 
 void msm_vfe_subdev_release(struct v4l2_subdev *sd)
 {
+#ifdef CONFIG_MSM_CAMERA_DEBUG
 	struct vfe32_ctrl_type *vfe32_ctrl =
 		(struct vfe32_ctrl_type *)v4l2_get_subdevdata(sd);
 	CDBG("vfe subdev release %p\n",
 		vfe32_ctrl->share_ctrl->vfebase);
+#endif
 }
 
 int msm_axi_set_low_power_mode(struct v4l2_subdev *sd, void *arg)
@@ -6904,7 +6924,7 @@ void axi_start(struct msm_cam_media_controller *pmctl,
 		break;
 	case AXI_CMD_CAPTURE:
 	case AXI_CMD_RAW_CAPTURE:
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 		if (axi_ctrl->share_ctrl->dual_enabled)
 #else
         if (!axi_ctrl->share_ctrl->dual_enabled)
@@ -6922,7 +6942,7 @@ void axi_start(struct msm_cam_media_controller *pmctl,
 			msm_camio_bus_scale_cfg(
 				pmctl->sdata->pdata->cam_bus_scale_table,
 				S_LOW_POWER);
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 		else if (axi_ctrl->share_ctrl->dual_enabled)
 #else 
         else if (!axi_ctrl->share_ctrl->dual_enabled)

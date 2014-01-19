@@ -24,7 +24,7 @@
 #include <mach/msm_bus_board.h>
 #include <linux/delay.h>
 
-#  define UINT32_MAX    (4294967295U)
+#define UINT32_MAX    (4294967295U)
 static int release_buf;
 
 /* size is based on 4k page size */
@@ -982,6 +982,16 @@ int msm_gemini_ioctl_set_outmode(struct msm_gemini_device *pgmn_dev,
 	return rc;
 }
 
+#ifdef CONFIG_MACH_N1
+int msm_gemini_ioctl_test_dump_region(struct msm_gemini_device *pgmn_dev,
+	unsigned long arg)
+{
+	GMN_DBG("%s:%d] Enter\n", __func__, __LINE__);
+	msm_gemini_hw_region_dump(arg);
+	return 0;
+}
+#endif
+
 long __msm_gemini_ioctl(struct msm_gemini_device *pgmn_dev,
 	unsigned int cmd, unsigned long arg)
 {
@@ -1049,6 +1059,12 @@ long __msm_gemini_ioctl(struct msm_gemini_device *pgmn_dev,
 	case MSM_GMN_IOCTL_HW_CMDS:
 		rc = msm_gemini_ioctl_hw_cmds(pgmn_dev, (void __user *) arg);
 		break;
+
+#ifdef CONFIG_MACH_N1
+	case MSM_GMN_IOCTL_TEST_DUMP_REGION:
+		rc = msm_gemini_ioctl_test_dump_region(pgmn_dev, arg);
+		break;
+#endif
 
 	case MSM_GMN_IOCTL_SET_MODE:
 		rc = msm_gemini_ioctl_set_outmode(pgmn_dev, (void __user *)arg);

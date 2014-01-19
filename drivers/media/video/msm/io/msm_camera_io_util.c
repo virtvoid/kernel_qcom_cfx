@@ -331,7 +331,7 @@ int msm_camera_enable_vreg(struct device *dev, struct camera_vreg_t *cam_vreg,
 					__func__, cam_vreg[j].reg_name);
 				return -EINVAL;
 			}
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
             if (reg_ptr[j] == NULL) {
                 printk("%s reg_ptr[%d] is null\n", __func__, j);
                 continue;

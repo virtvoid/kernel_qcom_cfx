@@ -96,7 +96,7 @@ int msm_gemini_hw_wait(struct msm_gemini_hw_cmd *hw_cmd_p, int m_us);
 void msm_gemini_hw_delay(struct msm_gemini_hw_cmd *hw_cmd_p, int m_us);
 int msm_gemini_hw_exec_cmds(struct msm_gemini_hw_cmd *hw_cmd_p, uint32_t m_cmds);
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 void msm_gemini_hw_region_dump(int size);
 #endif
 
