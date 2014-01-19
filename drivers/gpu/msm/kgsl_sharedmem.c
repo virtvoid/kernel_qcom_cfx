@@ -561,11 +561,12 @@ _kgsl_sharedmem_page_alloc(struct kgsl_memdesc *memdesc,
 
 	if (memdesc->sg == NULL) {
 		ret = -ENOMEM;
-/* OPPO 2013-05-08 huanggd Modify begin for NULL pointer*/
-		//goto done;
+#ifdef CONFIG_MACH_N1
+		goto done;
+#else
 		memset(memdesc, 0, sizeof(*memdesc));
 		return ret;
-/* OPPO 2013-05-08 huanggd Modify end*/		
+#endif	
 	}
 
 	/*
@@ -583,12 +584,13 @@ _kgsl_sharedmem_page_alloc(struct kgsl_memdesc *memdesc,
 
 	if (pages == NULL) {
 		ret = -ENOMEM;
-/* OPPO 2013-05-08 huanggd Modify begin for NULL pointer*/
-		//goto done;
+#ifdef CONFIG_MACH_N1
+		goto done;
+#else
 		kgsl_sg_free(memdesc->sg, sglen_alloc);
 		memset(memdesc, 0, sizeof(*memdesc));
 		return ret;
-/* OPPO 2013-05-08 huanggd Modify end*/		
+#endif
 	}
 
 	kmemleak_not_leak(memdesc->sg);
