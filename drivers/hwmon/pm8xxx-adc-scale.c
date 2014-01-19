@@ -31,7 +31,7 @@
    their framework which is 0.1DegC. True resolution of 0.1DegC
    will result in the below table size to increase by 10 times */
    
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 static const struct pm8xxx_adc_map_pt adcmap_btm_threshold[] = {
 	{-350, 1473}, 
 	{-340, 1460}, 
@@ -1001,7 +1001,7 @@ int32_t pm8xxx_adc_scale_batt_therm(int32_t adc_code,
 	bat_voltage = pm8xxx_adc_scale_ratiometric_calib(adc_code,
 			adc_properties, chan_properties);
     
-#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	if(get_pcb_version() == PCB_VERSION_PVT3_TD) {
 		return pm8xxx_adc_map_batt_therm(
 			adcmap_btm_threshold2,
