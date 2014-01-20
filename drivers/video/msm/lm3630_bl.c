@@ -176,11 +176,14 @@ int set_backlight_pwm(int state)
     int rc = 0;
     if(state == 1)
     {
-        rc = lm3630_i2c_write(0x01, 0x19);
+        if(lm3630_bkl_readout()>20)
+        {
+            rc = lm3630_i2c_write(0x01, LM3630_PWM_ON);
+        }
     }
     else
     {
-        rc = lm3630_i2c_write(0x01, 0x18);
+        rc = lm3630_i2c_write(0x01, LM3630_PWM_OFF);
     }
     return rc;
 }
@@ -249,6 +252,16 @@ int lm3630_bkl_readout(void)
     return rc;
 }
 
+int lm3630_pwm_readout(void)
+{
+    int rc = 0;
+    unsigned char bkl_level = 0;
+    rc = lm3630_i2c_read(0x01,&bkl_level);
+    rc = bkl_level;
+    pr_debug("%s Neal pwm read out = %d\n",__func__,(int)rc);
+    return rc;
+}
+
 static int lm3630_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
     int rc = 0;
@@ -293,8 +306,15 @@ static int lm3630_i2c_probe(struct i2c_client *client, const struct i2c_device_i
 
     rc = lm3630_i2c_write(0x00, 0x1f);
     rc = lm3630_i2c_write(0x50, 0x03);
-    rc = lm3630_i2c_write(0x01, 0x18);
-    rc = lm3630_i2c_write(0x02, 0x78);
+    if(get_boot_mode() == MSM_BOOT_MODE__NORMAL)
+    {
+        rc = lm3630_i2c_write(0x01, LM3630_PWM_ON);
+    }
+    else
+    {
+        rc = lm3630_i2c_write(0x01, LM3630_PWM_OFF);
+    }
+    rc = lm3630_i2c_write(0x02, 0x38);
     rc = lm3630_i2c_write(0x03, 0xff);
     rc = lm3630_i2c_write(0x05, 0x14);
     rc = lm3630_i2c_write(0x06, 0x14);
@@ -345,12 +365,12 @@ static int lm3630_resume(struct i2c_client *client)
 
     mdelay(10);
     rc = lm3630_i2c_write(0x50, 0x03);
-    rc = lm3630_i2c_write(0x01, 0x18);
+    rc = lm3630_i2c_write(0x01, LM3630_PWM_OFF);
 /* OPPO 2013-10-04 gousj Modify begin for Radio Frequency Interference */
 #ifndef CONFIG_MACH_N1
     rc = lm3630_i2c_write(0x02, 0x79);
 #else
-	rc = lm3630_i2c_write(0x02, 0x78);
+	rc = lm3630_i2c_write(0x02, 0x38);
 #endif
 /* OPPO 2013-10-04 gousj Modify end */
     rc = lm3630_i2c_write(0x05, 0x14);
