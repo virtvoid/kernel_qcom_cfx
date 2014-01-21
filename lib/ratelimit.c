@@ -47,7 +47,7 @@ int ___ratelimit(struct ratelimit_state *rs, const char *func)
 
 	if (time_is_before_jiffies(rs->begin + rs->interval)) {
 		if (rs->missed)
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 		printk(KERN_DEBUG "%s: %d callbacks suppressed\n",
 				func, rs->missed);
 #else

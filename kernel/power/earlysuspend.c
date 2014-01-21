@@ -44,7 +44,7 @@ enum {
 };
 static int state;
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 extern void wakelock_printk_control(int on); 
 #endif
 
@@ -108,7 +108,7 @@ static void early_suspend(struct work_struct *work)
 
 	suspend_sys_sync_queue();
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 	wakelock_printk_control(1); 
 #endif
 abort:
@@ -124,7 +124,7 @@ static void late_resume(struct work_struct *work)
 	unsigned long irqflags;
 	int abort = 0;
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 	wakelock_printk_control(0); 
 #endif
 	mutex_lock(&early_suspend_lock);

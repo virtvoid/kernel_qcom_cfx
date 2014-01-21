@@ -234,7 +234,7 @@ static void print_active_locks(int type)
 	}
 }
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 static int printk_active_wakelock(void)
 {
 	struct wake_lock *lock;
@@ -444,7 +444,7 @@ static void suspend(struct work_struct *work)
 		return;
 	}
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 	wakelock_printk_control(0); 
 #endif
 		
@@ -481,7 +481,7 @@ static void suspend(struct work_struct *work)
 			pr_info("suspend: pm_suspend returned with no event\n");
 		wake_lock_timeout(&unknown_wakeup, HZ / 2);
 	}
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 	wakelock_printk_control(1); 
 #endif
 }
@@ -777,7 +777,7 @@ static int __init wakelocks_init(void)
 	proc_create("wakelocks", S_IRUGO, NULL, &wakelock_stats_fops);
 #endif
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 	wakelock_printk_work_queue = create_singlethread_workqueue("wakelock_printk");
 #endif
 

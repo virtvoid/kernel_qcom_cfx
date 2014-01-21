@@ -174,6 +174,13 @@ static int lm3630_i2c_write(unsigned char   raddr, unsigned char  rdata)
 int set_backlight_pwm(int state)
 {
     int rc = 0;
+
+	if (!lm3630_client)
+    {
+        pr_err("%s: lm3630_client == null!\n", __func__);
+        return rc;
+    }
+
     if(state == 1)
     {
         if(lm3630_bkl_readout()>20)

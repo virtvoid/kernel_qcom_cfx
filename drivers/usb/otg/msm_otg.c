@@ -2536,7 +2536,12 @@ static void msm_otg_sm_work(struct work_struct *w)
 			pr_debug("b_sess_vld\n");
 			switch (motg->chg_state) {
 			case USB_CHG_STATE_UNDEFINED:
+#ifdef CONFIG_MACH_N1
+				/* OPPO 2013-10-30 sjc Modify begin for N1 USB receptacle problem, delay 300ms */
+				queue_delayed_work(system_nrt_wq, &motg->chg_work, msecs_to_jiffies(300));
+#else
 				msm_chg_detect_work(&motg->chg_work.work);
+#endif
 				break;
 			case USB_CHG_STATE_DETECTED:
 #ifdef CONFIG_MACH_APQ8064_FIND5
@@ -2596,6 +2601,8 @@ static void msm_otg_sm_work(struct work_struct *w)
 #if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 					motg->chg_type = USB_NON_DCP_CHARGER;
 					cancel_delayed_work_sync(&motg->nonstandard_detect_work);
+					enable_nonstandard_worker_fn("schedule_delayed_work");
+					schedule_delayed_work(&motg->nonstandard_detect_work, USB_NONSTANDARD_DET_DELAY);
 					schedule_delayed_work(&motg->nonstandard_detect_work,
 							USB_NONSTANDARD_DET_DELAY);
 #endif
@@ -4197,6 +4204,90 @@ static int __devexit msm_otg_remove(struct platform_device *pdev)
 	return 0;
 }
 
+#ifdef CONFIG_MACH_N1
+/*****************added by songxh for shutdowm otg begain**********************/
+static void  msm_otg_shutdown(struct platform_device *pdev)
+{
+	struct msm_otg *motg = platform_get_drvdata(pdev);
+	struct usb_otg *otg = motg->phy.otg;
+	int cnt = 0;	
+	if (get_pcb_version() >= PCB_VERSION_EVT_N1){		
+
+	    if (pdev->dev.of_node)
+		msm_otg_setup_devices(pdev, motg->pdata->mode, false);
+	    if (motg->pdata->otg_control == OTG_PMIC_CONTROL)
+		pm8921_charger_unregister_vbus_sn(0);
+	    msm_otg_mhl_register_callback(motg, NULL);
+	    msm_otg_debugfs_cleanup();
+	    cancel_delayed_work_sync(&motg->chg_work);
+	    cancel_delayed_work_sync(&motg->pmic_id_status_work);
+	    cancel_delayed_work_sync(&motg->check_ta_work);
+	    cancel_work_sync(&motg->sm_work);
+
+	    pm_runtime_resume(&pdev->dev);
+
+	    device_init_wakeup(&pdev->dev, 0);
+	    pm_runtime_disable(&pdev->dev);
+	    wake_lock_destroy(&motg->wlock);
+
+	    msm_hsusb_mhl_switch_enable(motg, 0);
+	    if (motg->pdata->pmic_id_irq)
+		free_irq(motg->pdata->pmic_id_irq, motg);
+	    usb_set_transceiver(NULL);
+	    free_irq(motg->irq, motg);
+
+	    if (motg->pdata->otg_control == OTG_PHY_CONTROL &&
+		motg->pdata->mpm_otgsessvld_int)
+		msm_mpm_enable_pin(motg->pdata->mpm_otgsessvld_int, 0);
+
+	    /*
+	     * Put PHY in low power mode.
+	     */
+	    ulpi_read(otg->phy, 0x14);
+	    ulpi_write(otg->phy, 0x08, 0x09);
+
+	    writel(readl(USB_PORTSC) | PORTSC_PHCD, USB_PORTSC);
+	    while (cnt < PHY_SUSPEND_TIMEOUT_USEC) {
+		if (readl(USB_PORTSC) & PORTSC_PHCD)
+			break;
+		udelay(1);
+		cnt++;
+	    }
+	    if (cnt >= PHY_SUSPEND_TIMEOUT_USEC)
+		dev_err(otg->phy->dev, "Unable to suspend PHY\n");
+
+	    clk_disable_unprepare(motg->pclk);
+	    clk_disable_unprepare(motg->core_clk);
+	    msm_xo_put(motg->xo_handle);
+	    msm_hsusb_ldo_enable(motg, 0);
+	    msm_hsusb_ldo_init(motg, 0);
+	    regulator_disable(hsusb_vddcx);
+	    regulator_set_voltage(hsusb_vddcx,
+		vdd_val[motg->vdd_type][VDD_NONE],
+		vdd_val[motg->vdd_type][VDD_MAX]);
+
+	    iounmap(motg->regs);
+	    pm_runtime_set_suspended(&pdev->dev);
+
+	    if (!IS_ERR(motg->phy_reset_clk))
+		clk_put(motg->phy_reset_clk);
+	    clk_put(motg->pclk);
+	    if (!IS_ERR(motg->clk))
+		clk_put(motg->clk);
+	    clk_put(motg->core_clk);
+
+	    if (motg->bus_perf_client)
+		msm_bus_scale_unregister_client(motg->bus_perf_client);
+
+	    kfree(motg->phy.otg);
+	    kfree(motg);
+
+	    smb358_charger_connected(CHARGER_TYPE__INVALID);
+	}
+	return ;
+}
+/*****************added by songxh for shutdowm otg end**********************/
+#endif
 #ifdef CONFIG_PM_RUNTIME
 static int msm_otg_runtime_idle(struct device *dev)
 {
@@ -4288,6 +4379,9 @@ static struct of_device_id msm_otg_dt_match[] = {
 
 static struct platform_driver msm_otg_driver = {
 	.remove = __devexit_p(msm_otg_remove),
+#ifdef CONFIG_MACH_N1
+	.shutdown = msm_otg_shutdown,
+#endif
 	.driver = {
 		.name = DRIVER_NAME,
 		.owner = THIS_MODULE,

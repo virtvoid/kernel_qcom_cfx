@@ -2672,7 +2672,7 @@ static bool sleeping_prematurely(pg_data_t *pgdat, int order, long remaining,
 		return !all_zones_ok;
 }
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 extern long congestion_wait_kswapd(int sync, long timeout);
 #endif
 /*
@@ -2910,7 +2910,7 @@ loop_again:
 			if (has_under_min_watermark_zone)
 				count_vm_event(KSWAPD_SKIP_CONGESTION_WAIT);
 			else
-#ifndef CONFIG_MACH_APQ8064_FIND5
+#if !defined (CONFIG_MACH_APQ8064_FIND5) || !defined (CONFIG_MACH_N1)
 				congestion_wait(BLK_RW_ASYNC, HZ/10);
 #else
 				congestion_wait_kswapd(BLK_RW_ASYNC, HZ/10);

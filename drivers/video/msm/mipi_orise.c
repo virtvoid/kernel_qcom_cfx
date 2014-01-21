@@ -330,6 +330,18 @@ static struct dsi_cmd_desc cmd_mipi_resume_sequence[] =
     },
 };
 
+#ifdef CONFIG_MACH_N1
+static struct dsi_cmd_desc cmd_mipi_display_off[] = {
+	{DTYPE_DCS_LWRITE, 1, 0, 0, 90,
+			sizeof(display_off), display_off},
+};
+
+static struct dsi_cmd_desc cmd_mipi_sleep_in[] = {
+	{DTYPE_DCS_LWRITE, 1, 0, 0, 90,
+			sizeof(sleep_in), sleep_in},
+};
+#endif
+
 static struct dsi_cmd_desc cmd_brightness_setting[] =
 {
     {
@@ -495,6 +507,7 @@ static int mipi_orise_lcd_off(struct platform_device *pdev)
         return -EINVAL;
 
     flag_lcd_off = true;
+#ifndef CONFIG_MACH_N1
 
     mipi_dsi_cmds_tx(&orise_tx_buf, cmd_sleep_and_off,
                      ARRAY_SIZE(cmd_sleep_and_off));
@@ -502,6 +515,7 @@ static int mipi_orise_lcd_off(struct platform_device *pdev)
 
     mipi_dsi_cmds_tx(&orise_tx_buf, cmd_mipi_off_sequence,
                      ARRAY_SIZE(cmd_mipi_off_sequence));
+#endif
     mdelay(5);
 
     cancel_delayed_work_sync(&techeck_work);
@@ -515,7 +529,21 @@ static int mipi_orise_lcd_off(struct platform_device *pdev)
     return 0;
 }
 
+#ifdef CONFIG_MACH_N1
+int mipi_orise_display_off(struct platform_device *pdev)
+{
+	mipi_dsi_cmds_tx(&orise_tx_buf, cmd_mipi_display_off,
+		ARRAY_SIZE(cmd_mipi_display_off));
+	return 0;
+}
 
+int mipi_orise_sleep_in(struct platform_device *pdev)
+{
+	mipi_dsi_cmds_tx(&orise_tx_buf, cmd_mipi_sleep_in,
+		ARRAY_SIZE(cmd_mipi_sleep_in));
+	return 0;
+}
+#endif
 
 static void mipi_orise_set_backlight(struct msm_fb_data_type *mfd)
 {

@@ -61,7 +61,7 @@ static void smsm_state_cb_hdlr(void *data, uint32_t old_state,
 		return;
 	}
 	
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 	pr_err("WCNSS3660 restart independent-\n");
 	enable_riva_ssr = 1 ;
 #endif
@@ -103,7 +103,7 @@ static irqreturn_t riva_wdog_bite_irq_hdlr(int irq, void *dev_id)
 		return IRQ_HANDLED;
 	}
 	
-#ifdef CONFIG_MACH_APQ8064_FIND5
+#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 		pr_err("WCNSS3660 restart because of Watchdog-\n");
 		enable_riva_ssr = 1 ;
 #endif

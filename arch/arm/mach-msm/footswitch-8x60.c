@@ -185,6 +185,9 @@ static int footswitch_enable(struct regulator_dev *rdev)
 
 	/* Enable the power rail at the footswitch. */
 	regval |= ENABLE_BIT;
+#ifdef CONFIG_MACH_N1
+	if (fs->desc.id != FS_GFX3D)
+#endif
 	writel_relaxed(regval, fs->gfs_ctl_reg);
 	/* Wait for the rail to fully charge. */
 	mb();
@@ -284,6 +287,9 @@ static int footswitch_disable(struct regulator_dev *rdev)
 
 	/* Collapse the power rail at the footswitch. */
 	regval &= ~ENABLE_BIT;
+#ifdef CONFIG_MACH_N1
+	if (fs->desc.id != FS_GFX3D)
+#endif
 	writel_relaxed(regval, fs->gfs_ctl_reg);
 
 	fs->is_enabled = false;

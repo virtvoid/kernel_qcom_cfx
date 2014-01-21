@@ -361,6 +361,12 @@ static irqreturn_t gpio_keys_gpio_isr(int irq, void *dev_id)
 
 	BUG_ON(irq != bdata->irq);
 
+#ifdef CONFIG_MACH_N1
+	/* HACK: drop spurious KEY_HOME, KEY_BACK, KEY_MENU IRQs on wake */
+	if (block_keypad && (irq == 657 || irq == 658 || irq == 659))
+		return IRQ_HANDLED;
+#endif
+
 	if (bdata->timer_debounce)
 		mod_timer(&bdata->timer,
 			jiffies + msecs_to_jiffies(bdata->timer_debounce));
