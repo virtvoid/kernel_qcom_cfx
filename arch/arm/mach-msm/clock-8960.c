@@ -5328,7 +5328,9 @@ static struct clk_lookup msm_clocks_8064[] = {
 #else
 	CLK_LOOKUP("core_clk",		gsbi7_uart_clk.c, "msm_serial_hsl.0"),
 #endif
-#else
+    
+#else //CONFIG_MACH_APQ8064_FIND5
+    
 #ifdef CONFIG_MACH_LGE
 	CLK_LOOKUP("core_clk",		gsbi4_uart_clk.c,	"msm_serial_hsl.0"),
 #else
@@ -5410,8 +5412,13 @@ static struct clk_lookup msm_clocks_8064[] = {
     CLK_LOOKUP("iface_clk",		gsbi4_p_clk.c,		"spi_qsd.0"),
 #endif
     
-#if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
+#ifdef CONFIG_MACH_APQ8064_FIND5
 	CLK_LOOKUP("iface_clk",		gsbi5_p_clk.c,		"spi_qsd.0"),
+	CLK_LOOKUP("iface_clk",		gsbi5_p_clk.c,		"msm_serial_hsl.0"),
+	CLK_LOOKUP("iface_clk",		gsbi6_p_clk.c,		""),
+	CLK_LOOKUP("iface_clk",		gsbi7_p_clk.c,	"qup_i2c.7"),
+#elif defined(CONFIG_MACH_N1)
+	CLK_LOOKUP("iface_clk",		gsbi5_p_clk.c,		"qup_i2c.5"),
 	CLK_LOOKUP("iface_clk",		gsbi5_p_clk.c,		"msm_serial_hsl.0"),
 	CLK_LOOKUP("iface_clk",		gsbi6_p_clk.c,		""),
 	CLK_LOOKUP("iface_clk",		gsbi7_p_clk.c,	"qup_i2c.7"),
@@ -5420,11 +5427,12 @@ static struct clk_lookup msm_clocks_8064[] = {
 	CLK_LOOKUP("iface_clk",		gsbi5_p_clk.c,		"spi_qsd.0"),
 	CLK_LOOKUP("iface_clk",		gsbi5_p_clk.c,		"qup_i2c.5"),
 	CLK_LOOKUP("iface_clk",		gsbi6_p_clk.c,	"msm_serial_hs.0"),
+#endif
+    
 #ifdef CONFIG_MACH_LGE
 	CLK_LOOKUP("iface_clk",		gsbi7_p_clk.c,		""),
 #else
 	CLK_LOOKUP("iface_clk",		gsbi7_p_clk.c,	"msm_serial_hsl.0"),
-#endif
 #endif
 	CLK_LOOKUP("ref_clk",	tsif_ref_clk.c,	"msm_tspp.0"),
 	CLK_LOOKUP("iface_clk",		tsif_p_clk.c,		"msm_tspp.0"),
@@ -5451,14 +5459,14 @@ static struct clk_lookup msm_clocks_8064[] = {
 	CLK_LOOKUP("cam_clk",		cam0_clk.c,	"4-0010"),
 	CLK_LOOKUP("cam_clk",		cam0_clk.c,	"4-0034"),
 	CLK_LOOKUP("cam_clk",		cam0_clk.c,	"4-0020"),
-#ifdef CONFIG_MACH_N1
-    CLK_LOOKUP("cam_clk",		cam0_clk.c,	"7-003e"),
-#endif
 	CLK_LOOKUP("cam_clk",		cam1_clk.c,	"4-0048"),
 	CLK_LOOKUP("cam_clk",		cam1_clk.c,	"4-006c"),
 #if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 	CLK_LOOKUP("cam_clk",		cam2_clk.c,	"0-0010"),
 	CLK_LOOKUP("cam_clk",		cam2_clk.c,	"7-0010"),
+#endif
+#ifdef CONFIG_MACH_N1
+    CLK_LOOKUP("cam_clk",		cam0_clk.c,	"7-003e"),
 #endif
 	CLK_LOOKUP("csi_src_clk",	csi0_src_clk.c,		"msm_csid.0"),
 	CLK_LOOKUP("csi_src_clk",	csi1_src_clk.c,		"msm_csid.1"),
