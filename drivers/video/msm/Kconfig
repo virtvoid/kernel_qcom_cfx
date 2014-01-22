@@ -1,4 +1,3 @@
-
 source "drivers/video/msm/vidc/Kconfig"
 
 config FB_MSM
@@ -1028,6 +1027,7 @@ config FB_MSM_EBI2_PANEL_DETECT
 config FB_MSM_MIPI_BACKLIGHT_LM3528
 	bool "lcd backlight lm3528 driver"
 	depends on I2C
+	default n
 	---help---
 	  Support for panel backlight
 	  
