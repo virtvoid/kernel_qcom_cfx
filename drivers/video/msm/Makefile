@@ -214,8 +214,14 @@ endif
 
 obj-$(CONFIG_MSM_VIDC_1080P) += vidc/
 obj-$(CONFIG_MSM_VIDC_720P) += vidc/
+
+ifeq ($(CONFIG_MACH_APQ8064_FIND5),y)
 obj-$(CONFIG_FB_MSM_MIPI_BACKLIGHT_LM3528) += lm3528.o
+endif
+
+ifeq ($(CONFIG_MACH_N1),y)
 obj-$(CONFIG_FB_MSM_MIPI_BACKLIGHT_LM3630) += lm3630_bl.o
+endif
 
 clean:
 	rm *.o .*cmd
