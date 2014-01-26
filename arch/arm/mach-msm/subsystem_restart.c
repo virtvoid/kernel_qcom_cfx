@@ -662,7 +662,7 @@ static int __init ssr_init_soc_restart_orders(void)
 		mutex_init(&restart_orders[i]->shutdown_lock);
 	}
 
-#ifndef CONFIG_MACH_APQ8064_FIND5
+#if !defined (CONFIG_MACH_APQ8064_FIND5) || !defined (CONFIG_MACH_N1)
 	if (restart_orders == NULL || n_restart_orders < 1) {
 		WARN_ON(1);
 	}
