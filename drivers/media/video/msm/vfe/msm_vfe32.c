@@ -5871,7 +5871,7 @@ static void axi32_do_tasklet(unsigned long data)
 				(void *)VFE_IMASK_WHILE_STOPPING_1);
 
 		if (atomic_read(&axi_ctrl->share_ctrl->handle_common_irq)) {
-#ifndef CONFIG_MACH_APQ8064_FIND5
+#ifndef CONFIG_MACH_N1
 			if ((qcmd->vfeInterruptStatus1 &
 				VFE32_IMASK_COMMON_ERROR_ONLY_1) &&
 				atomic_read(&recovery_active) != 1) {
@@ -6417,7 +6417,7 @@ static int msm_axi_subdev_s_crystal_freq(struct v4l2_subdev *sd,
 	if (axi_ctrl->share_ctrl->dual_enabled) {
 		CDBG("%s Dual camera Enabled hence returning "\
 			"without clock change\n", __func__);
-#ifndef CONFIG_MACH_APQ8064_FIND5
+#if !defined (CONFIG_MACH_APQ8064_FIND5) || !defined (CONFIG_MACH_N1)
 		return rc;
 #endif
 	}
