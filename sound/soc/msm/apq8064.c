@@ -1389,12 +1389,13 @@ static int msm_audrx_init(struct snd_soc_pcm_runtime *rtd)
 #if defined (CONFIG_MACH_APQ8064_FIND5) || defined (CONFIG_MACH_N1)
 	apq8064_hs_detect_use_gpio = 1;
 
-	/*OPPO 2013-10-23 zhzhyon Add for MICBIAS DC*/
+#ifdef CONFIG_MACH_N1
 	if(get_pcb_version() >= PCB_VERSION_EVT_N1)
 	{
 		mbhc_cfg.micbias_always_on = true;
 	}
-	/*OPPO 2013-10-23 zhzhyon Add end*/
+#endif
+
 #endif
 	if (apq8064_hs_detect_use_gpio == 1) 
 	{

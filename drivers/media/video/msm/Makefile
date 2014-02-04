@@ -8,7 +8,9 @@ ifeq ($(CONFIG_MSM_CAMERA_V4L2),y)
   EXTRA_CFLAGS += -Idrivers/media/video/msm/csi
   EXTRA_CFLAGS += -Idrivers/media/video/msm/eeprom
   EXTRA_CFLAGS += -Idrivers/media/video/msm/sensors
+ifeq ($(CONFIG_MACH_N1),y)
   EXTRA_CFLAGS += -Idrivers/media/video/msm/oppo
+endif
   EXTRA_CFLAGS += -Idrivers/media/video/msm/actuators
   EXTRA_CFLAGS += -Idrivers/media/video/msm/server
   obj-$(CONFIG_MSM_CAMERA) += msm_isp.o msm.o msm_mem.o msm_mctl.o msm_mctl_buf.o msm_mctl_pp.o
@@ -20,7 +22,9 @@ ifeq ($(CONFIG_MSM_CAMERA_V4L2),y)
 else
   obj-$(CONFIG_MSM_CAMERA) += msm_camera.o
 endif
+ifeq ($(CONFIG_MACH_N1),y)
 obj-$(CONFIG_MSM_CAMERA) += oppo/
+endif
 obj-$(CONFIG_MSM_CAMERA) += vfe/
 obj-$(CONFIG_MSM_CAMERA) += msm_axi_qos.o gemini/ mercury/ jpeg_10/
 obj-$(CONFIG_MSM_CAMERA_FLASH) += flash.o
@@ -59,4 +63,6 @@ obj-$(CONFIG_MT9D112) += mt9d112.o mt9d112_reg.o
 
 obj-$(CONFIG_MT9D113) += mt9d113.o mt9d113_reg.o
 obj-$(CONFIG_MSM_V4L2_VIDEO_OVERLAY_DEVICE) += msm_v4l2_video.o
+ifeq ($(CONFIG_MACH_N1),y)
 #obj-y += m9mo_v4l2.o
+endif
