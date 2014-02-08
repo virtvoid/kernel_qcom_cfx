@@ -552,6 +552,7 @@ _kgsl_sharedmem_page_alloc(struct kgsl_memdesc *memdesc,
 
 	sglen_alloc = PAGE_ALIGN(size) >> PAGE_SHIFT;
 
+	memdesc->size = size;
 	memdesc->pagetable = pagetable;
 	memdesc->ops = &kgsl_page_alloc_ops;
 
@@ -560,12 +561,7 @@ _kgsl_sharedmem_page_alloc(struct kgsl_memdesc *memdesc,
 
 	if (memdesc->sg == NULL) {
 		ret = -ENOMEM;
-#ifdef CONFIG_MACH_N1
 		goto done;
-#else
-		memset(memdesc, 0, sizeof(*memdesc));
-		return ret;
-#endif	
 	}
 
 	/*
@@ -576,25 +572,14 @@ _kgsl_sharedmem_page_alloc(struct kgsl_memdesc *memdesc,
 	 * get the memory we need.
 	 */
 
-#ifndef CONFIG_MACH_N1
 	if ((memdesc->sglen_alloc * sizeof(struct page *)) > PAGE_SIZE)
 		pages = vmalloc(memdesc->sglen_alloc * sizeof(struct page *));
 	else
 		pages = kmalloc(PAGE_SIZE, GFP_KERNEL);
-#else
-    pages = kmalloc(memdesc->sglen_alloc * sizeof(struct page *),
-                    GFP_KERNEL);
-#endif
 
 	if (pages == NULL) {
 		ret = -ENOMEM;
-#ifdef CONFIG_MACH_N1
 		goto done;
-#else
-		kgsl_sg_free(memdesc->sg, sglen_alloc);
-		memset(memdesc, 0, sizeof(*memdesc));
-		return ret;
-#endif
 	}
 
 	kmemleak_not_leak(memdesc->sg);
@@ -630,14 +615,6 @@ _kgsl_sharedmem_page_alloc(struct kgsl_memdesc *memdesc,
 				continue;
 			}
 
-			/*
-			 * Update sglen and memdesc size,as requested allocation
-			 * not served fully. So that they can be correctly freed
-			 * in kgsl_sharedmem_free().
-			 */
-			memdesc->sglen = sglen;
-			memdesc->size = (size - len);
-
 			KGSL_CORE_ERR(
 				"Out of memory: only allocated %dKB of %dKB requested\n",
 				(size - len) >> 10, size >> 10);
@@ -654,7 +631,6 @@ _kgsl_sharedmem_page_alloc(struct kgsl_memdesc *memdesc,
 	}
 
 	memdesc->sglen = sglen;
-	memdesc->size = size;
 
 	/*
 	 * All memory that goes to the user has to be zeroed out before it gets
@@ -695,23 +671,19 @@ _kgsl_sharedmem_page_alloc(struct kgsl_memdesc *memdesc,
 	outer_cache_range_op_sg(memdesc->sg, memdesc->sglen,
 				KGSL_CACHE_OP_FLUSH);
 
+	KGSL_STATS_ADD(size, kgsl_driver.stats.page_alloc,
+		kgsl_driver.stats.page_alloc_max);
+
 	order = get_order(size);
 
 	if (order < 16)
 		kgsl_driver.stats.histogram[order]++;
 
 done:
-	KGSL_STATS_ADD(memdesc->size, kgsl_driver.stats.page_alloc,
-		kgsl_driver.stats.page_alloc_max);
-
-#ifndef CONFIG_MACH_N1
 	if ((memdesc->sglen_alloc * sizeof(struct page *)) > PAGE_SIZE)
 		vfree(pages);
 	else
 		kfree(pages);
-#else
-	kfree(pages);
-#endif
 
 	if (ret)
 		kgsl_sharedmem_free(memdesc);
