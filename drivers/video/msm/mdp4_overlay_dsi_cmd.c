@@ -702,7 +702,6 @@ ssize_t mdp4_dsi_cmd_show_event(struct device *dev,
 	vctrl = &vsync_ctrl_db[0];
 	timestamp = vctrl->vsync_time;
 
-/* OPPO 2013-11-26 gousj Add begin for screen block */
 #ifdef CONFIG_MACH_N1
 	ret = wait_event_interruptible_timeout(vctrl->wait_queue,
 			!ktime_equal(timestamp, vctrl->vsync_time) &&
@@ -712,7 +711,6 @@ ssize_t mdp4_dsi_cmd_show_event(struct device *dev,
 			!ktime_equal(timestamp, vctrl->vsync_time) &&
 			vctrl->vsync_enabled);
 #endif
-/* OPPO 2013-11-26 gousj Add end */
 	
 	if (ret == -ERESTARTSYS)
 		return ret;

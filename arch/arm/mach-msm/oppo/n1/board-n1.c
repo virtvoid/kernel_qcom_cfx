@@ -2843,7 +2843,7 @@ struct gpio_keys_button vol_keys[] = {
 		.active_low        = 0,
 		.desc              = "volume_down_key",
 		.type              = EV_KEY,
-		.wakeup            = 0,
+		.wakeup            = 1,
 		.debounce_interval = 20,
 		.can_disable       = true,
 	},
@@ -2853,7 +2853,7 @@ struct gpio_keys_button vol_keys[] = {
 		.active_low        = 0,
 		.desc              = "volume_up_key",
 		.type              = EV_KEY,
-		.wakeup            = 0,
+		.wakeup            = 1,
 		.debounce_interval = 20,
 		.can_disable       = true,
 	},
@@ -2959,7 +2959,7 @@ static struct platform_device gpio_keys_device_n1 ={
 
 struct gpio_keys_button camera_rotate_keys[] = {
 	{
-		.code              = KEY_FLIP_CAMERA,
+		.code              = KEY_F1,
 		.gpio              = GPIO_KEY_MR1,
 		.active_low        = 1,
 		.desc              = "MRsensor_key1",
@@ -2969,7 +2969,7 @@ struct gpio_keys_button camera_rotate_keys[] = {
 		.can_disable       = true,
 	},
 	{
-		.code              = KEY_FLIP_CAMERA,
+		.code              = KEY_F1 ,
 		.gpio              = GPIO_KEY_MR2,
 		.active_low        = 1,
 		.desc              = "MRsensor_key2",

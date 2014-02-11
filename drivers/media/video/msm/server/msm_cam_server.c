@@ -1531,12 +1531,10 @@ static int msm_close_server(struct file *fp)
 	mutex_lock(&g_server_dev.server_lock);
 	if (g_server_dev.use_count > 0)
 		g_server_dev.use_count--;
-	/* OPPO 2013-11-15 liubin Add for avoid closing repeatly start */
 	else {
 		mutex_unlock(&g_server_dev.server_lock);
 		return 0;
 	}
-	/* OPPO 2013-11-15 liubin Add end */
 	mutex_unlock(&g_server_dev.server_lock);
 
 	if (g_server_dev.use_count == 0) {
@@ -1874,7 +1872,6 @@ static void msm_cam_server_subdev_notify(struct v4l2_subdev *sd,
 			rc = p_mctl->isp_notify(p_mctl,
 				p_mctl->vfe_sdev, notification, arg);
 #ifdef CONFIG_MACH_N1
-		/* OPPO 2013-07-29 lanhe Add for m9m0 caf start */
 		if(notification == NOTIFY_VFE_BUF_EVT)
 		{
 			struct sensor_cfg_data cfgarg;
@@ -1898,7 +1895,6 @@ static void msm_cam_server_subdev_notify(struct v4l2_subdev *sd,
 					VIDIOC_MSM_SENSOR_CFG, &cfgarg);
 			}
 		}
-		/* OPPO 2013-07-29 lanhe Add end */
 #endif
 		break;
 	case NOTIFY_VFE_IRQ:{

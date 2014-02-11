@@ -3327,7 +3327,6 @@ static int vfe32_proc_general(
 
 		vfe32_stop(vfe32_ctrl);
 		#if 1
-		/* OPPO 2013-10-02 lanhe Add for m9m0 silent monitor */
 		if(strcmp(pmctl->sdata->sensor_name,"m9mo") == 0)
 		{
 			struct sensor_cfg_data cfgarg;
@@ -3337,7 +3336,6 @@ static int vfe32_proc_general(
 				(unsigned long)(&cfgarg));
 			
 		}
-		/* OPPO 2013-07-29 lanhe Add end */
 		#endif
 		break;
 
