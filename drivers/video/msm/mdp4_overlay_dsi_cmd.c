@@ -269,7 +269,7 @@ static void mdp4_dsi_cmd_pipe_clean(struct vsync_update *vp)
 static void mdp4_dsi_cmd_blt_ov_update(struct mdp4_overlay_pipe *pipe);
 static int mdp4_dsi_cmd_clk_check(struct vsycn_ctrl *vctrl);
 
-int mdp4_dsi_cmd_pipe_commit(int cndx, int wait, u32 *release_busy)
+int mdp4_dsi_cmd_pipe_commit(int cndx, int wait)
 {
 	int  i, undx;
 	int mixer = 0;
@@ -415,17 +415,8 @@ int mdp4_dsi_cmd_pipe_commit(int cndx, int wait, u32 *release_busy)
 
 	mdp4_stat.overlay_commit[pipe->mixer_num]++;
 
-	if (wait) {
-		if (release_busy) {
-			msm_fb_release_busy(vctrl->mfd);
-			*release_busy = false;
-			mutex_unlock(&vctrl->mfd->dma->ov_mutex);
-		}
-		if (pipe->ov_blt_addr)
-			mdp4_dsi_cmd_wait4ov(0);
-		else
-			mdp4_dsi_cmd_wait4dmap(0);
-	}
+	if (wait)
+		mdp4_dsi_cmd_wait4vsync(0);
 
 	return cnt;
 }
@@ -702,18 +693,9 @@ ssize_t mdp4_dsi_cmd_show_event(struct device *dev,
 	vctrl = &vsync_ctrl_db[0];
 	timestamp = vctrl->vsync_time;
 
-/* OPPO 2013-11-26 gousj Add begin for screen block */
-#ifdef CONFIG_MACH_N1
-	ret = wait_event_interruptible_timeout(vctrl->wait_queue,
-			!ktime_equal(timestamp, vctrl->vsync_time) &&
-			vctrl->vsync_enabled,msecs_to_jiffies(VSYNC_PERIOD * 30));
-#else
 	ret = wait_event_interruptible(vctrl->wait_queue,
 			!ktime_equal(timestamp, vctrl->vsync_time) &&
 			vctrl->vsync_enabled);
-#endif
-/* OPPO 2013-11-26 gousj Add end */
-	
 	if (ret == -ERESTARTSYS)
 		return ret;
 
@@ -777,7 +759,8 @@ void mdp4_mipi_vsync_enable(struct msm_fb_data_type *mfd,
 	mdp_clk_ctrl(1);
 
 	data = inpdw(MDP_BASE + 0x20c);
-	if ((mfd->use_mdp_vsync) && (mfd->panel_info.lcd.vsync_enable)) {
+	if ((mfd->use_mdp_vsync) && (mfd->ibuf.vsync_enable) &&
+	    (mfd->panel_info.lcd.vsync_enable)) {
 		data |= tear_en;
 		/*
 		 * rdptr init and irq cannot be same due to h/w bug.
@@ -1268,7 +1251,7 @@ void mdp4_dsi_cmd_overlay(struct msm_fb_data_type *mfd)
 	}
 
 	mdp4_overlay_mdp_perf_upd(mfd, 1);
-	mdp4_dsi_cmd_pipe_commit(cndx, 1, NULL);
+	mdp4_dsi_cmd_pipe_commit(cndx, 0);
 	mdp4_overlay_mdp_perf_upd(mfd, 0);
 	mutex_unlock(&mfd->dma->ov_mutex);
 

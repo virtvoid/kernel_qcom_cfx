@@ -518,9 +518,6 @@ static void mdp4_dsi_video_tg_off(struct vsycn_ctrl *vctrl)
 	msleep(20);
 }
 
-#ifdef CONFIG_MACH_APQ8064_FIND5
-extern int mipi_dsi_panel_power(int on);
-#endif
 int mdp4_dsi_video_splash_done(void)
 {
 	struct vsycn_ctrl *vctrl;
@@ -529,9 +526,6 @@ int mdp4_dsi_video_splash_done(void)
 	vctrl = &vsync_ctrl_db[cndx];
 
 	mdp4_dsi_video_tg_off(vctrl);
-#ifdef CONFIG_MACH_APQ8064_FIND5
-	mipi_dsi_panel_power(0);
-#endif
 	mipi_dsi_controller_cfg(0);
 
 	return 0;

@@ -105,7 +105,6 @@ struct mdp4_overlay_ctrl {
 };
 
 static DEFINE_MUTEX(iommu_mutex);
-static DEFINE_MUTEX(perf_mutex);
 static struct mdp4_overlay_ctrl *ctrl = &mdp4_overlay_db;
 
 struct mdp4_overlay_perf {
@@ -122,8 +121,8 @@ struct mdp4_overlay_perf {
 
 };
 
-static struct mdp4_overlay_perf perf_request;
-static struct mdp4_overlay_perf perf_current;
+struct mdp4_overlay_perf perf_request;
+struct mdp4_overlay_perf perf_current;
 
 void  mdp4_overlay_free_base_pipe(struct msm_fb_data_type *mfd)
 {
@@ -1882,6 +1881,7 @@ void mdp4_mixer_stage_commit(int mixer)
 	mdp_clk_ctrl(0);
 }
 
+
 void mdp4_mixer_stage_up(struct mdp4_overlay_pipe *pipe, int commit)
 {
 	struct mdp4_overlay_pipe *pp;
@@ -2515,164 +2515,103 @@ static int mdp4_overlay_req2pipe(struct mdp_overlay *req, int mixer,
 		pr_err("%s: mfd == NULL, -ENODEV\n", __func__);
 		return -ENODEV;
 	}
-	
+
 	if (mixer >= MDP4_MIXER_MAX) {
-#ifdef CONFIG_MACH_APQ8064_FIND5
-		if (printk_ratelimit())	
-#endif
-			pr_err("%s: mixer out of range!\n", __func__);
+		pr_err("%s: mixer out of range!\n", __func__);
 		mdp4_stat.err_mixer++;
 		return -ERANGE;
 	}
 
 	if (req->z_order < 0 || req->z_order > 3) {
-#ifdef CONFIG_MACH_APQ8064_FIND5
-		if (printk_ratelimit())
-#endif
-			pr_err("%s: z_order=%d out of range!\n", __func__,
+		pr_err("%s: z_order=%d out of range!\n", __func__,
 				req->z_order);
 		mdp4_stat.err_zorder++;
 		return -ERANGE;
 	}
 
-#ifndef CONFIG_MACH_APQ8064_FIND5
 	if (req->src_rect.h > 0xFFF || req->src_rect.h < 2) {
 		pr_err("%s: src_h is out of range: 0X%x!\n",
 		       __func__, req->src_rect.h);
-#else
-	if (req->src_rect.h > 0xFFF) {
-		if (printk_ratelimit())	
-			pr_err("%s: src_h is out of range: 0X%x!\n",
-		       	__func__, req->src_rect.h);
-#endif
 		mdp4_stat.err_size++;
 		return -EINVAL;
 	}
 
-#ifndef CONFIG_MACH_APQ8064_FIND5
 	if (req->src_rect.w > 0xFFF || req->src_rect.w < 2) {
 		pr_err("%s: src_w is out of range: 0X%x!\n",
 		       __func__, req->src_rect.w);
-#else
-	if (req->src_rect.w > 0xFFF) {
-		if (printk_ratelimit())	
-			pr_err("%s: src_w is out of range: 0X%x!\n",
-		       	__func__, req->src_rect.w);
-#endif
 		mdp4_stat.err_size++;
 		return -EINVAL;
 	}
 
 	if (req->src_rect.x > 0xFFF) {
-#ifdef CONFIG_MACH_APQ8064_FIND5
-		if (printk_ratelimit())	
-#endif
-			pr_err("%s: src_x is out of range: 0X%x!\n",
-		       	__func__, req->src_rect.x);
+		pr_err("%s: src_x is out of range: 0X%x!\n",
+		       __func__, req->src_rect.x);
 		mdp4_stat.err_size++;
 		return -EINVAL;
 	}
 
 	if (req->src_rect.y > 0xFFF) {
-#ifdef CONFIG_MACH_APQ8064_FIND5
-		if (printk_ratelimit())	
-#endif
-			pr_err("%s: src_y is out of range: 0X%x!\n",
-		      		__func__, req->src_rect.y);
+		pr_err("%s: src_y is out of range: 0X%x!\n",
+		       __func__, req->src_rect.y);
 		mdp4_stat.err_size++;
 		return -EINVAL;
 	}
 
-#ifndef CONFIG_MACH_APQ8064_FIND5
 	if (req->dst_rect.h > 0xFFF || req->dst_rect.h < 2) {
 		pr_err("%s: dst_h is out of range: 0X%x!\n",
 		       __func__, req->dst_rect.h);
-#else
-	if (req->dst_rect.h > 0xFFF) {
-		if (printk_ratelimit())	
-			pr_err("%s: dst_h is out of range: 0X%x!\n",
-		       	__func__, req->dst_rect.h);
-#endif
 		mdp4_stat.err_size++;
 		return -EINVAL;
 	}
 
-#ifndef CONFIG_MACH_APQ8064_FIND5
 	if (req->dst_rect.w > 0xFFF || req->dst_rect.w < 2) {
 		pr_err("%s: dst_w is out of range: 0X%x!\n",
 		       __func__, req->dst_rect.w);
-#else
-	if (req->dst_rect.w > 0xFFF) {
-		if (printk_ratelimit())	
-			pr_err("%s: dst_w is out of range: 0X%x!\n",
-		       	__func__, req->dst_rect.w);
-#endif
 		mdp4_stat.err_size++;
 		return -EINVAL;
 	}
 
 	if (req->dst_rect.x > 0xFFF) {
-#ifdef CONFIG_MACH_APQ8064_FIND5
-		if (printk_ratelimit())
-#endif
-			pr_err("%s: dst_x is out of range: 0X%x!\n",
-		       	__func__, req->dst_rect.x);
+		pr_err("%s: dst_x is out of range: 0X%x!\n",
+		       __func__, req->dst_rect.x);
 		mdp4_stat.err_size++;
 		return -EINVAL;
 	}
 
 	if (req->dst_rect.y > 0xFFF) {
-#ifdef CONFIG_MACH_APQ8064_FIND5
-		if (printk_ratelimit())	
-#endif
-			pr_err("%s: dst_y is out of range: 0X%x!\n",
-		       	__func__, req->dst_rect.y);
+		pr_err("%s: dst_y is out of range: 0X%x!\n",
+		       __func__, req->dst_rect.y);
 		mdp4_stat.err_size++;
 		return -EINVAL;
 	}
 
 	if (req->src_rect.h == 0 || req->src_rect.w == 0) {
-#ifdef CONFIG_MACH_APQ8064_FIND5
-		if (printk_ratelimit())	
-#endif
-			pr_err("%s: src img of zero size!\n", __func__);
+		pr_err("%s: src img of zero size!\n", __func__);
 		mdp4_stat.err_size++;
 		return -EINVAL;
 	}
 
 	if (req->dst_rect.h > (req->src_rect.h * upscale_max)) {
 		mdp4_stat.err_scale++;
-#ifdef CONFIG_MACH_APQ8064_FIND5
-		if (printk_ratelimit())	
-#endif
-			pr_err("%s: scale up, too much (h)!\n", __func__);
+		pr_err("%s: scale up, too much (h)!\n", __func__);
 		return -ERANGE;
 	}
 
 	if (req->src_rect.h > (req->dst_rect.h * 8)) {	/* too little */
 		mdp4_stat.err_scale++;
-#ifdef CONFIG_MACH_APQ8064_FIND5
-		if (printk_ratelimit())	
-#endif
-			pr_err("%s: scale down, too little (h)!\n", __func__);
+		pr_err("%s: scale down, too little (h)!\n", __func__);
 		return -ERANGE;
 	}
 
 	if (req->dst_rect.w > (req->src_rect.w * upscale_max)) {
 		mdp4_stat.err_scale++;
-#ifdef CONFIG_MACH_APQ8064_FIND5
-		if (printk_ratelimit())	
-#endif
-			pr_err("%s: scale up, too much (w)!\n", __func__);
+		pr_err("%s: scale up, too much (w)!\n", __func__);
 		return -ERANGE;
 	}
 
 	if (req->src_rect.w > (req->dst_rect.w * 8)) {	/* too little */
 		mdp4_stat.err_scale++;
-#ifdef CONFIG_MACH_APQ8064_FIND5
-		if (printk_ratelimit())	
-#endif
-			pr_err("%s: scale down, too little (w)!\n", __func__);
+		pr_err("%s: scale down, too little (w)!\n", __func__);
 		return -ERANGE;
 	}
 
@@ -2979,9 +2918,7 @@ static int mdp4_calc_pipe_mdp_clk(struct msm_fb_data_type *mfd,
 				  struct mdp4_overlay_pipe *pipe)
 {
 	int ret = -EINVAL;
-#ifdef CONFIG_MACH_APQ8064_FIND5
-	u32 shift = 16;
-#endif
+
 	if (!pipe) {
 		pr_err("%s: pipe is null!\n", __func__);
 		return ret;
@@ -3012,9 +2949,7 @@ static int mdp4_calc_pipe_mdp_clk(struct msm_fb_data_type *mfd,
 
 	pr_debug("%s: required mdp clk %d mixer %d pipe ndx %d\n",
 		 __func__, pipe->req_clk, pipe->mixer_num, pipe->pipe_ndx);
-#ifdef CONFIG_MACH_APQ8064_FIND5
-	pipe->req_clk = (((pipe->req_clk) >> shift) * 23 / 20) << shift;
-#endif
+
 	return 0;
 }
 
@@ -3082,7 +3017,7 @@ int mdp4_calc_blt_mdp_bw(struct msm_fb_data_type *mfd,
 		pr_err("%s: mfd is null!\n", __func__);
 		return ret;
 	}
-	mutex_lock(&perf_mutex);
+
 	bpp = BLT_BPP;
 	fps = mdp_get_panel_framerate(mfd);
 
@@ -3107,7 +3042,6 @@ int mdp4_calc_blt_mdp_bw(struct msm_fb_data_type *mfd,
 		 perf_req->mdp_ov_ab_bw[pipe->mixer_num],
 		 perf_req->mdp_ov_ib_bw[pipe->mixer_num]);
 
-	mutex_unlock(&perf_mutex);
 	return 0;
 }
 
@@ -3186,7 +3120,6 @@ int mdp4_overlay_mdp_perf_req(struct msm_fb_data_type *mfd)
 		return ret;
 	}
 
-	mutex_lock(&perf_mutex);
 	pipe = ctrl->plist;
 
 	for (i = 0; i < MDP4_MIXER_MAX; i++)
@@ -3194,10 +3127,8 @@ int mdp4_overlay_mdp_perf_req(struct msm_fb_data_type *mfd)
 
 	for (i = 0; i < OVERLAY_PIPE_MAX; i++, pipe++) {
 
-		if (!pipe) {
-			mutex_unlock(&perf_mutex);
+		if (!pipe)
 			return ret;
-		}
 
 		if (!pipe->pipe_used)
 			continue;
@@ -3206,13 +3137,8 @@ int mdp4_overlay_mdp_perf_req(struct msm_fb_data_type *mfd)
 			worst_mdp_clk = pipe->req_clk;
 
 		if (pipe->req_clk > mdp_max_clk)
-		{
-#ifdef CONFIG_MACH_APQ8064_FIND5
-			pipe->req_clk = mdp_max_clk;
-#else
 			perf_req->use_ov_blt[pipe->mixer_num] = 1;
-#endif
-		}
+
 		if (pipe->mixer_num == MDP4_MIXER2)
 			perf_req->use_ov_blt[MDP4_MIXER2] = 1;
 
@@ -3323,7 +3249,6 @@ int mdp4_overlay_mdp_perf_req(struct msm_fb_data_type *mfd)
 		 perf_req->use_ov_blt[0],
 		 perf_req->use_ov_blt[1]);
 
-	mutex_unlock(&perf_mutex);
 	return 0;
 }
 
@@ -3357,7 +3282,6 @@ void mdp4_overlay_mdp_perf_upd(struct msm_fb_data_type *mfd,
 		 perf_cur->mdp_clk_rate,
 		 flag);
 
-	mutex_lock(&perf_mutex);
 	if (!mdp4_extn_disp)
 		perf_cur->use_ov_blt[1] = 0;
 
@@ -3458,8 +3382,6 @@ void mdp4_overlay_mdp_perf_upd(struct msm_fb_data_type *mfd,
 			perf_cur->use_ov_blt[0] = perf_req->use_ov_blt[0];
 		}
 	}
-
-	mutex_unlock(&perf_mutex);
 	return;
 }
 
@@ -3621,10 +3543,7 @@ int mdp4_overlay_set(struct fb_info *info, struct mdp_overlay *req)
 
 	if (ret < 0) {
 		mutex_unlock(&mfd->dma->ov_mutex);
-#ifdef CONFIG_MACH_APQ8064_FIND5		
-		if (printk_ratelimit())	
-#endif	
-			pr_err("%s: mdp4_overlay_req2pipe, ret=%d\n", __func__, ret);
+		pr_err("%s: mdp4_overlay_req2pipe, ret=%d\n", __func__, ret);
 		return ret;
 	}
 
@@ -4040,29 +3959,27 @@ end:
 
 int mdp4_overlay_commit(struct fb_info *info)
 {
-	int ret = 0, release_busy = true;
+	int ret = 0;
 	struct msm_fb_data_type *mfd = (struct msm_fb_data_type *)info->par;
 	int mixer;
 
-	if (mfd == NULL) {
-		ret = -ENODEV;
-		goto mdp4_overlay_commit_exit;
-	}
+	if (mfd == NULL)
+		return -ENODEV;
 
-	if (!mfd->panel_power_on) {
-		ret = -EINVAL;
-		goto mdp4_overlay_commit_exit;
-	}
+	if (!mfd->panel_power_on) /* suspended */
+		return -EINVAL;
 
 	mixer = mfd->panel_info.pdest;	/* DISPLAY_1 or DISPLAY_2 */
 
 	mutex_lock(&mfd->dma->ov_mutex);
 
+	mdp4_overlay_mdp_perf_upd(mfd, 1);
+
 	msm_fb_wait_for_fence(mfd);
 
 	switch (mfd->panel.type) {
 	case MIPI_CMD_PANEL:
-		mdp4_dsi_cmd_pipe_commit(0, 1, &release_busy);
+		mdp4_dsi_cmd_pipe_commit(0, 1);
 		break;
 	case MIPI_VIDEO_PANEL:
 		mdp4_dsi_video_pipe_commit(0, 1);
@@ -4084,19 +4001,11 @@ int mdp4_overlay_commit(struct fb_info *info)
 	}
 	msm_fb_signal_timeline(mfd);
 
-	mdp4_unmap_sec_resource(mfd);
-	if (release_busy)
-		mutex_unlock(&mfd->dma->ov_mutex);
-mdp4_overlay_commit_exit:
-	if (release_busy)
-		msm_fb_release_busy(mfd);
-	return ret;
-}
-
-void mdp4_overlay_commit_finish(struct fb_info *info)
-{
-	struct msm_fb_data_type *mfd = (struct msm_fb_data_type *)info->par;
 	mdp4_overlay_mdp_perf_upd(mfd, 0);
+	mdp4_unmap_sec_resource(mfd);
+	mutex_unlock(&mfd->dma->ov_mutex);
+
+	return ret;
 }
 
 struct msm_iommu_ctx {
