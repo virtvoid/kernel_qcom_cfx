@@ -27,7 +27,6 @@
 ** <author>		                      <data> 	<version >  <desc>
 ** ------------------------------------------------------------------------------
 ** LiuJun@OnlineRD.Driver.TouchScreen  2012/11/14   1.0	    create file
-** ranfei@OnlineRD.Driver.TouchScreen  2013/12/09   2.0	    add the gestrue 2.0
 ** ------------------------------------------------------------------------------
 ** 
 ************************************************************************************/
@@ -49,15 +48,14 @@
 #include <asm/uaccess.h>
 #include <linux/syscalls.h>
 #include <linux/wakelock.h>
-#include <linux/pcb_version.h>   //add by yubin,oppo
+#include <linux/pcb_version.h>
 #ifdef CONFIG_MACH_N1
 #include <mach/device_info.h>
 #endif
 
-
 /******************* tp function switch **************************/
 #define TP_UPDATE_FIRMWARE  1
-#define SUPPORT_DOUBLE_TAP
+#define SUPPORT_DOUBLE_TAP  1
 //#define SUPPORT_GLOVES_MODE  //ranfei modify for PVT
 /*****************************************************************/
 
@@ -82,34 +80,6 @@ extern int display_rle_file(char *filename);
 #define MASK_1BIT		0x01
 #define MAX_RETRY_COUNT		2
 
-#ifdef SUPPORT_DOUBLE_TAP
-#define ENABLE_UNICODE  0x40
-#define ENABLE_VEE      0x20
-#define ENABLE_CIRCLE   0x08
-#define ENABLE_SWIPE    0x02
-#define ENABLE_DTAP     0x01
-
-#define UNICODE_DETECT  0x40
-#define VEE_DETECT      0x20
-#define CIRCLE_DETECT   0x08
-#define SWIPE_DETECT    0x02
-#define DTAP_DETECT     0x01
-
-#define UnkownGestrue       0
-#define DouTap              1   // double tap
-#define UpVee               2   // V
-#define DownVee             3   // ^
-#define LeftVee             4   // >
-#define RightVee            5   // <
-#define Circle              6   // O
-#define DouSwip             7   // ||
-#define Left2RightSwip      8   // -->
-#define Right2LeftSwip      9   // <--
-#define Up2DownSwip         10  // |v
-#define Down2UpSwip         11  // |^
-#define Mgestrue            12  // M
-#define Wgestrue            13  // W
-#endif
 /*************** tp register definition **************************/
 //#define REG_MAP_START	0x00DD
 //#define REG_MAP_END		0x00EF
@@ -176,12 +146,9 @@ extern int display_rle_file(char *filename);
 #define F54_CTRL_02_00	(F54_CTRL_BASE_ADDR + 2)
 #define F54_CTRL_02_01	(F54_CTRL_BASE_ADDR + 3)
 
-#define F51_CUSTOM_DATA02 0x400
-
 #ifdef SUPPORT_GLOVES_MODE
 #define F51_CUSTOM_CTRL03  0x400
 #endif 
-
 /*****************************************************************/
 /*************** log definition **********************************/
 #define TS_ERROR   1
@@ -208,6 +175,7 @@ static int syna_log_level = TS_INFO;
 #define TP_CMD_FORCE_UPDATE	90
 #define TP_CMD_UPDATE_FROM_FILE	91
 /*****************************************************************/
+/* OPPO 2013-09-22 ranfei Add begin for 增加对启动模式的识别 */
 #ifdef CONFIG_MACH_N1
 extern int get_boot_mode(void);
 enum{
@@ -220,6 +188,7 @@ enum{
 	MSM_BOOT_MODE__CHARGE,
 };
 #endif
+/* OPPO 2013-09-22 ranfei Add end */
 
 /* Filter the first point, added by Eric for solve the bug: click action will change to glide action */
 static int input_point_num = 0;
@@ -233,11 +202,6 @@ struct synaptics_rmi4_fn_desc {
 	unsigned short	data_base_addr;
 	unsigned char	intr_src_count;
 	unsigned char	fn_number;
-};
-
-struct Coordinate {
-    uint32_t x;
-    uint32_t y;
 };
 
 struct synaptics_ts_data {
@@ -282,21 +246,16 @@ struct synaptics_ts_data {
 	struct synaptics_rmi4_fn_desc fn11_desc;
 	struct synaptics_rmi4_fn_desc fn34_desc;
 	struct synaptics_rmi4_fn_desc fn54_desc;
-#ifdef SUPPORT_DOUBLE_TAP
+#if SUPPORT_DOUBLE_TAP
 	atomic_t double_tap_number;
-	atomic_t double_tap_enable;        
+	atomic_t double_tap_enable;
+    atomic_t flashlight_enable;         
+    atomic_t camera_enable;        
+    atomic_t music_enable;          
 	wait_queue_head_t  wait_i2c_ready;
 	int i2c_ready;
 	struct wake_lock        double_wake_lock;
 	struct early_suspend early_suspend_power;
-    uint32_t gesture;
-    struct Coordinate Point_start;
-    struct Coordinate Point_end;
-    struct Coordinate Point_1st;
-    struct Coordinate Point_2nd;
-    struct Coordinate Point_3rd;
-    struct Coordinate Point_4th;
-    uint32_t  clockwise;
 #endif
 #ifdef SUPPORT_GLOVES_MODE
     atomic_t glove_mode_enable;
@@ -309,7 +268,7 @@ static DEFINE_SEMAPHORE(synaptics_sem);
 #ifdef CONFIG_HAS_EARLYSUSPEND
 static void synaptics_ts_early_suspend(struct early_suspend *h);
 static void synaptics_ts_late_resume(struct early_suspend *h);
-#ifdef SUPPORT_DOUBLE_TAP
+#if SUPPORT_DOUBLE_TAP
 static void synaptics_ts_late_resume_power(struct early_suspend *h);
 #endif
 #endif
@@ -669,7 +628,7 @@ static ssize_t synaptics_attr_vendor_show(struct device *dev,
 {
 	return sprintf(buf, "%d\n", syna_ts_data->vendor_id); 
 }
-#ifdef SUPPORT_DOUBLE_TAP
+#if SUPPORT_DOUBLE_TAP
 static ssize_t synaptics_attr_doubletap_count_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
@@ -715,7 +674,7 @@ static DEVICE_ATTR(info, S_IRUGO, synaptics_attr_basic_info_show, NULL);
 static DEVICE_ATTR(baseline_test, S_IRUGO, tp_test_show, NULL);
 static DEVICE_ATTR(test_max_error, S_IRUGO|S_IWUSR, synaptics_attr_errorlimit_show, synaptics_attr_errorlimit_store);
 static DEVICE_ATTR(vendor_id, S_IRUGO, synaptics_attr_vendor_show, NULL);
-#ifdef SUPPORT_DOUBLE_TAP	
+#if SUPPORT_DOUBLE_TAP	
 static DEVICE_ATTR(double_tap_counter, S_IRUGO|S_IWUSR, synaptics_attr_doubletap_count_show, synaptics_attr_doubletap_count_store);
 static DEVICE_ATTR(double_tap_enable, S_IRUGO|S_IWUSR, synaptics_attr_doubletap_enable_show, synaptics_attr_doubletap_enable_store);
 #endif
@@ -727,7 +686,7 @@ static struct attribute * attr_debug_interfaces[] = {
 	&dev_attr_report_mode.attr,
 	&dev_attr_info.attr,
 	&dev_attr_test_max_error.attr,
-#ifdef SUPPORT_DOUBLE_TAP
+#if SUPPORT_DOUBLE_TAP
 	&dev_attr_double_tap_counter.attr,
 	&dev_attr_double_tap_enable.attr,
 #endif
@@ -1267,19 +1226,18 @@ static void synaptics_ts_work_func(struct work_struct *work)
 	uint8_t buf_status[2];
 	struct i2c_msg msg[2];
 	uint8_t data_start_addr = ts->fn11_desc.data_base_addr & MASK_8BIT;
-#ifdef SUPPORT_DOUBLE_TAP	
+#if SUPPORT_DOUBLE_TAP	
 	unsigned char double_tap = 0;
-    unsigned char regswipe = 0;
-    unsigned char state[10] = {0};
-    unsigned char point[25] = {0};
+    unsigned char state[7] = {0};
 #endif
 
 	//printk("[SYNAPTICS]%s enter.\n", __func__);
 	down(&synaptics_sem);
-#ifdef SUPPORT_DOUBLE_TAP
+#if SUPPORT_DOUBLE_TAP
 	if (ts->is_tp_suspended)
 	{
-		if (1 == atomic_read(&ts->double_tap_enable)) {
+		if ((1 == atomic_read(&ts->double_tap_enable)) || (1 == atomic_read(&ts->flashlight_enable)) ||
+            (1 == atomic_read(&ts->camera_enable)) ||(1 == atomic_read(&ts->music_enable))) {
 			ret= wait_event_timeout(ts->wait_i2c_ready,
 					ts->i2c_ready,
 					msecs_to_jiffies(1000));
@@ -1308,8 +1266,11 @@ static void synaptics_ts_work_func(struct work_struct *work)
 			 /*检测到I2C错误，硬复位I2C总线以及总线上的所有设备*/
 			print_ts(TS_WARNING, "synaptics tp do hardware reset forced\n");
 			synaptics_hardware_reset(ts);
-#ifdef SUPPORT_DOUBLE_TAP
-			if (ts->is_tp_suspended	&& atomic_read(&ts->double_tap_enable)) {
+/* OPPO 2013-05-02 huanggd Add begin for double tap*/			
+#if SUPPORT_DOUBLE_TAP
+			if (ts->is_tp_suspended
+				&&((atomic_read(&ts->double_tap_enable)) || (atomic_read(&ts->flashlight_enable)) ||
+				   (atomic_read(&ts->camera_enable)) || (atomic_read(&ts->music_enable)))) {
 
 				synaptics_set_int_mask(ts, 0);
 				synaptics_set_report_mode(ts, 0x04);
@@ -1318,6 +1279,7 @@ static void synaptics_ts_work_func(struct work_struct *work)
 				synaptics_i2c_byte_write(ts, F01_CTRL_DEVICE_CONTROL, 0x80);
 			}
 #endif
+/* OPPO 2013-05-02 huanggd Add end*/			
 		}
 		/*必须在此处退出work，否则有可能进入下面的synaptics_software_reset()，并清need_hardware_reset，无法硬复位*/
 		goto work_func_end;
@@ -1327,6 +1289,7 @@ static void synaptics_ts_work_func(struct work_struct *work)
 	{
 		if(buf_status[0] != 0)
 		{
+/* OPPO 2013-08-16 huanggd Modify begin for softreset is no use when sometimes tp error*/		
 #if 0
 			print_ts(TS_WARNING, "TP interrupt register status unnormal , software reset !\n");
 			synaptics_software_reset(ts);
@@ -1334,8 +1297,12 @@ static void synaptics_ts_work_func(struct work_struct *work)
 			print_ts(TS_WARNING, "TP interrupt register status unnormal , hardware reset !\n");
 			synaptics_hardware_reset(ts);			
 #endif
-#ifdef SUPPORT_DOUBLE_TAP
-			if (ts->is_tp_suspended && atomic_read(&ts->double_tap_enable)) {
+/* OPPO 2013-08-16 huanggd Modify end*/				
+/* OPPO 2013-05-02 huanggd Add begin for double tap*/			
+#if SUPPORT_DOUBLE_TAP
+			if (ts->is_tp_suspended
+				&&((atomic_read(&ts->double_tap_enable)) || (atomic_read(&ts->flashlight_enable)) ||
+				   (atomic_read(&ts->camera_enable)) || (atomic_read(&ts->music_enable)))) {
 
 				print_ts(TS_WARNING, "reinit double tp after hardware reset !\n");
 				synaptics_set_int_mask(ts, 0);
@@ -1345,6 +1312,7 @@ static void synaptics_ts_work_func(struct work_struct *work)
 				synaptics_i2c_byte_write(ts, F01_CTRL_DEVICE_CONTROL, 0x80);
 			}
 #endif
+/* OPPO 2013-05-02 huanggd Add end*/
 		} 
 	}
 	else if (buf_status[1] & 0x04) /*0x04: Abs0 bit*/
@@ -1416,95 +1384,84 @@ static void synaptics_ts_work_func(struct work_struct *work)
 
 			input_sync(ts->input_dev);
 
-#ifdef SUPPORT_DOUBLE_TAP
-            if(ts->is_tp_suspended && atomic_read(&ts->double_tap_enable)) {
+#if SUPPORT_DOUBLE_TAP
+            if(ts->is_tp_suspended && (atomic_read(&ts->double_tap_enable) || atomic_read(&ts->flashlight_enable) ||
+                                       atomic_read(&ts->camera_enable) || atomic_read(&ts->music_enable))) {
                 synaptics_i2c_block_read(ts, F11_DATA_LPWG_STATUS, 1, &double_tap);                
-                synaptics_i2c_block_read(ts, F11_DATA_LPWG_STATUS + 1, 10, state);
-                synaptics_i2c_block_read(ts, F51_CUSTOM_DATA02 + 0x18, 1, &regswipe);
 		        print_ts(TS_DEBUG, KERN_INFO "%d, [read reg: 0x%x] get LPWG Status value = 0x%x \n", __LINE__, F11_DATA_LPWG_STATUS, double_tap);
-
-                //detect the gesture mode
-                switch (double_tap) {
-                case DTAP_DETECT:
-                    ts->gesture = DouTap;
-                    atomic_inc(&ts->double_tap_number);
-                    break;
-                case SWIPE_DETECT:
-                    ts->gesture = (regswipe == 0x41) ? Left2RightSwip   :
-                                  (regswipe == 0x42) ? Right2LeftSwip   :
-                                  (regswipe == 0x44) ? Up2DownSwip      :
-                                  (regswipe == 0x48) ? Down2UpSwip      :
-                                  (regswipe == 0x80) ? DouSwip          :
-                                  UnkownGestrue;
-                    break;
-                case CIRCLE_DETECT:
-                    ts->gesture = Circle;
-                    break;
-                case VEE_DETECT:
-                    ts->gesture = (state[6] == 0x01) ? DownVee  :
-                                  (state[6] == 0x02) ? UpVee    :
-                                  (state[6] == 0x04) ? RightVee :
-                                  (state[6] == 0x08) ? LeftVee  : 
-                                  UnkownGestrue;
-                    break;
-                case UNICODE_DETECT:
-                    ts->gesture = (state[8] == 0x77) ? Wgestrue :
-                                  (state[8] == 0x6d) ? Mgestrue :
-                                  UnkownGestrue;
-			    }
-
-                // read the coordinate
-                synaptics_i2c_block_read(ts, F51_CUSTOM_DATA02, 25, point);
-                ts->Point_start.x = (point[0] | (point[1] << 8)) * 1080 / (ts->max[0] - ts->snap_left - ts->snap_right);
-                ts->Point_start.y = (point[2] | (point[3] << 8)) * 1920 / (ts->max[1] - ts->snap_top - ts->virtual_key_height);
-                ts->Point_end.x   = (point[4] | (point[5] << 8)) * 1080 / (ts->max[0] - ts->snap_left - ts->snap_right);
-                ts->Point_end.y   = (point[6] | (point[7] << 8)) * 1920 / (ts->max[1] - ts->snap_top - ts->virtual_key_height);
-                ts->Point_1st.x   = (point[8] | (point[9] << 8)) * 1080 / (ts->max[0] - ts->snap_left - ts->snap_right);
-                ts->Point_1st.y   = (point[10] | (point[11] << 8)) * 1920 / (ts->max[1] - ts->snap_top - ts->virtual_key_height);
-                ts->Point_2nd.x   = (point[12] | (point[13] << 8)) * 1080 / (ts->max[0] - ts->snap_left - ts->snap_right);
-                ts->Point_2nd.y   = (point[14] | (point[15] << 8)) * 1920 / (ts->max[1] - ts->snap_top - ts->virtual_key_height);
-                ts->Point_3rd.x   = (point[16] | (point[17] << 8)) * 1080 / (ts->max[0] - ts->snap_left - ts->snap_right);
-                ts->Point_3rd.y   = (point[18] | (point[19] << 8)) * 1920 / (ts->max[1] - ts->snap_top - ts->virtual_key_height);
-                ts->Point_4th.x   = (point[20] | (point[21] << 8)) * 1080 / (ts->max[0] - ts->snap_left - ts->snap_right);
-                ts->Point_4th.y   = (point[22] | (point[23] << 8)) * 1920 / (ts->max[1] - ts->snap_top - ts->virtual_key_height);
-                ts->clockwise     = (point[24] & 0x10) ? 1 : 
-                                    (point[24] & 0x20) ? 0 : 2; // 1--clockwise, 0--anticlockwise, not circle, report 2
-
-                if(ts->gesture == Up2DownSwip){
-                    //if the length less than 6cm, do not report;
-                    ts->gesture = (ts->Point_end.y - ts->Point_start.y) > 800 ? Up2DownSwip : UnkownGestrue;
-                }
-                if(ts->gesture == Down2UpSwip){
-                    //if the length less than 6cm, do not report;
-                    ts->gesture = (ts->Point_start.y - ts->Point_end.y) > 800 ? Down2UpSwip : UnkownGestrue;
-                }
-                if(ts->gesture == DouSwip){
-                    //if the length less than 6cm, do not report;
-                    ts->gesture = (ts->Point_end.y - ts->Point_start.y) > 800 ? DouSwip : UnkownGestrue;
-                }
-
-                printk(KERN_INFO "detect %s gesture\n", ts->gesture == DouTap ? "double tap" :
-                                                        ts->gesture == UpVee ? "up vee" :
-                                                        ts->gesture == DownVee ? "down vee" :
-                                                        ts->gesture == LeftVee ? "(>)" :
-                                                        ts->gesture == RightVee ? "(<)" :
-                                                        ts->gesture == Circle ? "circle" :
-                                                        ts->gesture == DouSwip ? "(||)" :
-                                                        ts->gesture == Left2RightSwip ? "(-->)" :
-                                                        ts->gesture == Right2LeftSwip ? "(<--)" :
-                                                        ts->gesture == Up2DownSwip ? "up to down |" :
-                                                        ts->gesture == Down2UpSwip ? "down to up |" :
-                                                        ts->gesture == Mgestrue ? "(M)" :
-                                                        ts->gesture == Wgestrue ? "(W)" : "unknown");
-                
-                //report Key to notify
-                if(ts->gesture != UnkownGestrue){
-                    input_report_key(ts->input_dev, KEY_F4, 1);
-                    input_sync(ts->input_dev);
-                    input_report_key(ts->input_dev, KEY_F4, 0);
-                    input_sync(ts->input_dev);
-                }
+                synaptics_i2c_block_read(ts, F11_DATA_LPWG_STATUS + 1, 7, state);
+			    print_ts(TS_DEBUG, KERN_INFO "%d, [read reg: 0x%x] get LPWG Status value = 0x%x \n", __LINE__, F11_DATA_LPWG_STATUS + 1, state[6]);
             }
+
+			if (ts->is_tp_suspended && 1 == atomic_read(&ts->double_tap_enable))
+			{
+				if (double_tap & 0x01)
+				{
+					print_ts(TS_INFO, KERN_INFO "double tap the tp\n");
+					input_report_key(ts->input_dev, KEY_POWER, 1);
+					input_sync(ts->input_dev);
+					input_report_key(ts->input_dev, KEY_POWER, 0);
+					input_sync(ts->input_dev);
+					atomic_inc(&ts->double_tap_number);
+				}
+			}
+/* OPPO 2013-08-16 ranfei Add begin for reason */
+            if (ts->is_tp_suspended && 1 == atomic_read(&ts->camera_enable))
+			{
+                if (double_tap & 0x08)
+				{
+					print_ts(TS_INFO, KERN_INFO "draw a circle\n");
+					input_report_key(ts->input_dev, KEY_GESTURE_CIRCLE, 1);
+					input_sync(ts->input_dev);
+					input_report_key(ts->input_dev, KEY_GESTURE_CIRCLE, 0);
+					input_sync(ts->input_dev);
+				}
+            }
+            if (ts->is_tp_suspended && 1 == atomic_read(&ts->music_enable))
+			{
+                if (double_tap & 0x02)
+				{
+					print_ts(TS_INFO, KERN_INFO "draw || gesture\n");
+					input_report_key(ts->input_dev, KEY_GESTURE_SWIPE_DOWN, 1);
+					input_sync(ts->input_dev);
+					input_report_key(ts->input_dev, KEY_GESTURE_SWIPE_DOWN, 0);
+					input_sync(ts->input_dev);
+				}
+            }
+            if (ts->is_tp_suspended && 1 == atomic_read(&ts->flashlight_enable))
+			{
+                if ((double_tap & 0x20) && (state[6] & 0x02))
+				{
+					print_ts(TS_INFO, KERN_INFO "draw a V gesture\n");
+					input_report_key(ts->input_dev, KEY_GESTURE_V, 1);
+					input_sync(ts->input_dev);
+					input_report_key(ts->input_dev, KEY_GESTURE_V, 0);
+					input_sync(ts->input_dev);
+				}
+            }
+            if (ts->is_tp_suspended && 1 == atomic_read(&ts->music_enable))
+			{
+                if ((double_tap & 0x20) && (state[6] & 0x04))
+				{
+					print_ts(TS_INFO, KERN_INFO "draw a < gesture\n");
+					input_report_key(ts->input_dev, KEY_GESTURE_LTR, 1);
+					input_sync(ts->input_dev);
+					input_report_key(ts->input_dev, KEY_GESTURE_LTR, 0);
+					input_sync(ts->input_dev);
+				}
+            }
+            if (ts->is_tp_suspended && 1 == atomic_read(&ts->music_enable))
+			{
+                if ((double_tap & 0x20) && (state[6] & 0x08))
+				{
+					print_ts(TS_INFO, KERN_INFO "draw a > gesture\n");
+					input_report_key(ts->input_dev, KEY_GESTURE_GTR, 1);
+					input_sync(ts->input_dev);
+					input_report_key(ts->input_dev, KEY_GESTURE_GTR, 0);
+					input_sync(ts->input_dev);
+				}
+			}
+/* OPPO 2013-08-16 ranfei Add end */
 #endif
 		}
 	}
@@ -1514,8 +1471,10 @@ work_func_end:
 	
 	if (ts->use_irq)
 		enable_irq(ts->client->irq);
-#ifdef SUPPORT_DOUBLE_TAP	
-	if (ts->is_tp_suspended && atomic_read(&ts->double_tap_enable)) {
+/* OPPO 2013-05-02 huanggd Add begin for double tap*/	
+#if SUPPORT_DOUBLE_TAP	
+	if (ts->is_tp_suspended && (atomic_read(&ts->double_tap_enable) || atomic_read(&ts->flashlight_enable) ||
+                                atomic_read(&ts->camera_enable) || atomic_read(&ts->music_enable))) {
 
 		if (double_tap)
 			wake_lock_timeout(&ts->double_wake_lock, HZ);
@@ -1524,6 +1483,7 @@ work_func_end:
 	}
 	
 #endif	
+/* OPPO 2013-05-02 huanggd Add end*/
 
 	up(&synaptics_sem);
 }
@@ -1546,12 +1506,16 @@ static irqreturn_t synaptics_ts_irq_handler(int irq, void *dev_id)
 	/* printk("synaptics_ts_irq_handler\n"); */
 	disable_irq_nosync(ts->client->irq);
 	queue_work(synaptics_wq, &ts->work);
-#ifdef SUPPORT_DOUBLE_TAP	
-	if (ts->is_tp_suspended	&& atomic_read(&ts->double_tap_enable)) {
+/* OPPO 2013-05-02 huanggd Add begin for double tap*/	
+#if SUPPORT_DOUBLE_TAP	
+	if (ts->is_tp_suspended
+		&& (atomic_read(&ts->double_tap_enable) || atomic_read(&ts->flashlight_enable) ||
+		    atomic_read(&ts->camera_enable) || atomic_read(&ts->music_enable))) {
 		wake_lock_timeout(&ts->double_wake_lock, HZ);
 		//print_ts(TS_DEBUG, KERN_INFO "[%s]  \n", __func__);
 	}
 #endif
+/* OPPO 2013-05-02 huanggd Add end*/
 	return IRQ_HANDLED;
 }
 
@@ -1747,7 +1711,7 @@ static ssize_t synaptics_proc_write( struct file *filp, const char __user *buff,
 	return len;
 }
 
-#ifdef SUPPORT_DOUBLE_TAP
+#if SUPPORT_DOUBLE_TAP
 #define BUFFER_LEN (10)
 static int double_tap_counter_proc_write( struct file *filp, const char __user *buff,
                         unsigned long len, void *data )
@@ -1793,17 +1757,20 @@ static int double_tap_enable_proc_write( struct file *filp, const char __user *b
 	
 	if (ts->is_tp_suspended == 0) {   //almost do this
         if ((val == 1) && atomic_read(&ts->double_tap_enable) == 0) {
-            buffer = ENABLE_DTAP | ENABLE_SWIPE | ENABLE_CIRCLE | ENABLE_VEE | ENABLE_UNICODE;
+            synaptics_i2c_block_read(ts, F11_2D_CTRL92_00_00, 1, &buffer);
+            buffer |= 0x01;
 		    synaptics_i2c_byte_write(ts, F11_2D_CTRL92_00_00, buffer);
-            atomic_set(&ts->double_tap_enable, val);
-
-            printk(KERN_INFO "%s: set gesture mode enable\n", __func__);
+            printk(KERN_INFO "[%d]----write reg[0x%x] is 0x%x\n", __LINE__, F11_2D_CTRL92_00_00, buffer);
+		    atomic_set(&ts->double_tap_enable, val);
+        
+		    printk(KERN_INFO "%s: set double tap mode enable \n", __func__);
 	    } else if ((val == 0) && atomic_read(&ts->double_tap_enable) == 1) {
-            buffer = 0x00;
+            synaptics_i2c_block_read(ts, F11_2D_CTRL92_00_00, 1, &buffer);
+            buffer &= 0xFE;
             synaptics_i2c_byte_write(ts, F11_2D_CTRL92_00_00, buffer);
 		    atomic_set(&ts->double_tap_enable, val);
 
-		    printk(KERN_INFO"%s: set gesture mode disable\n", __func__);
+		    printk(KERN_INFO"%s: set double tap mode disable\n", __func__);
 	    }
 	} else {
 		if ((val == 1) && atomic_read(&ts->double_tap_enable) == 0) {
@@ -1821,32 +1788,55 @@ static int double_tap_enable_proc_write( struct file *filp, const char __user *b
 			synaptics_set_int_mask(ts, 1);
 			synaptics_i2c_byte_write(ts, F01_CTRL_DEVICE_CONTROL, 0x80);
             
-            buffer = ENABLE_DTAP | ENABLE_SWIPE | ENABLE_CIRCLE | ENABLE_VEE | ENABLE_UNICODE;
+            if(atomic_read(&ts->double_tap_enable))
+                buffer |= 0x01;
+            if(atomic_read(&ts->flashlight_enable))
+                buffer |= 0x20;
+            if(atomic_read(&ts->camera_enable))
+                buffer |= 0x08;
+            if(atomic_read(&ts->music_enable))
+                buffer |= 0x22;
 		    synaptics_i2c_byte_write(ts, F11_2D_CTRL92_00_00, buffer);
 
 			atomic_set(&ts->double_tap_enable, val);
 			
 			up(&synaptics_sem);
 			wake_unlock(&ts->double_wake_lock);
-			printk(KERN_INFO"%s: set gesture mode enable while suspend\n", __func__);
+			printk(KERN_INFO"%s: set double tap enable %d while suspend\n", __func__, val);
 		} else if ((val == 0) && atomic_read(&ts->double_tap_enable) == 1) {
-            wake_lock(&ts->double_wake_lock);
-    	    down(&synaptics_sem);
+			if(atomic_read(&ts->flashlight_enable) == 0 &&
+               atomic_read(&ts->camera_enable) == 0 &&
+               atomic_read(&ts->music_enable) == 0 ) {
+                wake_lock(&ts->double_wake_lock);
+    			down(&synaptics_sem);
 
-    	    disable_irq(ts->client->irq);
-    	    synaptics_set_int_mask(ts, 0); /* disable interrupt */
-    		/* deep sleep */
-    		synaptics_i2c_byte_write(ts, F01_CTRL_DEVICE_CONTROL, 0x01); 		
-    		if (ts->power) {
-    			ts->power(0);
-    		}
-    		atomic_set(&ts->double_tap_enable, val);
+    			disable_irq(ts->client->irq);
+    			synaptics_set_int_mask(ts, 0); /* disable interrupt */
+    			/* deep sleep */
+    			synaptics_i2c_byte_write(ts, F01_CTRL_DEVICE_CONTROL, 0x01); 		
+    			if (ts->power) {
+    				ts->power(0);
+    			}
+    			atomic_set(&ts->double_tap_enable, val);
     			
-    		up(&synaptics_sem);
-    		wake_unlock(&ts->double_wake_lock);
-			
-			printk(KERN_INFO"%s: set gesture mode disable while suspend\n", __func__);	
+    			up(&synaptics_sem);
+    			wake_unlock(&ts->double_wake_lock);
+			} else {
+			    wake_lock(&ts->double_wake_lock);
+    			down(&synaptics_sem);
+
+                synaptics_i2c_block_read(ts, F11_2D_CTRL92_00_00, 1, &buffer);
+                buffer &= 0xFE;
+                synaptics_i2c_byte_write(ts, F11_2D_CTRL92_00_00, buffer);
+    		    atomic_set(&ts->double_tap_enable, val);
+
+    			up(&synaptics_sem);
+    			wake_unlock(&ts->double_wake_lock);
+			}
+			printk(KERN_INFO"%s: set double tap enable %d while suspend\n", __func__, val);
+	
 		}
+
 	}
 	return len;
 }
@@ -1867,16 +1857,355 @@ static int double_tap_enable_proc_read(char *page, char **start, off_t off,
 	return sprintf(page, "%d\n", atomic_read(&ts->double_tap_enable));
 }
 
-static int coordinate_proc_read(char *page, char **start, off_t off,
+//=================
+static int flashlight_enable_proc_read(char *page, char **start, off_t off,
 			  int count, int *eof, void *data)
 {
 	struct synaptics_ts_data *ts = data;
 	
-	return sprintf(page, "%d,%d:%d,%d:%d,%d:%d,%d:%d,%d:%d,%d:%d,%d\n", ts->gesture,
-                   ts->Point_start.x, ts->Point_start.y, ts->Point_end.x, ts->Point_end.y,
-                   ts->Point_1st.x, ts->Point_1st.y, ts->Point_2nd.x, ts->Point_2nd.y,
-                   ts->Point_3rd.x, ts->Point_3rd.y, ts->Point_4th.x, ts->Point_4th.y,
-                   ts->clockwise);
+	return sprintf(page, "%d\n", atomic_read(&ts->flashlight_enable));
+}
+
+static int flashlight_enable_proc_write( struct file *filp, const char __user *buff,
+                        unsigned long len, void *data )
+{
+	unsigned int val = 0;
+	struct synaptics_ts_data *ts = data;
+	char buf[10];
+    unsigned char buffer;
+
+	if (len > 10) 
+		return len;
+	
+	if (copy_from_user( buf, buff, len )) {
+		printk(KERN_INFO "%s: read proc input error.\n", __func__);
+		return len;
+	}
+	
+	sscanf(buf, "%d", &val);
+	val = (val == 0 ? 0:1);
+
+    if (ts->is_tp_suspended == 0) {
+        if ((val == 1) && atomic_read(&ts->flashlight_enable) == 0) {
+            synaptics_i2c_block_read(ts, F11_2D_CTRL92_00_00, 1, &buffer);
+            buffer |= 0x20;
+		    synaptics_i2c_byte_write(ts, F11_2D_CTRL92_00_00, buffer);
+		    atomic_set(&ts->flashlight_enable, val);
+        
+		    printk(KERN_INFO "%s: set flashlight mode enable \n", __func__);
+	    } else if ((val == 0) && atomic_read(&ts->flashlight_enable) == 1) {
+	        if(atomic_read(&ts->music_enable) == 0) {
+                synaptics_i2c_block_read(ts, F11_2D_CTRL92_00_00, 1, &buffer);
+                buffer &= 0xDF;
+                synaptics_i2c_byte_write(ts, F11_2D_CTRL92_00_00, buffer);
+	        }
+		    atomic_set(&ts->flashlight_enable, val);
+
+		    printk(KERN_INFO"%s: set flashlight mode disable\n", __func__);
+	    }
+	} else {
+		if ((val == 1) && atomic_read(&ts->flashlight_enable) == 0) {
+			wake_lock(&ts->double_wake_lock);
+			down(&synaptics_sem);
+
+			if (ts->power) {
+				ts->power(1);
+			}
+
+			synaptics_set_int_mask(ts, 0);
+			synaptics_set_report_mode(ts, 0x04);
+			enable_irq(ts->client->irq);
+			enable_irq_wake(ts->client->irq);
+			synaptics_set_int_mask(ts, 1);
+			synaptics_i2c_byte_write(ts, F01_CTRL_DEVICE_CONTROL, 0x80);
+            
+            if(atomic_read(&ts->double_tap_enable))
+                buffer |= 0x01;
+            if(atomic_read(&ts->flashlight_enable))
+                buffer |= 0x20;
+            if(atomic_read(&ts->camera_enable))
+                buffer |= 0x08;
+            if(atomic_read(&ts->music_enable))
+                buffer |= 0x22;
+            synaptics_i2c_byte_write(ts, F11_2D_CTRL92_00_00, buffer);
+
+			atomic_set(&ts->flashlight_enable, val);
+			
+			up(&synaptics_sem);
+			wake_unlock(&ts->double_wake_lock);
+			printk(KERN_INFO"%s: set flash light enable %d while suspend\n", __func__, val);
+		} else if ((val == 0) && atomic_read(&ts->flashlight_enable) == 1) {
+			if( atomic_read(&ts->double_tap_enable) == 0 &&
+                atomic_read(&ts->camera_enable) == 0 &&
+                atomic_read(&ts->music_enable) == 0) {
+                wake_lock(&ts->double_wake_lock);
+    			down(&synaptics_sem);
+
+    			disable_irq(ts->client->irq);
+    			synaptics_set_int_mask(ts, 0); /* disable interrupt */
+    			/* deep sleep */
+    			synaptics_i2c_byte_write(ts, F01_CTRL_DEVICE_CONTROL, 0x01); 		
+    			if (ts->power) {
+    				ts->power(0);
+    			}
+    			atomic_set(&ts->flashlight_enable, val);
+    			
+    			up(&synaptics_sem);
+    			wake_unlock(&ts->double_wake_lock);
+			} else {
+                wake_lock(&ts->double_wake_lock);
+    			down(&synaptics_sem);
+
+    	        if(atomic_read(&ts->music_enable) == 0) {
+                    synaptics_i2c_block_read(ts, F11_2D_CTRL92_00_00, 1, &buffer);
+                    buffer &= 0xDF;
+                    synaptics_i2c_byte_write(ts, F11_2D_CTRL92_00_00, buffer);
+    	        }
+    		    atomic_set(&ts->flashlight_enable, val);
+
+    			up(&synaptics_sem);
+    			wake_unlock(&ts->double_wake_lock);
+			}
+			printk(KERN_INFO"%s: set flash light disable %d while suspend\n", __func__, val);
+	
+		}
+	}
+
+	return len;
+}
+
+//============
+static int camera_enable_proc_read(char *page, char **start, off_t off,
+			  int count, int *eof, void *data)
+{
+	struct synaptics_ts_data *ts = data;
+	
+	return sprintf(page, "%d\n", atomic_read(&ts->camera_enable));
+}
+
+static int camera_enable_proc_write( struct file *filp, const char __user *buff,
+                        unsigned long len, void *data )
+{
+	unsigned int val = 0;
+	struct synaptics_ts_data *ts = data;
+	char buf[10];
+    unsigned char buffer;
+
+	if (len > 10) 
+		return len;
+	
+	if (copy_from_user( buf, buff, len )) {
+		printk(KERN_INFO "%s: read proc input error.\n", __func__);
+		return len;
+	}
+	
+	sscanf(buf, "%d", &val);
+	val = (val == 0 ? 0:1);
+
+    if (ts->is_tp_suspended == 0) {
+    	if ((val == 1) && atomic_read(&ts->camera_enable) == 0) {
+            synaptics_i2c_block_read(ts, F11_2D_CTRL92_00_00, 1, &buffer);
+            buffer |= 0x08;
+    		synaptics_i2c_byte_write(ts, F11_2D_CTRL92_00_00, buffer);
+    		atomic_set(&ts->camera_enable, val);
+            
+    		printk(KERN_INFO "%s: set camera mode enable \n", __func__);
+    	} else if ((val == 0) && atomic_read(&ts->camera_enable) == 1) {
+    	    synaptics_i2c_block_read(ts, F11_2D_CTRL92_00_00, 1, &buffer);
+            buffer &= 0xF7;
+    		synaptics_i2c_byte_write(ts, F11_2D_CTRL92_00_00, buffer); 		
+    		atomic_set(&ts->camera_enable, val);
+
+    		printk(KERN_INFO"%s: set camera mode disable\n", __func__);
+    	}
+	} else {
+		if ((val == 1) && atomic_read(&ts->camera_enable) == 0) {
+			wake_lock(&ts->double_wake_lock);
+			down(&synaptics_sem);
+
+			if (ts->power) {
+				ts->power(1);
+			}
+
+			synaptics_set_int_mask(ts, 0);
+			synaptics_set_report_mode(ts, 0x04);
+			enable_irq(ts->client->irq);
+			enable_irq_wake(ts->client->irq);
+			synaptics_set_int_mask(ts, 1);
+			synaptics_i2c_byte_write(ts, F01_CTRL_DEVICE_CONTROL, 0x80);
+            
+            if(atomic_read(&ts->double_tap_enable))
+                buffer |= 0x01;
+            if(atomic_read(&ts->flashlight_enable))
+                buffer |= 0x20;
+            if(atomic_read(&ts->camera_enable))
+                buffer |= 0x08;
+            if(atomic_read(&ts->music_enable))
+                buffer |= 0x22;
+            synaptics_i2c_byte_write(ts, F11_2D_CTRL92_00_00, buffer);
+            
+			atomic_set(&ts->camera_enable, val);
+			
+			up(&synaptics_sem);
+			wake_unlock(&ts->double_wake_lock);
+			printk(KERN_INFO"%s: set camara enable %d while suspend\n", __func__, val);
+		} else if ((val == 0) && atomic_read(&ts->camera_enable) == 1) {
+            if(atomic_read(&ts->double_tap_enable) == 0 &&
+               atomic_read(&ts->flashlight_enable) == 0 &&
+               atomic_read(&ts->music_enable) == 0) {
+                wake_lock(&ts->double_wake_lock);
+    			down(&synaptics_sem);
+
+    			disable_irq(ts->client->irq);
+    			synaptics_set_int_mask(ts, 0); /* disable interrupt */
+    			/* deep sleep */
+    			synaptics_i2c_byte_write(ts, F01_CTRL_DEVICE_CONTROL, 0x01); 		
+    			if (ts->power) {
+    				ts->power(0);
+    			}
+    			atomic_set(&ts->camera_enable, val);
+    			
+    			up(&synaptics_sem);
+    			wake_unlock(&ts->double_wake_lock);
+            } else {
+                wake_lock(&ts->double_wake_lock);
+    			down(&synaptics_sem);
+
+        	    synaptics_i2c_block_read(ts, F11_2D_CTRL92_00_00, 1, &buffer);
+                buffer &= 0xF7;
+        		synaptics_i2c_byte_write(ts, F11_2D_CTRL92_00_00, buffer); 		
+        		atomic_set(&ts->camera_enable, val);
+
+    			up(&synaptics_sem);
+    			wake_unlock(&ts->double_wake_lock);
+            }
+			printk(KERN_INFO"%s: set camera disable %d while suspend\n", __func__, val);
+	
+		}
+	}
+
+	return len;
+}
+
+//=========
+static int music_enable_proc_read(char *page, char **start, off_t off,
+			  int count, int *eof, void *data)
+{
+	struct synaptics_ts_data *ts = data;
+	
+	return sprintf(page, "%d\n", atomic_read(&ts->music_enable));
+}
+
+static int music_enable_proc_write( struct file *filp, const char __user *buff,
+                        unsigned long len, void *data )
+{
+	unsigned int val = 0;
+	struct synaptics_ts_data *ts = data;
+	char buf[10];
+    unsigned char buffer;
+
+	if (len > 10) 
+		return len;
+	
+	if (copy_from_user( buf, buff, len )) {
+		printk(KERN_INFO "%s: read proc input error.\n", __func__);
+		return len;
+	}
+	
+	sscanf(buf, "%d", &val);
+	val = (val == 0 ? 0:1);
+
+    if (ts->is_tp_suspended == 0) {
+    	if ((val == 1) && atomic_read(&ts->music_enable) == 0) {
+            synaptics_i2c_block_read(ts, F11_2D_CTRL92_00_00, 1, &buffer);
+            buffer |= 0x22;
+    		synaptics_i2c_byte_write(ts, F11_2D_CTRL92_00_00, buffer);
+    		atomic_set(&ts->music_enable, val);
+            
+    		printk(KERN_INFO "%s: set music mode enable \n", __func__);
+    	} else if ((val == 0) && atomic_read(&ts->music_enable) == 1) {
+    	    synaptics_i2c_block_read(ts, F11_2D_CTRL92_00_00, 1, &buffer);
+    	    if(atomic_read(&ts->flashlight_enable) == 0) {
+                buffer &= 0xDD;
+    	    } else {
+    	        buffer &= 0xFD;
+    	    }
+    		synaptics_i2c_byte_write(ts, F11_2D_CTRL92_00_00, buffer); 		
+    		atomic_set(&ts->music_enable, val);
+
+    		printk(KERN_INFO"%s: set music mode disable\n", __func__);
+    	}
+	} else {
+		if ((val == 1) && atomic_read(&ts->music_enable) == 0) {
+			wake_lock(&ts->double_wake_lock);
+			down(&synaptics_sem);
+
+			if (ts->power) {
+				ts->power(1);
+			}
+
+			synaptics_set_int_mask(ts, 0);
+			synaptics_set_report_mode(ts, 0x04);
+			enable_irq(ts->client->irq);
+			enable_irq_wake(ts->client->irq);
+			synaptics_set_int_mask(ts, 1);
+			synaptics_i2c_byte_write(ts, F01_CTRL_DEVICE_CONTROL, 0x80);
+
+            if(atomic_read(&ts->double_tap_enable))
+                buffer |= 0x01;
+            if(atomic_read(&ts->flashlight_enable))
+                buffer |= 0x20;
+            if(atomic_read(&ts->camera_enable))
+                buffer |= 0x08;
+            if(atomic_read(&ts->music_enable))
+                buffer |= 0x22;
+            synaptics_i2c_byte_write(ts, F11_2D_CTRL92_00_00, buffer);
+
+			atomic_set(&ts->music_enable, val);
+			
+			up(&synaptics_sem);
+			wake_unlock(&ts->double_wake_lock);
+			printk(KERN_INFO"%s: set music enable %d while suspend\n", __func__, val);
+		} else if ((val == 0) && atomic_read(&ts->music_enable) ) {
+		    if(atomic_read(&ts->double_tap_enable) == 0 && 
+               atomic_read(&ts->camera_enable) == 0 &&
+               atomic_read(&ts->flashlight_enable) == 0) {
+    			wake_lock(&ts->double_wake_lock);
+    			down(&synaptics_sem);
+
+    			disable_irq(ts->client->irq);
+    			synaptics_set_int_mask(ts, 0); /* disable interrupt */
+    			/* deep sleep */
+    			synaptics_i2c_byte_write(ts, F01_CTRL_DEVICE_CONTROL, 0x01); 		
+    			if (ts->power) {
+    				ts->power(0);
+    			}
+    			atomic_set(&ts->music_enable, val);
+    			
+    			up(&synaptics_sem);
+    			wake_unlock(&ts->double_wake_lock);
+		    } else {
+    			wake_lock(&ts->double_wake_lock);
+    			down(&synaptics_sem);
+
+        	    synaptics_i2c_block_read(ts, F11_2D_CTRL92_00_00, 1, &buffer);
+        	    if(atomic_read(&ts->flashlight_enable) == 0) {
+                    buffer &= 0xDD;
+        	    } else {
+        	        buffer &= 0xFD;
+        	    }
+        		synaptics_i2c_byte_write(ts, F11_2D_CTRL92_00_00, buffer); 
+        		atomic_set(&ts->music_enable, val);
+
+    			up(&synaptics_sem);
+    			wake_unlock(&ts->double_wake_lock);
+		    }
+			printk(KERN_INFO"%s: set music disable %d while suspend\n", __func__, val);
+	
+		}
+	}
+
+	return len;
 }
 #endif
 
@@ -1926,7 +2255,7 @@ extern struct proc_dir_entry proc_root;
 static int init_synaptics_proc(struct synaptics_ts_data *ts)
 {
 	int ret=0;
-#ifdef SUPPORT_DOUBLE_TAP	
+#if SUPPORT_DOUBLE_TAP	
 	struct proc_dir_entry *prcdir;
 #endif
 	struct proc_dir_entry *proc_entry = create_proc_entry( "syna_proc_write", 0666, NULL );
@@ -1942,13 +2271,12 @@ static int init_synaptics_proc(struct synaptics_ts_data *ts)
 		proc_entry->write_proc = synaptics_proc_write;
 	}
 
-#ifdef SUPPORT_DOUBLE_TAP
 	prcdir = proc_mkdir("touchpanel", &proc_root);
 	if (prcdir == NULL) {
 		printk(KERN_ERR "%s: can't create /proc/touchpanel\n", __func__);
 		return ret;
 	}
-
+#if SUPPORT_DOUBLE_TAP
 	proc_entry = create_proc_entry("double_tap_counter", 0666, prcdir);
 	if (proc_entry) {
 		proc_entry->write_proc = double_tap_counter_proc_write;
@@ -1961,9 +2289,22 @@ static int init_synaptics_proc(struct synaptics_ts_data *ts)
 		proc_entry->read_proc = double_tap_enable_proc_read;
 		proc_entry->data = ts;
 	}
-    proc_entry = create_proc_entry("coordinate", 0444, prcdir);
+    proc_entry = create_proc_entry("flashlight_enable", 0666, prcdir);
 	if (proc_entry) {
-		proc_entry->read_proc = coordinate_proc_read;
+		proc_entry->write_proc = flashlight_enable_proc_write;
+		proc_entry->read_proc = flashlight_enable_proc_read;
+		proc_entry->data = ts;
+	}
+    proc_entry = create_proc_entry("camera_enable", 0666, prcdir);
+	if (proc_entry) {
+		proc_entry->write_proc = camera_enable_proc_write;
+		proc_entry->read_proc = camera_enable_proc_read;
+		proc_entry->data = ts;
+	}
+    proc_entry = create_proc_entry("music_enable", 0666, prcdir);
+	if (proc_entry) {
+		proc_entry->write_proc = music_enable_proc_write;
+		proc_entry->read_proc = music_enable_proc_read;
 		proc_entry->data = ts;
 	}
 #endif	
@@ -1989,8 +2330,8 @@ static int synaptics_ts_probe(
 	unsigned long irqflags;
 	int force_update;
 
-#ifdef CONFIG_MACH_N1
    	 int not_need_update = 0;
+#ifdef CONFIG_MACH_N1
     	if(get_boot_mode() == MSM_BOOT_MODE__FACTORY ||
        		get_boot_mode() == MSM_BOOT_MODE__RF ||
        			get_boot_mode() == MSM_BOOT_MODE__WLAN ) {
@@ -2017,9 +2358,11 @@ static int synaptics_ts_probe(
 
 	INIT_WORK(&ts->work, synaptics_ts_work_func);
 	INIT_DELAYED_WORK(&ts->delay_work, synaptics_ts_delay_work);
-#ifdef SUPPORT_DOUBLE_TAP
+/* OPPO 2013-05-02 huanggd Add begin for double tap*/		
+#if SUPPORT_DOUBLE_TAP
 	wake_lock_init(&ts->double_wake_lock, WAKE_LOCK_SUSPEND, "touchpanel");
 #endif
+/* OPPO 2013-05-02 huanggd Add end*/	
 	ts->client = client;
 	i2c_set_clientdata(client, ts);
 	pdata = client->dev.platform_data;
@@ -2065,6 +2408,7 @@ firmware_update:
 			fw_update_version = FIRMWARE_TRULY_VERSION;
 			fw_update_data = Syna_Firmware_Data_Truly;
 		}
+/* OPPO 2013-10-29 ranfei Modify begin for N1 */
 #if 0
 		else if (ts->vendor_id == TP_VENDOR_WINTEK)
 		{
@@ -2078,8 +2422,10 @@ firmware_update:
 			fw_update_data = Syna_Firmware_Data_YFO_N1;
         }
 #endif
+/* OPPO 2013-10-29 ranfei Modify end */
 		else if (ts->vendor_id == TP_VENDOR_TPK)
 		{
+/* OPPO 2013-07-30 ranfei Modify begin for reason */
 #if 0
 			fw_update_version = FIRMWARE_TPK_VERSION;
 			fw_update_data = Syna_Firmware_Data_TPK;
@@ -2087,7 +2433,9 @@ firmware_update:
 	        fw_update_version = FIRMWARE_TPK_VERSION_N1;
 			fw_update_data = Syna_Firmware_Data_TPK_N1;
 #endif
+/* OPPO 2013-07-30 ranfei Modify end */
 		}
+/*OPPO 2013-09-28 hewei Add begin for 在AT，WLAN和RF模式下不升级触摸屏固件*/
 		if(not_need_update == 0) {
 		if (fw_update_version != 0 && fw_update_data != NULL && (force_update
 			|| (ts->version[2] != ((fw_update_version>>8)&0xFF)
@@ -2099,6 +2447,7 @@ firmware_update:
 			CompleteReflash(client, fw_update_data);
 			goto detect_device;
 		}
+/*OPPO 2013-09-28 hewei Add end*/		
 		}
 	}
 #endif
@@ -2188,10 +2537,21 @@ firmware_update:
 	set_bit(EV_SYN, ts->input_dev->evbit);
 	set_bit(EV_KEY, ts->input_dev->evbit);
 	set_bit(EV_ABS, ts->input_dev->evbit);
-#ifdef SUPPORT_DOUBLE_TAP
-    set_bit(KEY_F4, ts->input_dev->keybit);
+#if SUPPORT_DOUBLE_TAP
+    set_bit(KEY_POWER, ts->input_dev->keybit);
+    set_bit(KEY_FLIP_CAMERA, ts->input_dev->keybit);
+    set_bit(KEY_GESTURE_CIRCLE, ts->input_dev->keybit);
+    set_bit(KEY_GESTURE_SWIPE_DOWN, ts->input_dev->keybit);
+    set_bit(KEY_GESTURE_V, ts->input_dev->keybit);
+    set_bit(KEY_GESTURE_LTR, ts->input_dev->keybit);
+    set_bit(KEY_GESTURE_GTR, ts->input_dev->keybit);
 	atomic_set(&ts->double_tap_number, 0);
+    /*ranfei modify for N1 发布会临时打开这四个开关,在工厂模式里面不打开*/
+    /*ranfei 设置菜单会设置，内核都默认关闭*/
 	atomic_set(&ts->double_tap_enable, 0);   
+    atomic_set(&ts->flashlight_enable, 0);
+    atomic_set(&ts->camera_enable, 0);
+    atomic_set(&ts->music_enable, 0);
 #endif
 #ifdef SUPPORT_GLOVES_MODE
     atomic_set(&ts->glove_mode_enable, 0);
@@ -2239,7 +2599,8 @@ firmware_update:
 	ts->early_suspend.suspend = synaptics_ts_early_suspend;
 	ts->early_suspend.resume = synaptics_ts_late_resume;
 	register_early_suspend(&ts->early_suspend);
-#ifdef SUPPORT_DOUBLE_TAP
+/* OPPO 2013-05-02 huanggd Add begin for double tap*/	
+#if SUPPORT_DOUBLE_TAP
 	ts->early_suspend_power.level = EARLY_SUSPEND_LEVEL_DISABLE_FB - 1;
 	ts->early_suspend_power.suspend = NULL;
 	ts->early_suspend_power.resume = synaptics_ts_late_resume_power;
@@ -2248,6 +2609,7 @@ firmware_update:
 	init_waitqueue_head(&ts->wait_i2c_ready);
 	ts->i2c_ready = 1;
 #endif
+/* OPPO 2013-05-02 huanggd Add end*/	
 #endif
 
 	synaptics_ts_sysfs_init(ts->input_dev);
@@ -2271,7 +2633,7 @@ err_input_dev_alloc_failed:
 err_detect_failed:
 	if (ts->power)
 		ts->power(0);
-#ifdef SUPPORT_DOUBLE_TAP	
+#if SUPPORT_DOUBLE_TAP	
 	wake_lock_destroy(&ts->double_wake_lock);
 #endif
 //err_power_failed:
@@ -2298,9 +2660,7 @@ static int synaptics_ts_remove(struct i2c_client *client)
 static int synaptics_ts_suspend(struct i2c_client *client, pm_message_t mesg)
 {
 	int ret;
-#ifdef SUPPORT_DOUBLE_TAP
     unsigned char buffer = 0;
-#endif
 	struct synaptics_ts_data *ts = i2c_get_clientdata(client);
 	down(&synaptics_sem);
 	ts->is_tp_suspended = 1;
@@ -2316,10 +2676,18 @@ static int synaptics_ts_suspend(struct i2c_client *client, pm_message_t mesg)
     } 
 #endif
 
-#ifdef SUPPORT_DOUBLE_TAP
-	if (atomic_read(&ts->double_tap_enable))
-	{	    
-        buffer = ENABLE_DTAP | ENABLE_SWIPE | ENABLE_CIRCLE | ENABLE_VEE | ENABLE_UNICODE;
+#if SUPPORT_DOUBLE_TAP
+	if (atomic_read(&ts->double_tap_enable) || atomic_read(&ts->flashlight_enable) ||
+        atomic_read(&ts->camera_enable) || atomic_read(&ts->music_enable))
+	{
+	    if(atomic_read(&ts->double_tap_enable))
+            buffer |= 0x01;
+        if(atomic_read(&ts->flashlight_enable))
+            buffer |= 0x20;
+        if(atomic_read(&ts->camera_enable))
+            buffer |= 0x08;
+        if(atomic_read(&ts->music_enable))
+            buffer |= 0x22;
         synaptics_i2c_byte_write(ts, F11_2D_CTRL92_00_00, buffer);
         printk(KERN_INFO "[%d] write reg[0x%x] 0x%x\n", __LINE__, F11_2D_CTRL92_00_00, buffer);
 		synaptics_set_int_mask(ts, 0);
@@ -2362,14 +2730,17 @@ static int synaptics_ts_resume(struct i2c_client *client)
 	struct synaptics_ts_data *ts = i2c_get_clientdata(client);
 	down(&synaptics_sem);
 
-#ifdef SUPPORT_DOUBLE_TAP
-	if (atomic_read(&ts->double_tap_enable))
+#if SUPPORT_DOUBLE_TAP
+	if (atomic_read(&ts->double_tap_enable) || atomic_read(&ts->flashlight_enable) ||
+        atomic_read(&ts->camera_enable) || atomic_read(&ts->music_enable))
 	{
+/* OPPO 2013-05-02 huanggd Add begin for double tap*/		
 		if (ts->power) {
 			ret = ts->power(1);
 			if (ret < 0)
 				print_ts(TS_ERROR, KERN_ERR "synaptics_ts_resume power on failed\n");
 		}
+/* OPPO 2013-05-02 huanggd Add end*/			
 		synaptics_set_int_mask(ts, 0);
 		synaptics_init_panel(ts);
 		synaptics_set_report_mode(ts, ts->report_mode);
@@ -2386,7 +2757,9 @@ static int synaptics_ts_resume(struct i2c_client *client)
 #endif
 		ts->is_tp_suspended = 0;
 		disable_irq_wake(client->irq);
+/* OPPO 2013-05-02 huanggd Add begin for double tap*/			
 		enable_irq(client->irq);
+/* OPPO 2013-05-02 huanggd Add end*/	
 		synaptics_set_int_mask(ts, 1);
 #ifdef CONFIG_MACH_N1
         input_mt_sync(ts->input_dev);
@@ -2450,16 +2823,19 @@ static void synaptics_ts_late_resume(struct early_suspend *h)
 
 	ts = container_of(h, struct synaptics_ts_data, early_suspend);
 	synaptics_ts_resume(ts->client);
+/*OPPO yuyi add begin for forbidding N1 button*/
 	gpio_button_confirm = 0;
-}
-#ifdef SUPPORT_DOUBLE_TAP
+/*OPPO yuyi add end*/ }
+/* OPPO 2013-05-02 huanggd Add begin for double tap*/	
+#if SUPPORT_DOUBLE_TAP
 static void synaptics_ts_late_resume_power(struct early_suspend *h)
 {
 	struct synaptics_ts_data *ts;
 	int ret;
 	ts = container_of(h, struct synaptics_ts_data, early_suspend_power);
 
-	if (0 == atomic_read(&ts->double_tap_enable))
+	if (0 == atomic_read(&ts->double_tap_enable) && 0 == atomic_read(&ts->flashlight_enable) &&
+        0 == atomic_read(&ts->camera_enable) && 0 == atomic_read(&ts->music_enable))
 		return;
 	
 	disable_irq(ts->client->irq);
@@ -2487,6 +2863,7 @@ static int synaptics_ts_resume_double_tap(struct i2c_client *client)
 	return 0;
 }
 #endif
+/* OPPO 2013-05-02 huanggd Add end*/	
 #endif
 
 static const struct i2c_device_id synaptics_ts_id[] = {
@@ -2501,7 +2878,7 @@ static struct i2c_driver synaptics_ts_driver = {
 	.suspend	= synaptics_ts_suspend,
 	.resume		= synaptics_ts_resume,
 #else
-#ifdef SUPPORT_DOUBLE_TAP
+#if SUPPORT_DOUBLE_TAP
 	.suspend	= synaptics_ts_suspend_double_tap,
 	.resume		= synaptics_ts_resume_double_tap,
 #endif	
