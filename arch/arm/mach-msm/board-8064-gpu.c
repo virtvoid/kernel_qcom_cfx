@@ -221,6 +221,11 @@ static struct kgsl_device_iommu_data kgsl_3d0_iommu_data[] = {
 static struct kgsl_device_platform_data kgsl_3d0_pdata = {
 	.pwrlevel = {
 		{
+			.gpu_freq = 487500000,
+			.bus_freq = 4,
+			.io_fraction = 0,
+		},
+		{
 			.gpu_freq = 400000000,
 			.bus_freq = 4,
 			.io_fraction = 0,
@@ -230,8 +235,8 @@ static struct kgsl_device_platform_data kgsl_3d0_pdata = {
 			.bus_freq = 3,
 			.io_fraction = 33,
 		},
-		{
-			.gpu_freq = 200000000,
+        {
+			.gpu_freq = 228571000,
 			.bus_freq = 2,
 			.io_fraction = 100,
 		},
@@ -245,12 +250,8 @@ static struct kgsl_device_platform_data kgsl_3d0_pdata = {
 			.bus_freq = 0,
 		},
 	},
-#ifndef CONFIG_MACH_APQ8064_FIND5
-	.init_level = 1,
-#else
 	.init_level = 2,
-#endif
-	.num_levels = 5,
+	.num_levels = 6,
 	.set_grp_async = NULL,
 	.idle_timeout = HZ/10,
 	.nap_allowed = true,
